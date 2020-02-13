@@ -13,6 +13,7 @@ mutable struct FESetL2CorotBeam <: AbstractFESet1Manifold{2}
     end
 end
 
+include("CrossSectionModule.jl")
 include("MeshFrameMemberModule.jl")
 
 end # module
