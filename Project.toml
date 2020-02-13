@@ -1,0 +1,10 @@
+name = "FinEtoolsFrames"
+uuid = "1d6e2fc3-29aa-4bd6-bf55-212bcb8e2840"
+authors = ["Petr Krysl <pkrysl@ucsd.edu>"]
+version = "0.1.0"
+
+[deps]
+Dierckx = "39dd38d3-220a-591b-8e3c-4c3a8c710a94"
+FinEtools = "91bb5406-6c9a-523d-811d-0644c4229550"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+SimplePCHIP = "dcc2f27d-5e82-4729-bf16-75538f52d909"
