@@ -4,7 +4,7 @@ module MeshFrameMemberModule
 using Dierckx
 using LinearAlgebra: norm
 using FinEtools
-using ..FinEtoolsFrames: FESetL2CorotBeam
+using ..FinEtoolsFrames.FESetCorotBeamModule: FESetL2CorotBeam
 
 # Mesh of a generally curved beam member given by the location of the
 # vertices of the spline curve.
@@ -16,7 +16,7 @@ using ..FinEtoolsFrames: FESetL2CorotBeam
 # constructor=constructor of the finite element set, default @fe_set_beam3
 # Parameters= see fe_set_beam3
 # 
-function frame_member(xyz, nL; )
+function frame_member(xyz, nL, crosssection)
     npts = size(xyz,1);
     s = fill(0.0, npts);
     for j in 2:npts
@@ -37,10 +37,9 @@ function frame_member(xyz, nL; )
         nxyz[i,2] = itpy(fens.xyz[i]);
         nxyz[i,3] = itpz(fens.xyz[i]);
     end
-    @show nxyz;
-    
+  
     fens.xyz = deepcopy(nxyz)
-    fes = FESetL2CorotBeam(connasarray(fes))
+    fes = FESetL2CorotBeam(connasarray(fes), crosssection)
     return fens, fes
 end
 
