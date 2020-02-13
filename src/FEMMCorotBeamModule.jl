@@ -18,20 +18,28 @@ using FinEtools
 # aN= transformation matrix to take Cartesian (local) displacement increments in the 
 #      element frame and to produce increments of natural deformations; 
 #      see local_frames() for the definition of the natural deformations 
-function _local_cartesian_to_natural(L)
-    aN=[[ -1,   0,   0,  0,  0, 0, 1,    0,    0, 0,  0,  0]
-        [  0,   0,   0,  0,  0, 1, 0,    0,    0, 0,  0, -1]
-        [  0, 2/L,   0,  0,  0, 1, 0, -2/L,    0, 0,  0,  1]
-        [  0,   0,   0,  0, -1, 0, 0,    0,    0, 0,  1,  0]
-        [  0,   0, 2/L,  0, -1, 0, 0,    0, -2/L, 0, -1,  0]
-        [  0,   0,   0, -1,  0, 0, 0,    0,    0, 1,  0,  0]];
+function _local_cartesian_to_natural!(aN, L)
+    fill!(aN, 0.0)
+    aN[1, 1] = -1; aN[1, 7] = +1
+    aN[2, 6] = +1; aN[2, 12] = -1
+    aN[3, 2] = 2/L; aN[3, 6] = +1; aN[3, 8] = -2/L; aN[3, 12] = -1
+    aN[4, 5] = -1; aN[4, 11] = +1
+    aN[5, 3] = 2/L; aN[5, 5] = -1; aN[5, 9] = -2/L; aN[5, 11] = -1
+    aN[6, 4] = -1; aN[6, 10] = +1
+    # aN=[[ -1,   0,   0,  0,  0, 0, 1,    0,    0, 0,  0,  0]
+    #     [  0,   0,   0,  0,  0, 1, 0,    0,    0, 0,  0, -1]
+    #     [  0, 2/L,   0,  0,  0, 1, 0, -2/L,    0, 0,  0,  1]
+    #     [  0,   0,   0,  0, -1, 0, 0,    0,    0, 0,  1,  0]
+    #     [  0,   0, 2/L,  0, -1, 0, 0,    0, -2/L, 0, -1,  0]
+    #     [  0,   0,   0, -1,  0, 0, 0,    0,    0, 1,  0,  0]];
+        return aN
 end
 
 # Compute forces through which the element acts on the nodes in the
 # local coordinate system.
 # 
-function _local_forces(PN, L)
-    aN= _local_cartesian_to_natural(L);
+function _local_forces(PN, L, aN)
+    _local_cartesian_to_natural(aN, L);
     FL=aN'*PN;
 end
 
@@ -186,6 +194,191 @@ function _local_geometric_stiffness!(SM, A, I2, I3, PN, L)
                         M_2J/2   0   0];
     complete_lt!(SM)
     return SM
+end
+
+# Mass matrix of the beam.
+#
+# function MM=local_mass (self, A, I1, I2, I3, rho, L)
+#
+# Inputs:
+# A= cross-sectional area,
+# I1=central moment of inertia of the cross-section about the x1 axis,
+# I2, I3=central moment of inertia of the cross-section about the x2 and x3
+# coordinate axis, 
+# rho=mass density, 
+# L0= initial length of the element, 
+# 
+# Outputs:
+# MM = local mass matrix, 12 x 12
+# In the element frame the mass matrix is constant.
+function _local_mass!(MM, A, I1, I2, I3, rho, L, mass_type)
+    if (mass_type == MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA)
+        # C
+        # C  CONSISTENT MASS MATRIX including ROTATIONAL MASSES
+        # C  Formulation of the (3.38), (3.39) equation from Dykstra's thesis
+        MM .= (rho*A*L)*[...
+            1/3      0        0        0        0        0       1/6       0        0        0        0        0
+            0     13/35       0        0        0    11*L/210     0      9/70       0        0        0    -13*L/420
+            0        0     13/35       0    -11*L/210    0        0        0       9/70      0    13*L/420     0
+            0        0        0     I1/3/A      0        0        0        0        0      I1/6/A     0        0
+            0        0   -11*L/210     0     L^2/105     0        0        0    -13*L/420    0    -L^2/140     0
+            0    11*L/210     0        0        0     L^2/105     0    13*L/420     0        0        0    -L^2/140
+            1/6      0        0        0        0        0       1/3       0        0        0        0        0
+            0      9/70       0        0        0     13*L/420    0      13/35      0        0        0   -11*L/210
+            0        0       9/70    0     -13*L/420     0        0        0      13/35      0    11*L/210     0
+            0        0        0     I1/6/A      0        0        0        0        0      I1/3/A     0        0
+            0        0    13*L/420     0    -L^2/140     0        0        0     11*L/210     0     L^2/105    0
+            0   -13*L/420     0        0        0    -L^2/140     0   -11*L/210     0         0        0    L^2/105];
+        MM .+= (rho/L)*[...
+            0       0        0        0       0         0       0       0        0       0       0        0
+            0    6/5*I2      0        0       0     L/10*I2     0    -6/5*I2     0       0       0    L/10*I2
+            0       0     6/5*I3      0   -L/10*I3      0       0       0     -6/5*I3    0   -L/10*I3     0
+            0       0        0        0       0         0       0       0        0       0       0        0
+            0       0    -L/10*I3     0  2*L^2/15*I3    0       0       0     L/10*I3    0   -L^2/30*I3   0
+            0    L/10*I2     0        0       0   2*L^2/15*I2   0    -L/10*I2    0       0       0    -L^2/30*I2
+            0       0        0        0       0         0       0       0        0       0       0        0
+            0   -6/5*I2      0        0       0     -L/10*I2    0    6/5*I2      0       0       0     -L/10*I2
+            0       0     -6/5*I3     0    L/10*I3      0       0       0      6/5*I3    0    L/10*I3     0
+            0       0        0        0       0         0       0       0        0       0       0        0
+            0       0     -L/10*I3    0  -L^2/30*I3     0       0       0     L/10*I3    0   2*L^2/15*I3  0
+            0   L/10*I2      0        0       0    -L^2/30*I2   0   -L/10*I2     0       0       0   2*L^2/15*I2];
+    elseif (mass_type == MASS_TYPE_CONSISTENT_NO_ROTATION_INERTIA)
+        # C
+        # C  CONSISTENT MASS MATRIX excluding ROTATIONAL MASSES
+        # C  Formulation of the (3.38) equation from Dykstra's thesis, no rotational inertia
+        MM .= (rho*A*L)*[...
+            1/3      0        0        0        0        0       1/6       0        0        0        0        0
+            0     13/35       0        0        0    11*L/210     0      9/70       0        0        0    -13*L/420
+            0        0     13/35       0    -11*L/210    0        0        0       9/70      0    13*L/420     0
+            0        0        0     I1/3/A      0        0        0        0        0      I1/6/A     0        0
+            0        0   -11*L/210     0     L^2/105     0        0        0    -13*L/420    0    -L^2/140     0
+            0    11*L/210     0        0        0     L^2/105     0    13*L/420     0        0        0    -L^2/140
+            1/6      0        0        0        0        0       1/3       0        0        0        0        0
+            0      9/70       0        0        0     13*L/420    0      13/35      0        0        0   -11*L/210
+            0        0       9/70    0     -13*L/420     0        0        0      13/35      0    11*L/210     0
+            0        0        0     I1/6/A      0        0        0        0        0      I1/3/A     0        0
+            0        0    13*L/420     0    -L^2/140     0        0        0     11*L/210     0     L^2/105    0
+            0   -13*L/420     0        0        0    -L^2/140     0   -11*L/210     0         0        0    L^2/105];
+    elseif (mass_type == MASS_TYPE_LUMPED_DIAGONAL_WITH_ROTATION_INERTIA)
+        # C
+        # C  LUMPED DIAGONAL MASS MATRIX WITH ROTATIONAL MASSES
+        # C
+        HLM  = A*rho*L/2.;
+        HLI1 = rho*I1* L/2.;
+        HLI2 = rho*I2* L/2.;
+        HLI3 = rho*I3* L/2.;
+        CA = HLM;
+        CB = HLI1;
+        CC = HLI2;
+        CD = HLI3;
+        fill!(MM, 0.0);
+        MM[1,1]    = MM[1,1]    + CA;
+        MM[2,2]    = MM[2,2]    + CA;
+        MM[3,3]    = MM[3,3]    + CA;
+        MM[4,4]    = MM[4,4]    + CB;
+        MM[5,5]    = MM[5,5]    + CC;
+        MM[6,6]    = MM[6,6]    + CD;
+        MM[7,7]    = MM[7,7]    + CA;
+        MM[8,8]    = MM[8,8]    + CA;
+        MM[9,9]    = MM[9,9]    + CA;
+        MM[10,10]  = MM[10,10]  + CB;
+        MM[11,11]  = MM[11,11]  + CC;
+        MM[12,12]  = MM[12,12]  + CD;
+    elseif (self.mass_type == self.mass_type_lumped_diagonal_no_rotation_inertia)
+        # C
+        # C  LUMPED DIAGONAL ISOTROPIC MASS MATRIX WITHOUT ROTATIONAL MASSES
+        # C
+        HLM  = A*rho*L/2.;
+        CA = HLM;
+        CB = 0.0;
+        CC = 0.0;
+        CD = 0.0;
+        fill!(MM, 0.0);
+        MM[1,1]    = MM[1,1]    + CA;
+        MM[2,2]    = MM[2,2]    + CA;
+        MM[3,3]    = MM[3,3]    + CA;
+        MM[7,7]    = MM[7,7]    + CA;
+        MM[8,8]    = MM[8,8]    + CA;
+        MM[9,9]    = MM[9,9]    + CA;
+    end
+    return MM
+end
+
+
+# Compute the local elastic stiffness matrix. 
+#
+# function SM = local_stiffness(self, E, G, A, I2, I3, J, L)
+# 
+# Inputs:
+# E, G= Young's and shear modulus, 
+# A= cross-sectional area, 
+# I2, I3=central moment of inertia of the cross-section about the x2 and x3 
+# coordinate axis, 
+# J=St Venant torsion constant, 
+# L= current length of the element, 
+# 
+# Outputs:
+# SM = local stiffness matrix, 12 x 12
+function _local_stiffness(SM, E, G, A, I2, I3, J, L, aN)
+    _local_cartesian_to_natural!(aN, L);
+    _natural_stiffness!(DN, E, G, A, I2, I3, J, L);
+    SM .= aN'*DN*aN;
+    return SM
+end
+
+# Compute the natural forces from the natural deformations.
+#
+# function PN = natural_forces (self, E, G, A, I2, I3, J, L, dN)
+#
+# Inputs:
+# E, G= Young's and shear modulus, 
+# A= cross-sectional area, 
+# I2, I3=central moment of inertia of the cross-section about the x2 and x3 
+# coordinate axis, 
+# J=St Venant torsion constant, 
+# L= current length of the element, 
+# dN= column vector of natural deformations; see local_frames() 
+# 
+# Outputs:
+#    PN = column vector of natural forces; 
+#      PN(1)= axial force; 
+#      PN(2)= symmetric bending moment in the plane x1-x2; 
+#      PN(3)= anti-symmetric bending bending moment in the plane x1-x2;    
+#      PN(4)= symmetric bending bending moment in the plane x1-x3;
+#      PN(5)= anti-symmetric bending bending moment in the plane x1-x3; 
+#      PN(6)= axial torque. 
+# 
+function _natural_forces!(PN, E, G, A, I2, I3, J, L, dN, DN)
+    _natural_stiffness!(DN, E, G, A, I2, I3, J, L);
+    #     Natural forces
+    PN .= DN*dN;
+    # Note that the non-constitutive stiffness due to pre-existing internal forces is currently omitted
+end
+
+# Compute the natural stiffness matrix.
+#
+# function DN= natural_stiffness(self, E, G, A, I2, I3, J, L) 
+#
+# Inputs:
+# E, G= Young's and shear modulus, 
+# A= cross-sectional area, 
+# I2, I3=central moment of inertia of the cross-section about the x2 and x3 
+# coordinate axis, 
+# J=St Venant torsion constant, 
+# L= current length of the element, 
+# 
+# Outputs:
+# DN = 6 x 6 natural stiffness matrix
+# 
+function _natural_stiffness!(DN, E, G, A, I2, I3, J, L)
+    fill!(DN, 0.0)
+    DN[1, 1] = E*A
+    DN[2, 2] = E*I3,
+    DN[3, 3] = 3*E*I3,
+    DN[4, 4] = E*I2,
+    DN[5, 5] = 3*E*I2,
+    DN[6, 6] = G*J ]/L;
+    return DN
 end
 
 end # module
