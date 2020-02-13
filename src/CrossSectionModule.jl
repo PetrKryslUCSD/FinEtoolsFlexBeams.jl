@@ -13,10 +13,13 @@ struct CrossSectionCircle{F} <: AbstractCrossSectionType
     #     I1= moment of inertia of the cross-section, twisting about the beam axis 
     #     I2, I3=moments of inertia, bending about the x2-axis (I2) or x3-axis (I3)
     #     J= torsion constant, (to give torsion stiffness =G*J)
+    #     x1x2_vector = vector to determine the local x1--x2 plane
+    # The parameter is the normalized arc length.
+    # A, J, I1, I2, I3, x1x2_vector = parameters(s)
     parameters::F
 end
 
-function CrossSectionCircle(radius)
+function CrossSectionCircle(radius, x1x2_vector)
     function parameters(s)
         R=radius(s);
         A=pi*R^2;
@@ -24,7 +27,7 @@ function CrossSectionCircle(radius)
         I1=pi/2*R^4;
         I2=pi/4*R^4;
         I3=pi/4*R^4;
-        return A, J, I1, I2, I3
+        return A, J, I1, I2, I3, x1x2_vector(s)
     end
     return CrossSectionCircle("circle", parameters)
 end
@@ -34,7 +37,7 @@ struct CrossSectionHollowCircle{F} <: AbstractCrossSectionType
     parameters::F
 end
 
-function CrossSectionHollowCircle(innerradius, outerradius)
+function CrossSectionHollowCircle(innerradius, outerradius, x1x2_vector)
     function parameters(s)
         Rext=outerradius(s);
         Rint=innerradius(s);
@@ -44,7 +47,7 @@ function CrossSectionHollowCircle(innerradius, outerradius)
         I3=pi/4*(Rext^4-Rint^4);
         I1=I2+I3;
         J=pi/2*(Rext^4-Rint^4);
-        return A, J, I1, I2, I3
+        return A, J, I1, I2, I3, x1x2_vector(s)
     end
     return CrossSectionHollowCircle("hollow circle", parameters)
 end
@@ -54,7 +57,7 @@ struct CrossSectionRectangle{F} <: AbstractCrossSectionType
     parameters::F
 end
 
-function CrossSectionRectangle(d2, d3)
+function CrossSectionRectangle(d2, d3, x1x2_vector)
     function parameters(s)
         d2=d2(s);
         d3=d3(s);
@@ -68,7 +71,7 @@ function CrossSectionRectangle(d2, d3)
         I2=d2*d3^3/12;
         I3=d2^3*d3/12;
         I1=I2+I3;
-        return A, J, I1, I2, I3
+        return A, J, I1, I2, I3, x1x2_vector(s)
     end
     return CrossSectionRectangle("rectangle", parameters)
 end
