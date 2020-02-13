@@ -16,7 +16,7 @@ using FinEtools
 using FinEtoolsFrames.FESetCorotBeamModule: FESetL2CorotBeam
 using FinEtoolsFrames.CrossSectionModule: CrossSectionCircle
 using FinEtoolsFrames.MeshFrameMemberModule: frame_member
-using GR
+using PlotlyJS
 using Test
 function test()
     L = 42
