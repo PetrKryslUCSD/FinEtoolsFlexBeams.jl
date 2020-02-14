@@ -2,6 +2,55 @@ module FEMMCorotBeamModule
 
 using LinearAlgebra: norm
 using FinEtools
+using FinEtools.IntegDomainModule: IntegDomain
+import FinEtoolsDeforLinear.MatDeforElastIsoModule: MatDeforElastIso
+using ..FESetCorotBeamModule: FESetL2CorotBeam 
+
+"""
+    FEMMDeforLinear{MR<:AbstractDeforModelRed,  S<:AbstractFESet, F<:Function, M<:AbstractMatDeforLinearElastic} <: FEMMCorotBeam
+
+Class for linear deformation finite element modeling machine.
+"""
+mutable struct FEMMCorotBeam{S<:AbstractFESet, F<:Function} <: AbstractFEMM
+    integdomain::IntegDomain{S, F} # integration domain data
+    material::MatDeforElastIso # material object
+    _ecoords0::FFltMat
+    _ecoords1::FFltMat
+    _edisp1::FFltMat
+    _dofnums::FIntMat
+    _Te::FFltMat
+    _elmat::FFltMat
+    _elmatTe::FFltMat
+    _aN::FFltMat
+    _dN::FFltVec
+    _DN::FFltMat
+    _RI::FFltMat
+    _RJ::FFltMat
+end
+
+function _buffers(self)
+    return self._ecoords0, self._ecoords1, self._edisp1, self._dofnums, self._Te, self._elmat, self._elmatTe, self._aN, self._dN, self._DN, self._RI, self._RJ
+end
+
+function FEMMCorotBeam(integdomain::IntegDomain{S, F}, material::MatDeforElastIso) where {S<:FESetL2CorotBeam, F<:Function}
+    _ecoords0 = fill(0.0, 2, 3)
+    _ecoords1 = fill(0.0, 2, 3)
+    _edisp1 = fill(0.0, 2, 3)
+    _dofnums = zeros(FInt, 1, elmatdim); 
+    _Te = fill(0.0, 12, 12)
+    _elmat = fill(0.0, 12, 12)
+    _elmatTe = fill(0.0, 12, 12)
+    _aN = fill(0.0, 6, 12)
+    _dN = fill(0.0, 6)
+    _DN = fill(0.0, 6, 6)
+    return FEMMCorotBeam(integdomain, material, _ecoords0, _ecoords1, _edisp1, _dofnums, _Te, _elmat, _elmatTe, _aN, _dN, _DN, _RI, _RJ)
+end
+
+
+const MASS_TYPE_CONSISTENT_NO_ROTATION_INERTIA=0;
+const MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA=1;
+const MASS_TYPE_LUMPED_DIAGONAL_NO_ROTATION_INERTIA=2;
+const MASS_TYPE_LUMPED_DIAGONAL_WITH_ROTATION_INERTIA=3;
 
 # Transformation from local Cartesian displacements to natural deformations 
 # of a beam element. 
@@ -64,10 +113,10 @@ end
 #      dN(3)= anti-symmetric bending;    dN(4)= symmetric bending
 #      dN(5)= anti-symmetric bending; dN(6)=total axial torsion angle.
 # 
-function _local_frames(x0, x1x2_vector, xt, RI, RJ)
+function _local_frames!(Te, dN, x0, x1x2_vector, xt, RI, RJ)
     # This is the element frame in the configuration t=0
     F0 = fill(0.0, 3, 3);
-    F0[:,1] = (x0(2,:)-x0[1,:]); 
+    F0[:,1] = (x0[2,:]-x0[1,:]); 
     L0 = norm(@view F0[:,1]);
     F0[:,1] /= L0;
     #     F0(:,3)=skewmat(F0(:,1))*x1x2_vector;
@@ -87,17 +136,17 @@ function _local_frames(x0, x1x2_vector, xt, RI, RJ)
     Ft = fill(0.0, 3, 3);
     # Compute the element frame in configuration t
     Ft[:,1] = (xt[2,:]-xt[1,:]); 
-    Lt =norm(Ft(:,1));
+    Lt = norm(@view Ft[:,1]);
     Ft[:,1] /= Lt;
-    x1x2_vectort=FtI[:,2]+FtJ[:,2];
+    x1x2_vectort = FtI[:,2]+FtJ[:,2];
     #     Ft(:,3)=skewmat(Ft(:,1))*x1x2_vectort; Ft(:,3)=Ft(:,3)/norm(Ft(:,3));
     #     Ft(:,2)=skewmat(Ft(:,3))*Ft(:,1);
     #     Ft(:,3)=skewmat(Ft(:,1))*x1x2_vectort; # In the interest of speed,
     #     replace with below explicit rewrite
     Ft[:,3] = (-Ft[3,1]*x1x2_vectort[2]+Ft[2,1]*x1x2_vectort[3],
                 Ft[3,1]*x1x2_vectort[1]-Ft[1,1]*x1x2_vectort[3],
-               -Ft[2,1]*x1x2_vectort[1]+Ft[1,1]*x1x2_vectort[2];
-    Ft[:,3] /= norm(Ft[:,3]);
+               -Ft[2,1]*x1x2_vectort[1]+Ft[1,1]*x1x2_vectort[2]);
+    Ft[:,3] /= norm(@view Ft[:,3]);
     #     Ft(:,2)=skewmat(Ft(:,3))*Ft(:,1); # In the interest of speed,
     #     replace with below explicit rewrite
     Ft[:,2] = (-Ft[3,3]*Ft[2,1]+Ft[2,3]*Ft[3,1],
@@ -124,7 +173,8 @@ function _local_frames(x0, x1x2_vector, xt, RI, RJ)
     dN[3] = TH3I+TH3J; # anti-symmetric bending
     dN[4] = -TH2I+TH2J; # symmetric bending
     dN[5] = -TH2I-TH2J; # anti-symmetric bending
-    return Lt,Ft,dN
+    Te[1:3, 1:3] = Te[4:6, 4:6] = Te[7:9, 7:9] = Te[10:12, 10:12] = Ft
+    return Lt, Te, dN
 end
 
 # Compute the local geometric stiffness matrix. 
@@ -216,7 +266,7 @@ function _local_mass!(MM, A, I1, I2, I3, rho, L, mass_type)
         # C
         # C  CONSISTENT MASS MATRIX including ROTATIONAL MASSES
         # C  Formulation of the (3.38), (3.39) equation from Dykstra's thesis
-        MM .= (rho*A*L)*[...
+        MM .= (rho*A*L)*[
             1/3      0        0        0        0        0       1/6       0        0        0        0        0
             0     13/35       0        0        0    11*L/210     0      9/70       0        0        0    -13*L/420
             0        0     13/35       0    -11*L/210    0        0        0       9/70      0    13*L/420     0
@@ -229,7 +279,7 @@ function _local_mass!(MM, A, I1, I2, I3, rho, L, mass_type)
             0        0        0     I1/6/A      0        0        0        0        0      I1/3/A     0        0
             0        0    13*L/420     0    -L^2/140     0        0        0     11*L/210     0     L^2/105    0
             0   -13*L/420     0        0        0    -L^2/140     0   -11*L/210     0         0        0    L^2/105];
-        MM .+= (rho/L)*[...
+        MM .+= (rho/L)*[
             0       0        0        0       0         0       0       0        0       0       0        0
             0    6/5*I2      0        0       0     L/10*I2     0    -6/5*I2     0       0       0    L/10*I2
             0       0     6/5*I3      0   -L/10*I3      0       0       0     -6/5*I3    0   -L/10*I3     0
@@ -246,7 +296,7 @@ function _local_mass!(MM, A, I1, I2, I3, rho, L, mass_type)
         # C
         # C  CONSISTENT MASS MATRIX excluding ROTATIONAL MASSES
         # C  Formulation of the (3.38) equation from Dykstra's thesis, no rotational inertia
-        MM .= (rho*A*L)*[...
+        MM .= (rho*A*L)*[
             1/3      0        0        0        0        0       1/6       0        0        0        0        0
             0     13/35       0        0        0    11*L/210     0      9/70       0        0        0    -13*L/420
             0        0     13/35       0    -11*L/210    0        0        0       9/70      0    13*L/420     0
@@ -319,7 +369,7 @@ end
 # 
 # Outputs:
 # SM = local stiffness matrix, 12 x 12
-function _local_stiffness(SM, E, G, A, I2, I3, J, L, aN)
+function _local_stiffness!(SM, E, G, A, I2, I3, J, L, aN, DN)
     _local_cartesian_to_natural!(aN, L);
     _natural_stiffness!(DN, E, G, A, I2, I3, J, L);
     SM .= aN'*DN*aN;
@@ -373,12 +423,92 @@ end
 function _natural_stiffness!(DN, E, G, A, I2, I3, J, L)
     fill!(DN, 0.0)
     DN[1, 1] = E*A
-    DN[2, 2] = E*I3,
-    DN[3, 3] = 3*E*I3,
-    DN[4, 4] = E*I2,
-    DN[5, 5] = 3*E*I2,
-    DN[6, 6] = G*J ]/L;
+    DN[2, 2] = E*I3
+    DN[3, 3] = 3*E*I3
+    DN[4, 4] = E*I2
+    DN[5, 5] = 3*E*I2
+    DN[6, 6] = G*J/L
     return DN
 end
+
+"""
+    mass(self::FEMMCorotBeam,  assembler::A,
+      geom::NodalField{FFlt},
+      u::NodalField{T}) where {A<:AbstractSysmatAssembler, T<:Number}
+
+Compute the consistent mass matrix
+
+This is a general routine for the abstract linear-deformation  FEMM.
+"""
+function mass(self::FEMMCorotBeam, assembler::A, geom::NodalField{FFlt}, u::NodalField{T}) where {A<:AbstractSysmatAssembler, T<:Number}
+    fes = self.integdomain.fes
+    npts,  Ns,  gradNparams,  w,  pc = integrationdata(self.integdomain);
+    ecoords, dofnums, loc, J, csmatTJ, gradN, D, B, DB, elmat = _buffers(self, geom, u)  # Prepare buffers
+    rho::FFlt = massdensity(self.material); # mass density
+    NexpTNexp = FFltMat[];# basis f. matrix -- buffer
+    ndn = ndofs(u)
+    Indn = [i==j ? one(FFlt) : zero(FFlt) for i=1:ndn, j=1:ndn] # "identity"
+    for j = 1:npts # This quantity is the same for all quadrature points
+        Nexp = fill(zero(FFlt), ndn, size(elmat,1))
+        for l1 = 1:nodesperelem(fes)
+            Nexp[1:ndn, (l1-1)*ndn+1:(l1)*ndn] = Indn * Ns[j][l1];
+        end
+        push!(NexpTNexp, Nexp'*Nexp);
+    end
+    startassembly!(assembler,  size(elmat,1),  size(elmat,2),  count(fes), u.nfreedofs,  u.nfreedofs);
+    for i = 1:count(fes) # Loop over elements
+        gathervalues_asmat!(geom, ecoords, fes.conn[i]);
+        fill!(elmat,  0.0); # Initialize element matrix
+        for j = 1:npts # Loop over quadrature points
+            locjac!(loc, J, ecoords, Ns[j], gradNparams[j])
+            Jac = Jacobianvolume(self.integdomain, J, loc, fes.conn[i], Ns[j]);
+            thefactor::FFlt =(rho*Jac*w[j]);
+            elmat .+= NexpTNexp[j]*thefactor
+        end # Loop over quadrature points
+        gatherdofnums!(u,  dofnums,  fes.conn[i]);# retrieve degrees of freedom
+        assemble!(assembler,  elmat,  dofnums,  dofnums);# assemble symmetric matrix
+    end # Loop over elements
+    return makematrix!(assembler);
+end
+
+function mass(self::FEMMCorotBeam,  geom::NodalField{FFlt},  u::NodalField{T}) where {T<:Number}
+    assembler = SysmatAssemblerSparseSymm();
+    return mass(self, assembler, geom, u);
+end
+
+"""
+    stiffness(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{T}) where {ASS<:AbstractSysmatAssembler, T<:Number}
+
+Compute the material stiffness matrix.
+"""
+function stiffness(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{T}) where {ASS<:AbstractSysmatAssembler, T<:Number}
+    fes = self.integdomain.fes
+    ecoords0, ecoords1, edisp1, dofnums, Te, elmat, elmatTe, aN, dN, DN, RI, RJ = _buffers(self)
+    E = self.material.E
+    G = E / 2 / (1 + self.material.nu)
+    A, I2, I3, J, x1x2_vector = fes.A, fes.I2, fes.I3, fes.J, fes.x1x2_vector
+    startassembly!(assembler, size(elmat, 1), size(elmat, 2), count(fes), u.nfreedofs, u.nfreedofs);
+    for i = 1:count(fes) # Loop over elements
+        gathervalues_asmat!(geom0, ecoords0, fes.conn[i]);
+        gathervalues_asmat!(u1, edisp1, fes.conn[i]);
+        ecoords1 .= ecoords0 .+ edisp1
+        gathervalues_asmat!(Rfield1, R1I, fes.conn[i][1]);
+        gathervalues_asmat!(Rfield1, R1J, fes.conn[i][2]);
+        fill!(elmat,  0.0); # Initialize element matrix
+        L1, Te, dN = _local_frames!(Te, dN, ecoords0, x1x2_vector[i], ecoords1, RI, RJ);
+        _local_stiffness!(_elmat, E, G, A[i], I2[i], I3[i], J[i], L1, aN, DN);
+        mul!(_elmatTe, _elmat, Transpose(_Te))
+        mul!(_elmat, _Te, _elmat, _elmatTe)
+        gatherdofnums!(dchi, _dofnums, fes.conn[i]); # degrees of freedom
+        assemble!(assembler, _elmat, _dofnums, _dofnums); 
+    end # Loop over elements
+    return makematrix!(assembler);
+end
+
+function stiffness(self::FEMMCorotBeam, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{T}) where {T<:Number}
+    assembler = SysmatAssemblerSparseSymm();
+    return stiffness(self, assembler, geom0, u1, Rfield1, dchi);
+end
+
 
 end # module
