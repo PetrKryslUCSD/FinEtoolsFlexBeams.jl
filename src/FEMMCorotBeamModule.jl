@@ -1,6 +1,6 @@
 module FEMMCorotBeamModule
 
-using LinearAlgebra: norm
+using LinearAlgebra: norm, Transpose, mul!
 using FinEtools
 using FinEtools.IntegDomainModule: IntegDomain
 import FinEtoolsDeforLinear.MatDeforElastIsoModule: MatDeforElastIso
@@ -502,9 +502,9 @@ function stiffness(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt},
         @show R1I, R1J
         L1, Te, dN = _local_frames!(Te, dN, ecoords0, x1x2_vector[i], ecoords1, R1I, R1J);
         _local_stiffness!(elmat, E, G, A[i], I2[i], I3[i], J[i], L1, aN, DN);
-        mul!(elmatTe, elmat, Transpose(_Te))
-        mul!(elmat, Te, _elmat, elmatTe)
-        gatherdofnums!(dchi, _dofnums, fes.conn[i]); # degrees of freedom
+        mul!(elmatTe, elmat, Transpose(Te))
+        mul!(elmat, Te, elmat, elmatTe)
+        gatherdofnums!(dchi, dofnums, fes.conn[i]); # degrees of freedom
         assemble!(assembler, elmat, dofnums, dofnums); 
     end # Loop over elements
     return makematrix!(assembler);
