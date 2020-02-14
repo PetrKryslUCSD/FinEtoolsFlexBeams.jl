@@ -5,7 +5,12 @@
 module beam_modal_examples
 
 using FinEtools
+using FinEtoolsDeforLinear
 using FinEtoolsFrames.CrossSectionModule: CrossSectionRectangle
+using FinEtoolsFrames.MeshFrameMemberModule: frame_member
+using FinEtoolsFrames.FEMMCorotBeamModule
+using FinEtoolsFrames.FEMMCorotBeamModule: FEMMCorotBeam
+stiffness = FEMMCorotBeamModule.stiffness
 using LinearAlgebra: dot
 using Arpack
 using LinearAlgebra
@@ -16,8 +21,8 @@ using Test
 function beam_modal()
 ## 
 # Parameters:
-E=30002*1000;#30002ksi
-nu=0.;
+E=30002.0*1000;#30002ksi
+nu=0.0;
 b=18; h=18; L=300;# in, cross-section and length
 g=32.17*12; # in/second^2
 rho=0.2/g;# Pound/g mass density per unit volume
@@ -43,13 +48,13 @@ mass_type=2;
 # 
 # Vertical plane, simply supported:
 # Horizontal plane, clamped:
+A=b*h;# in^2
+I2=b*h^3/12;# cm^4 
+I3=b^3*h/12;# cm^4 
 analyt_Frequencies = [(1*pi)^2/(2*pi*L^2)*sqrt(E*I2/rho/A),
 (4.73004074)^2/(2*pi*L^2)*sqrt(E*I2/rho/A)];
 neigvs = length(analyt_Frequencies);
-
-
-
-## 
+ 
 # Select the number of elements per half the length.
 xyz = [[0 -L/2 0];[0 L/2 0]]
 n=4;
@@ -78,7 +83,7 @@ l1 = selectnode(fens; box = [0 L/2 0 0 L/2 0], tolerance = L/10000)
 for i in [1,2,3,5,6]
     setebc!(dchi, l1, true, i)
 end
-applyebc!(u)
+applyebc!(dchi)
 numberdofs!(dchi);
 
 # Assemble the global discrete system
