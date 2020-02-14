@@ -57,10 +57,10 @@ struct CrossSectionRectangle{F} <: AbstractCrossSectionType
     parameters::F
 end
 
-function CrossSectionRectangle(d2, d3, x1x2_vector)
+function CrossSectionRectangle(d2f, d3f, x1x2_vector)
     function parameters(s)
-        d2=d2(s);
-        d3=d3(s);
+        d2=d2f(s);
+        d3=d3f(s);
         a=max(d2,d3);
         b=min(d2,d3);
         itp=Spline1D([1,1.5,2.0, 2.5, 3.0, 4.0, 5.0, 6.0,10,20,40,80,200,2000], 
