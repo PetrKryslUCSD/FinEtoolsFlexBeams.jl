@@ -503,7 +503,7 @@ function stiffness(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt},
         L1, Te, dN = _local_frames!(Te, dN, ecoords0, x1x2_vector[i], ecoords1, R1I, R1J);
         _local_stiffness!(elmat, E, G, A[i], I2[i], I3[i], J[i], L1, aN, DN);
         mul!(elmatTe, elmat, Transpose(Te))
-        mul!(elmat, Te, elmat, elmatTe)
+        mul!(elmat, Te, elmatTe)
         gatherdofnums!(dchi, dofnums, fes.conn[i]); # degrees of freedom
         assemble!(assembler, elmat, dofnums, dofnums); 
     end # Loop over elements
