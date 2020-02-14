@@ -16,7 +16,6 @@ using FinEtools
 using FinEtoolsFrames.FESetCorotBeamModule: FESetL2CorotBeam
 using FinEtoolsFrames.CrossSectionModule: CrossSectionCircle
 using FinEtoolsFrames.MeshFrameMemberModule: frame_member
-using PlotlyJS
 using Test
 function test()
     L = 42
@@ -29,7 +28,6 @@ function test()
     
     cs = CrossSectionCircle(s -> 5.9910, s -> [0.0, 0.0, 1.0])
     fens, fes = frame_member(xyz, nL, cs)
-    scatter3(fens.xyz[:, 1], fens.xyz[:, 2], fens.xyz[:, 3])
 end
 end
 using .m2
