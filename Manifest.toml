@@ -1,5 +1,10 @@
 # This file is machine-generated - editing it directly is not advised
 
+[[ArgCheck]]
+git-tree-sha1 = "e14de95bcfacd85e00f5369958a38bb72827bce2"
+uuid = "dce04be8-c92d-5529-be00-80e4d2c0e197"
+version = "1.1.0"
+
 [[Arpack]]
 deps = ["BinaryProvider", "Libdl", "LinearAlgebra"]
 git-tree-sha1 = "cd64c112638582ba4f0be9c3e20656499c508565"
@@ -77,6 +82,12 @@ version = "1.0.0"
 deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
 
+[[DefaultApplication]]
+deps = ["InteractiveUtils"]
+git-tree-sha1 = "fc2b7122761b22c87fec8bf2ea4dc4563d9f8c24"
+uuid = "3f0dd361-4fe0-5fc6-8523-80b14ec94d85"
+version = "1.0.0"
+
 [[DelimitedFiles]]
 deps = ["Mmap"]
 uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
@@ -105,6 +116,14 @@ deps = ["Arpack", "DelimitedFiles", "LinearAlgebra", "Printf", "Random", "Sparse
 git-tree-sha1 = "81407f64ce49eeefa31c89eb90735b99bc39d272"
 uuid = "91bb5406-6c9a-523d-811d-0644c4229550"
 version = "4.0.5"
+
+[[FinEtoolsDeforLinear]]
+deps = ["Arpack", "BenchmarkTools", "FinEtools", "LinearAlgebra", "Literate", "PGFPlotsX", "SparseArrays", "Statistics", "StatsBase", "Test"]
+git-tree-sha1 = "8cfe401f1fe7a72d6fc61f5c5ccfa3125403e8f4"
+repo-rev = "master"
+repo-url = "https://github.com/PetrKryslUCSD/FinEtoolsDeforLinear.jl.git"
+uuid = "e9187c00-8bdd-11e9-1e70-7ba8303116a2"
+version = "0.1.0"
 
 [[FixedPointNumbers]]
 git-tree-sha1 = "4aaea64dd0c30ad79037084f8ca2b94348e65eaa"
@@ -179,6 +198,12 @@ uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 deps = ["Libdl"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
+[[Literate]]
+deps = ["Base64", "JSON", "REPL"]
+git-tree-sha1 = "1237e824184149798082d89a60805a67b577bc75"
+uuid = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
+version = "2.2.1"
+
 [[Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 
@@ -230,6 +255,18 @@ deps = ["Random", "Serialization", "Test"]
 git-tree-sha1 = "c4c13474d23c60d20a67b217f1d7f22a40edf8f1"
 uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 version = "1.1.0"
+
+[[PGFPlotsX]]
+deps = ["ArgCheck", "DataStructures", "Dates", "DefaultApplication", "DocStringExtensions", "MacroTools", "Parameters", "Requires", "StatsBase"]
+git-tree-sha1 = "22eeb8209b3d240d22b9c52b0f077aaa4f2f6b19"
+uuid = "8314cec4-20b6-5062-9cdb-752b83310925"
+version = "1.2.3"
+
+[[Parameters]]
+deps = ["OrderedCollections"]
+git-tree-sha1 = "b62b2558efb1eef1fa44e4be5ff58a515c287e38"
+uuid = "d96e819e-fc66-5662-9728-84c9c7592b0a"
+version = "0.12.0"
 
 [[Parsers]]
 deps = ["Dates", "Test"]
