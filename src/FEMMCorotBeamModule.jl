@@ -36,13 +36,15 @@ function FEMMCorotBeam(integdomain::IntegDomain{S, F}, material::MatDeforElastIs
     _ecoords0 = fill(0.0, 2, 3)
     _ecoords1 = fill(0.0, 2, 3)
     _edisp1 = fill(0.0, 2, 3)
-    _dofnums = zeros(FInt, 1, elmatdim); 
+    _dofnums = zeros(FInt, 1, 12); 
     _Te = fill(0.0, 12, 12)
     _elmat = fill(0.0, 12, 12)
     _elmatTe = fill(0.0, 12, 12)
     _aN = fill(0.0, 6, 12)
     _dN = fill(0.0, 6)
     _DN = fill(0.0, 6, 6)
+    _RI = fill(0.0, 3, 3)
+    _RJ = fill(0.0, 3, 3)
     return FEMMCorotBeam(integdomain, material, _ecoords0, _ecoords1, _edisp1, _dofnums, _Te, _elmat, _elmatTe, _aN, _dN, _DN, _RI, _RJ)
 end
 
@@ -483,11 +485,11 @@ Compute the material stiffness matrix.
 """
 function stiffness(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{T}) where {ASS<:AbstractSysmatAssembler, T<:Number}
     fes = self.integdomain.fes
-    ecoords0, ecoords1, edisp1, dofnums, Te, elmat, elmatTe, aN, dN, DN, RI, RJ = _buffers(self)
+    ecoords0, ecoords1, edisp1, dofnums, Te, elmat, elmatTe, aN, dN, DN, R1I, R1J = _buffers(self)
     E = self.material.E
     G = E / 2 / (1 + self.material.nu)
     A, I2, I3, J, x1x2_vector = fes.A, fes.I2, fes.I3, fes.J, fes.x1x2_vector
-    startassembly!(assembler, size(elmat, 1), size(elmat, 2), count(fes), u.nfreedofs, u.nfreedofs);
+    startassembly!(assembler, size(elmat, 1), size(elmat, 2), count(fes), dchi.nfreedofs, dchi.nfreedofs);
     for i = 1:count(fes) # Loop over elements
         gathervalues_asmat!(geom0, ecoords0, fes.conn[i]);
         gathervalues_asmat!(u1, edisp1, fes.conn[i]);
@@ -495,7 +497,7 @@ function stiffness(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt},
         gathervalues_asmat!(Rfield1, R1I, fes.conn[i][1]);
         gathervalues_asmat!(Rfield1, R1J, fes.conn[i][2]);
         fill!(elmat,  0.0); # Initialize element matrix
-        L1, Te, dN = _local_frames!(Te, dN, ecoords0, x1x2_vector[i], ecoords1, RI, RJ);
+        L1, Te, dN = _local_frames!(Te, dN, ecoords0, x1x2_vector[i], ecoords1, R1I, R1J);
         _local_stiffness!(_elmat, E, G, A[i], I2[i], I3[i], J[i], L1, aN, DN);
         mul!(_elmatTe, _elmat, Transpose(_Te))
         mul!(_elmat, _Te, _elmat, _elmatTe)
