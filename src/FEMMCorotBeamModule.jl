@@ -116,7 +116,6 @@ end
 #      dN(5)= anti-symmetric bending; dN(6)=total axial torsion angle.
 # 
 function _local_frames!(Te, dN, x0, x1x2_vector, xt, RI, RJ)
-    @show Te, dN, x0, x1x2_vector, xt, RI, RJ
     # This is the element frame in the configuration t=0
     F0 = fill(0.0, 3, 3);
     F0[:,1] = (x0[2,:]-x0[1,:]); 
@@ -486,7 +485,7 @@ Compute the material stiffness matrix.
 """
 function stiffness(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{T}) where {ASS<:AbstractSysmatAssembler, T<:Number}
     fes = self.integdomain.fes
-    @show ecoords0, ecoords1, edisp1, dofnums, Te, elmat, elmatTe, aN, dN, DN, R1I, R1J = _buffers(self)
+    ecoords0, ecoords1, edisp1, dofnums, Te, elmat, elmatTe, aN, dN, DN, R1I, R1J = _buffers(self)
     E = self.material.E
     G = E / 2 / (1 + self.material.nu)
     A, I2, I3, J, x1x2_vector = fes.A, fes.I2, fes.I3, fes.J, fes.x1x2_vector
@@ -495,11 +494,9 @@ function stiffness(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt},
         gathervalues_asmat!(geom0, ecoords0, fes.conn[i]);
         gathervalues_asmat!(u1, edisp1, fes.conn[i]);
         ecoords1 .= ecoords0 .+ edisp1
-        @show R1I, R1J
         R1I[:] .= Rfield1.values[fes.conn[i][1], :];
         R1J[:] .= Rfield1.values[fes.conn[i][2], :];
         fill!(elmat,  0.0); # Initialize element matrix
-        @show R1I, R1J
         L1, Te, dN = _local_frames!(Te, dN, ecoords0, x1x2_vector[i], ecoords1, R1I, R1J);
         _local_stiffness!(elmat, E, G, A[i], I2[i], I3[i], J[i], L1, aN, DN);
         mul!(elmatTe, elmat, Transpose(Te))

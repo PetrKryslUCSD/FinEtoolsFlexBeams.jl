@@ -35,7 +35,8 @@ function frame_member(xyz, nL, crosssection)
         nxyz[i,2] = itpy(fens.xyz[i]);
         nxyz[i,3] = itpz(fens.xyz[i]);
     end
-
+    fens.xyz = deepcopy(nxyz)
+    
     N = count(fes)
     smid = fill(0.0, N)
     c = fes.conn[1]
@@ -54,7 +55,6 @@ function frame_member(xyz, nL, crosssection)
     _I3 = fill(0.0, N)
     _J = fill(0.0, N)
     _x1x2_vector = [[0.0, 0.0, 1.0] for i in 1:N]
-    @show crosssection
     for i in 1:N
         A, J, I1, I2, I3, x1x2_vector = crosssection.parameters(smid[i] / stot)
         _A[i] = A
@@ -64,7 +64,6 @@ function frame_member(xyz, nL, crosssection)
         _J[i] = J
         _x1x2_vector[i] = deepcopy(x1x2_vector)
     end
-    fens.xyz = deepcopy(nxyz)
     fes = FESetL2CorotBeam(connasarray(fes), crosssection, _A, _I1, _I2, _I3, _J, _x1x2_vector)
     return fens, fes
 end
