@@ -11,6 +11,7 @@ using FinEtoolsFrames.MeshFrameMemberModule: frame_member
 using FinEtoolsFrames.FEMMCorotBeamModule
 using FinEtoolsFrames.FEMMCorotBeamModule: FEMMCorotBeam
 stiffness = FEMMCorotBeamModule.stiffness
+using FinEtoolsFrames.RotUtilModule: initial_Rfield
 using LinearAlgebra: dot
 using Arpack
 using LinearAlgebra
@@ -71,7 +72,7 @@ femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material)
 # Initialize configuration variables
 geom0 = NodalField(fens.xyz)
 u0 = NodalField(zeros(size(fens.xyz,1), 3))
-Rfield0 = NodalField(zeros(size(fens.xyz,1), 9))
+Rfield0 = initial_Rfield(fens)
 dchi = NodalField(zeros(size(fens.xyz,1), 6))
 
 # Apply EBC's
