@@ -65,6 +65,25 @@ function cat(self::T,  other::T) where {T<:FESetL2CorotBeam}
     return result
 end
 
+"""
+    subset(self::T, L::FIntVec) where {T<:FESetL2CorotBeam}
+
+Subset of a beam-element set
+"""
+function subset(self::T, L::FIntVec) where {T<:FESetL2CorotBeam}
+    result = deepcopy(self)
+    result.conn = deepcopy(self.conn[L])
+    result.label = deepcopy(self.label[L])
+    result.A = self.A[L] 
+    result.I1 = self.I1[L]
+    result.I2 = self.I2[L]
+    result.I3 = self.I3[L]
+    result.J = self.J[L] 
+    result.x1x2_vector = self.x1x2_vector[L]
+    result.dimensions = self.dimensions[L]
+    return  result
+end
+
 function initial_local_frame!(F0, x0, x1x2_vector)
     # This is the element frame in the configuration t=0
     F0[:,1] = (x0[2,:]-x0[1,:]); 
