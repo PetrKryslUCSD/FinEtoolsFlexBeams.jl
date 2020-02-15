@@ -4,7 +4,7 @@ using FinEtools
 using FinEtoolsFlexBeams.FESetCorotBeamModule: FESetL2CorotBeam
 using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionCircle, CrossSectionRectangle
 using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member, merge_members
-using FinEtoolsBeamsVis: plot_nodes, plot_midline, render, plot_space_box, plot_envelope
+using FinEtoolsBeamsVis: plot_nodes, plot_midline, render, plot_space_box, plot_envelope, space_aspectratio
 
 function curve_mesh()
     L = 42
@@ -31,7 +31,7 @@ function line_mesh_envelope()
     0 0 L]
     nL = 1
     
-    cs = CrossSectionCircle(s -> 5.9910, s -> [0.0, 1.0, 0.0])
+    cs = CrossSectionCircle(s -> 2.5, s -> [0.0, 1.0, 0.0])
     fens, fes = frame_member(xyz, nL, cs)
     plots = cat(plot_nodes(fens), 
         plot_envelope(fens, fes);
@@ -50,13 +50,13 @@ function curve_mesh_envelope()
     0 0 L]
     nL = 20
     
-    cs = CrossSectionCircle(s -> 5.9910, s -> [0.0, 0.0, 1.0])
+    cs = CrossSectionCircle(s -> 0.5, s -> [0.0, 0.0, 1.0])
     fens, fes = frame_member(xyz, nL, cs)
     plots = cat(plot_nodes(fens), 
         plot_envelope(fens, fes);
         dims = 1)
     # push!(plots, plot_nodes(fens))
-    render(plots; aspectratio = [1.0 1.0 1.0])
+    render(plots; aspectratio = space_aspectratio(fens.xyz))
     true
 end # curve_mesh
 
@@ -90,6 +90,40 @@ function argyr_l_frame()
     plots = cat(plot_space_box([[0 -L/2 0]; [L L/2 L]]),
         plot_nodes(fens), 
         plot_midline(fens, fes; color = "rgb(155, 155, 255)", lwidth = 4), dims = 1)
+    render(plots; aspectratio = [1.0 1.0 1.0])
+    true
+end # argyr_l_frame
+
+function argyr_l_frame_envelope()
+    # Parameters:
+    E=71240.0;#MPa
+    nu=0.31;# Poisson ratio
+    rho=5e-9;
+    b=3.0; h=30.0; L=240.0; # cross-sectional dimensions and length of each leg in millimeters
+
+    # Cross-sectional properties
+    cs = CrossSectionRectangle(s -> b, s -> h, s -> [0.0, 1.0, 0.0])
+
+    ## 
+    # Choose the mass formulation:
+    mass_type=2;
+
+    ## 
+    # Reference frequencies
+    reffs = [11.2732, 30.5269]
+    neigvs = 2;
+
+    # Select the number of elements per half the length.
+    xyz = 
+    n=8;
+    members = []
+    push!(members, frame_member([0 0 L; L 0 L], n, cs))
+    push!(members, frame_member([L 0 L; L 0 0], n, cs))
+    fens, fes = merge_members(members; tolerance = L / 10000);
+
+    plots = cat(plot_space_box([[0 -L/2 0]; [L L/2 L]]),
+        plot_nodes(fens), 
+        plot_envelope(fens, fes; facecolor = "rgb(155, 0, 0)"), dims = 1)
     render(plots; aspectratio = [1.0 1.0 1.0])
     true
 end # argyr_l_frame
