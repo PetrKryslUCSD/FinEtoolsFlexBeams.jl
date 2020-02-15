@@ -15,10 +15,11 @@ mutable struct FESetL2CorotBeam{CT} <: AbstractFESet1Manifold{2}
     I3::FFltVec
     J::FFltVec
     x1x2_vector::Vector{FFltVec}
+    dimensions::Vector{FFltVec}
 end
 
 function FESetL2CorotBeam(conn::FIntMat, crosssection::CT) where {CT}
-    A, J, I1, I2, I3, x1x2_vector = crosssection.parameters(0.0)
+    A, J, I1, I2, I3, x1x2_vector, dimensions = crosssection.parameters(0.0)
     N = size(conn, 1)
     _A = fill(A, N)
     _I1 = fill(I1, N)
@@ -26,16 +27,17 @@ function FESetL2CorotBeam(conn::FIntMat, crosssection::CT) where {CT}
     _I3 = fill(I3, N)
     _J = fill(J, N)
     _x1x2_vector = [x1x2_vector for i in 1:N]
-    self = FESetL2CorotBeam(NTuple{2, FInt}[], FInt[], crosssection, _A, _I1, _I2, _I3, _J, _x1x2_vector)
+    _dimensions = [dimensions for i in 1:N]
+    self = FESetL2CorotBeam(NTuple{2, FInt}[], FInt[], crosssection, _A, _I1, _I2, _I3, _J, _x1x2_vector, _dimensions)
     self = fromarray!(self, conn)
     setlabel!(self, 0)
     return self
 end
 
-function FESetL2CorotBeam(conn::FIntMat, crosssection::CT, _A, _I1, _I2, _I3, _J, _x1x2_vector) where {CT}
+function FESetL2CorotBeam(conn::FIntMat, crosssection::CT, _A, _I1, _I2, _I3, _J, _x1x2_vector, _dimensions) where {CT}
     dummy = FESetL2(conn)
     setlabel!(dummy, 0)
-    return FESetL2CorotBeam(dummy.conn, dummy.label, crosssection, _A, _I1, _I2, _I3, _J, _x1x2_vector)
+    return FESetL2CorotBeam(dummy.conn, dummy.label, crosssection, _A, _I1, _I2, _I3, _J, _x1x2_vector, _dimensions)
 end
 
 const MASS_TYPE_CONSISTENT_NO_ROTATION_INERTIA=0;
@@ -59,6 +61,7 @@ function cat(self::T,  other::T) where {T<:FESetL2CorotBeam}
     result.I3 = vcat(self.I3, other.I3);
     result.J = vcat(self.J, other.J);
     result.x1x2_vector = vcat(self.x1x2_vector, other.x1x2_vector);
+    result.dimensions = vcat(self.dimensions, other.dimensions);
     return result
 end
 

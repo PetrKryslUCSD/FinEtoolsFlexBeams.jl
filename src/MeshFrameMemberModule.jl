@@ -56,16 +56,18 @@ function frame_member(xyz, nL, crosssection)
     _I3 = fill(0.0, N)
     _J = fill(0.0, N)
     _x1x2_vector = [[0.0, 0.0, 1.0] for i in 1:N]
+    _dimensions = [[0.0] for i in 1:N]
     for i in 1:N
-        A, J, I1, I2, I3, x1x2_vector = crosssection.parameters(smid[i] / stot)
+        A, J, I1, I2, I3, x1x2_vector, dimensions = crosssection.parameters(smid[i] / stot)
         _A[i] = A
         _I1[i] = I1
         _I2[i] = I2
         _I3[i] = I3
         _J[i] = J
         _x1x2_vector[i] = deepcopy(x1x2_vector)
+        _dimensions[i] = deepcopy(dimensions)
     end
-    fes = FESetL2CorotBeam(connasarray(fes), crosssection, _A, _I1, _I2, _I3, _J, _x1x2_vector)
+    fes = FESetL2CorotBeam(connasarray(fes), crosssection, _A, _I1, _I2, _I3, _J, _x1x2_vector, _dimensions)
     return fens, fes
 end
 

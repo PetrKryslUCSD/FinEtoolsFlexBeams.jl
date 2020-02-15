@@ -27,7 +27,7 @@ function CrossSectionCircle(radius, x1x2_vector)
         I1=pi/2*R^4;
         I2=pi/4*R^4;
         I3=pi/4*R^4;
-        return A, J, I1, I2, I3, x1x2_vector(s)
+        return A, J, I1, I2, I3, x1x2_vector(s), [R]
     end
     return CrossSectionCircle("circle", parameters)
 end
@@ -47,7 +47,7 @@ function CrossSectionHollowCircle(innerradius, outerradius, x1x2_vector)
         I3=pi/4*(Rext^4-Rint^4);
         I1=I2+I3;
         J=pi/2*(Rext^4-Rint^4);
-        return A, J, I1, I2, I3, x1x2_vector(s)
+        return A, J, I1, I2, I3, x1x2_vector(s), [Rext, Rint]
     end
     return CrossSectionHollowCircle("hollow circle", parameters)
 end
@@ -71,7 +71,7 @@ function CrossSectionRectangle(d2f, d3f, x1x2_vector)
         I2=d2*d3^3/12;
         I3=d2^3*d3/12;
         I1=I2+I3;
-        return A, J, I1, I2, I3, x1x2_vector(s)
+        return A, J, I1, I2, I3, x1x2_vector(s), [d2, d3]
     end
     return CrossSectionRectangle("rectangle", parameters)
 end
