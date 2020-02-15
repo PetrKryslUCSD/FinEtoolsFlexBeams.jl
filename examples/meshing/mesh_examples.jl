@@ -4,7 +4,7 @@ using FinEtools
 using FinEtoolsFlexBeams.FESetCorotBeamModule: FESetL2CorotBeam
 using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionCircle, CrossSectionRectangle
 using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member, merge_members
-using FinEtoolsBeamsVis: plot_nodes, plot_midline, render, plot_space_box
+using FinEtoolsBeamsVis: plot_nodes, plot_midline, render, plot_space_box, plot_envelope
 
 function curve_mesh()
     L = 42
@@ -17,10 +17,46 @@ function curve_mesh()
     
     cs = CrossSectionCircle(s -> 5.9910, s -> [0.0, 0.0, 1.0])
     fens, fes = frame_member(xyz, nL, cs)
-    plots = plot_nodes(fens)
-    plots = cat(plots, plot_midline(fens, fes; color = "rgb(155, 155, 255)", lwidth = 4), dims = 1)
+    plots = cat(plot_nodes(fens), 
+        plot_midline(fens, fes; color = "rgb(155, 155, 255)", lwidth = 4), 
+        dims = 1)
     # push!(plots, plot_nodes(fens))
     render(plots; aspectratio = [1.0 1.0 4.0])
+    true
+end # curve_mesh
+
+function line_mesh_envelope()
+    L = 40.2
+    xyz = [0 0 0;
+    0 0 L]
+    nL = 1
+    
+    cs = CrossSectionCircle(s -> 5.9910, s -> [0.0, 1.0, 0.0])
+    fens, fes = frame_member(xyz, nL, cs)
+    plots = cat(plot_nodes(fens), 
+        plot_envelope(fens, fes);
+        dims = 1)
+    # push!(plots, plot_nodes(fens))
+    render(plots; aspectratio = [1.0 1.0 1.0])
+    true
+end # curve_mesh
+
+function curve_mesh_envelope()
+    L = 42
+    xyz = [0 0 0;
+    0 L/4 L*1/4;
+    L/4 L/4 L*2/4;
+    L/4 0 L*3/4;
+    0 0 L]
+    nL = 20
+    
+    cs = CrossSectionCircle(s -> 5.9910, s -> [0.0, 0.0, 1.0])
+    fens, fes = frame_member(xyz, nL, cs)
+    plots = cat(plot_nodes(fens), 
+        plot_envelope(fens, fes);
+        dims = 1)
+    # push!(plots, plot_nodes(fens))
+    render(plots; aspectratio = [1.0 1.0 1.0])
     true
 end # curve_mesh
 
@@ -62,6 +98,9 @@ function allrun()
     println("#####################################################")
     println("# curve_mesh ")
     curve_mesh()
+    println("#####################################################")
+    println("# curve_mesh_envelope ")
+    curve_mesh_envelope()
     println("#####################################################")
     println("# argyr_l_frame ")
     argyr_l_frame()
