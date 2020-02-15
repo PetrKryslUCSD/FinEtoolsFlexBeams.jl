@@ -73,7 +73,7 @@ function _local_cartesian_to_natural!(aN, L)
     fill!(aN, 0.0)
     aN[1, 1] = -1; aN[1, 7] = +1
     aN[2, 6] = +1; aN[2, 12] = -1
-    aN[3, 2] = 2/L; aN[3, 6] = +1; aN[3, 8] = -2/L; aN[3, 12] = -1
+    aN[3, 2] = 2/L; aN[3, 6] = +1; aN[3, 8] = -2/L; aN[3, 12] = +1
     aN[4, 5] = -1; aN[4, 11] = +1
     aN[5, 3] = 2/L; aN[5, 5] = -1; aN[5, 9] = -2/L; aN[5, 11] = -1
     aN[6, 4] = -1; aN[6, 10] = +1
@@ -424,11 +424,11 @@ end
 # 
 function _natural_stiffness!(DN, E, G, A, I2, I3, J, L)
     fill!(DN, 0.0)
-    DN[1, 1] = E*A
-    DN[2, 2] = E*I3
-    DN[3, 3] = 3*E*I3
-    DN[4, 4] = E*I2
-    DN[5, 5] = 3*E*I2
+    DN[1, 1] = E*A/L
+    DN[2, 2] = E*I3/L
+    DN[3, 3] = 3*E*I3/L
+    DN[4, 4] = E*I2/L
+    DN[5, 5] = 3*E*I2/L
     DN[6, 6] = G*J/L
     return DN
 end
@@ -442,40 +442,33 @@ Compute the consistent mass matrix
 
 This is a general routine for the abstract linear-deformation  FEMM.
 """
-function mass(self::FEMMCorotBeam, assembler::A, geom::NodalField{FFlt}, u::NodalField{T}) where {A<:AbstractSysmatAssembler, T<:Number}
+function mass(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{T}; mass_type=MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA) where {ASS<:AbstractSysmatAssembler, T<:Number}
     fes = self.integdomain.fes
-    npts,  Ns,  gradNparams,  w,  pc = integrationdata(self.integdomain);
-    ecoords, dofnums, loc, J, csmatTJ, gradN, D, B, DB, elmat = _buffers(self, geom, u)  # Prepare buffers
-    rho::FFlt = massdensity(self.material); # mass density
-    NexpTNexp = FFltMat[];# basis f. matrix -- buffer
-    ndn = ndofs(u)
-    Indn = [i==j ? one(FFlt) : zero(FFlt) for i=1:ndn, j=1:ndn] # "identity"
-    for j = 1:npts # This quantity is the same for all quadrature points
-        Nexp = fill(zero(FFlt), ndn, size(elmat,1))
-        for l1 = 1:nodesperelem(fes)
-            Nexp[1:ndn, (l1-1)*ndn+1:(l1)*ndn] = Indn * Ns[j][l1];
-        end
-        push!(NexpTNexp, Nexp'*Nexp);
-    end
-    startassembly!(assembler,  size(elmat,1),  size(elmat,2),  count(fes), u.nfreedofs,  u.nfreedofs);
+    ecoords0, ecoords1, edisp1, dofnums, Te, elmat, elmatTe, aN, dN, DN, R1I, R1J = _buffers(self)
+    rho = massdensity(self.material)
+    A, I1, I2, I3, x1x2_vector = fes.A, fes.I1, fes.I2, fes.I3, fes.x1x2_vector
+    startassembly!(assembler, size(elmat, 1), size(elmat, 2), count(fes), dchi.nfreedofs, dchi.nfreedofs);
     for i = 1:count(fes) # Loop over elements
-        gathervalues_asmat!(geom, ecoords, fes.conn[i]);
+        gathervalues_asmat!(geom0, ecoords0, fes.conn[i]);
+        gathervalues_asmat!(u1, edisp1, fes.conn[i]);
+        ecoords1 .= ecoords0 .+ edisp1
+        R1I[:] .= Rfield1.values[fes.conn[i][1], :];
+        R1J[:] .= Rfield1.values[fes.conn[i][2], :];
         fill!(elmat,  0.0); # Initialize element matrix
-        for j = 1:npts # Loop over quadrature points
-            locjac!(loc, J, ecoords, Ns[j], gradNparams[j])
-            Jac = Jacobianvolume(self.integdomain, J, loc, fes.conn[i], Ns[j]);
-            thefactor::FFlt =(rho*Jac*w[j]);
-            elmat .+= NexpTNexp[j]*thefactor
-        end # Loop over quadrature points
-        gatherdofnums!(u,  dofnums,  fes.conn[i]);# retrieve degrees of freedom
-        assemble!(assembler,  elmat,  dofnums,  dofnums);# assemble symmetric matrix
+        L1, Te, dN = _local_frames!(Te, dN, ecoords0, x1x2_vector[i], ecoords1, R1I, R1J);
+        L0 = norm(ecoords0[2,:]-ecoords0[1,:]); 
+        _local_mass!(elmat, A[i], I1[i], I2[i], I3[i], rho, L0, mass_type);
+        mul!(elmatTe, elmat, Transpose(Te))
+        mul!(elmat, Te, elmatTe)
+        gatherdofnums!(dchi, dofnums, fes.conn[i]); # degrees of freedom
+        assemble!(assembler, elmat, dofnums, dofnums); 
     end # Loop over elements
     return makematrix!(assembler);
 end
 
-function mass(self::FEMMCorotBeam,  geom::NodalField{FFlt},  u::NodalField{T}) where {T<:Number}
+function mass(self::FEMMCorotBeam, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{T}; mass_type=MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA) where {T<:Number}
     assembler = SysmatAssemblerSparseSymm();
-    return mass(self, assembler, geom, u);
+    return mass(self, assembler, geom0, u1, Rfield1, dchi; mass_type = mass_type);
 end
 
 """

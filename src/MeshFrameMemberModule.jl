@@ -4,7 +4,7 @@ module MeshFrameMemberModule
 using Dierckx
 using LinearAlgebra: norm
 using FinEtools
-using ..FinEtoolsFrames.FESetCorotBeamModule: FESetL2CorotBeam
+using ..FinEtoolsFlexBeams.FESetCorotBeamModule: FESetL2CorotBeam
 
 # Mesh of a generally curved beam member given by the location of the
 # vertices of the spline curve.

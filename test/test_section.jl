@@ -1,6 +1,6 @@
 module mcrosssection1
 using FinEtools
-using FinEtoolsFrames.CrossSectionModule
+using FinEtoolsFlexBeams.CrossSectionModule
 using Test
 function test()
     cs = CrossSectionModule.CrossSectionCircle(s -> 5.9910, s -> [0.0, 0.0, 1.0])
@@ -16,7 +16,7 @@ mcrosssection1.test()
 
 module mcrosssection2
 using FinEtools
-using FinEtoolsFrames.CrossSectionModule
+using FinEtoolsFlexBeams.CrossSectionModule
 using Test
 function test()
     cs = CrossSectionModule.CrossSectionRectangle(s -> 42.0, s -> 4.2, s -> [0.0, 0.0, 1.0])
@@ -32,7 +32,7 @@ mcrosssection2.test()
 
 module mcrosssection3
 using FinEtools
-using FinEtoolsFrames.CrossSectionModule
+using FinEtoolsFlexBeams.CrossSectionModule
 using Test
 function test()
     cs = CrossSectionModule.CrossSectionRectangle(s -> 1.3 * 4.2, s -> 4.2, s -> [0.0, 0.0, 1.0])
@@ -48,7 +48,7 @@ mcrosssection3.test()
 
 module mcrosssection4
 using FinEtools
-using FinEtoolsFrames.CrossSectionModule
+using FinEtoolsFlexBeams.CrossSectionModule
 using Test
 function test()
     R = 0.5

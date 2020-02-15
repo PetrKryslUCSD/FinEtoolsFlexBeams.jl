@@ -1,7 +1,7 @@
 module m1
 using FinEtools
-using FinEtoolsFrames.FESetCorotBeamModule: FESetL2CorotBeam
-using FinEtoolsFrames.CrossSectionModule: CrossSectionCircle
+using FinEtoolsFlexBeams.FESetCorotBeamModule: FESetL2CorotBeam
+using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionCircle
 using Test
 function test()
     cs = CrossSectionCircle(s -> 5.9910, s -> [0.0, 0.0, 1.0])
@@ -13,9 +13,9 @@ m1.test()
 
 module m2
 using FinEtools
-using FinEtoolsFrames.FESetCorotBeamModule: FESetL2CorotBeam
-using FinEtoolsFrames.CrossSectionModule: CrossSectionCircle
-using FinEtoolsFrames.MeshFrameMemberModule: frame_member
+using FinEtoolsFlexBeams.FESetCorotBeamModule: FESetL2CorotBeam
+using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionCircle
+using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member
 using PlotlyJS
 using Test
 function test()

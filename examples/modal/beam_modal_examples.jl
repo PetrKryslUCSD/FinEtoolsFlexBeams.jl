@@ -6,12 +6,13 @@ module beam_modal_examples
 
 using FinEtools
 using FinEtoolsDeforLinear
-using FinEtoolsFrames.CrossSectionModule: CrossSectionRectangle
-using FinEtoolsFrames.MeshFrameMemberModule: frame_member
-using FinEtoolsFrames.FEMMCorotBeamModule
-using FinEtoolsFrames.FEMMCorotBeamModule: FEMMCorotBeam
+using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionRectangle
+using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member
+using FinEtoolsFlexBeams.FEMMCorotBeamModule
+using FinEtoolsFlexBeams.FEMMCorotBeamModule: FEMMCorotBeam
 stiffness = FEMMCorotBeamModule.stiffness
-using FinEtoolsFrames.RotUtilModule: initial_Rfield
+mass = FEMMCorotBeamModule.mass
+using FinEtoolsFlexBeams.RotUtilModule: initial_Rfield
 using LinearAlgebra: dot
 using Arpack
 using LinearAlgebra
@@ -30,7 +31,7 @@ rho=0.2/g;# Pound/g mass density per unit volume
 
 ## 
 # Cross-sectional properties
-cs = CrossSectionRectangle(s -> b, s -> h, s -> [0.0, 0.0, 1.0])
+cs = CrossSectionRectangle(s -> b, s -> h, s -> [1.0, 0.0, 0.0])
 
 ## 
 # Choose the mass formulation:
@@ -52,7 +53,7 @@ mass_type=2;
 A=b*h;# in^2
 I2=b*h^3/12;# cm^4 
 I3=b^3*h/12;# cm^4 
-analyt_Frequencies = [(1*pi)^2/(2*pi*L^2)*sqrt(E*I2/rho/A),
+@show analyt_Frequencies = [(1*pi)^2/(2*pi*L^2)*sqrt(E*I2/rho/A),
 (4.73004074)^2/(2*pi*L^2)*sqrt(E*I2/rho/A)];
 neigvs = length(analyt_Frequencies);
  
@@ -60,12 +61,11 @@ neigvs = length(analyt_Frequencies);
 xyz = [[0 -L/2 0];[0 L/2 0]]
 n=4;
 fens, fes = frame_member(xyz, n, cs)
+@show fens
 
-## 
 # Material properties
 material = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
 
-femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material)
 
 ##
 # Construct the requisite fields, geometry and displacement
@@ -76,11 +76,11 @@ Rfield0 = initial_Rfield(fens)
 dchi = NodalField(zeros(size(fens.xyz,1), 6))
 
 # Apply EBC's
-l1 = selectnode(fens; box = [0 -L/2 0 0 -L/2 0], tolerance = L/10000)
+l1 = selectnode(fens; box = [0 0 -L/2 -L/2 0 0], tolerance = L/10000)
 for i in [1,2,3,5,6]
     setebc!(dchi, l1, true, i)
 end
-l1 = selectnode(fens; box = [0 L/2 0 0 L/2 0], tolerance = L/10000)
+l1 = selectnode(fens; box = [0 0 L/2  L/2 0 0], tolerance = L/10000)
 for i in [1,2,3,5,6]
     setebc!(dchi, l1, true, i)
 end
@@ -88,14 +88,14 @@ applyebc!(dchi)
 numberdofs!(dchi);
 
 # Assemble the global discrete system
-Km = stiffness(femm, geom0, u0, Rfield0, dchi);
-# Mm = mass(femm,sysmat_assembler_sparse,geom0,u0,Rfield0,dchi);
+femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material)
+K = stiffness(femm, geom0, u0, Rfield0, dchi);
+M = mass(femm, geom0, u0, Rfield0, dchi);
 
 # Solve the eigenvalue problem
-# d,v,nev,nconv = eigs(K+OmegaShift*M, M; nev=neigvs, which=:SM)
-# d = d .- OmegaShift;
-# fs = real(sqrt.(complex(d)))/(2*pi)
-# println("Eigenvalues: $fs [Hz]")
+d,v,nev,nconv = eigs(K, M; nev=2*neigvs, which=:SM)
+fs = real(sqrt.(complex(d)))/(2*pi)
+println("Eigenvalues: $fs [Hz]")
   
 # #
 # for i=1:neigvs
