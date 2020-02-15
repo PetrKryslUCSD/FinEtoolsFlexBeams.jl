@@ -4,7 +4,7 @@ using FinEtools
 using FinEtoolsFlexBeams.FESetCorotBeamModule: FESetL2CorotBeam
 using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionCircle, CrossSectionRectangle
 using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member, merge_members
-using FinEtoolsBeamsVis: plot_nodes, plot_midline, render
+using FinEtoolsBeamsVis: plot_nodes, plot_midline, render, plot_space_box
 
 function curve_mesh()
     L = 42
@@ -18,7 +18,7 @@ function curve_mesh()
     cs = CrossSectionCircle(s -> 5.9910, s -> [0.0, 0.0, 1.0])
     fens, fes = frame_member(xyz, nL, cs)
     plots = plot_nodes(fens)
-    plots = cat(plots, plot_midline(fens, fes; color = "rgb(155, 155, 255)", lwidth = 4))
+    plots = cat(plots, plot_midline(fens, fes; color = "rgb(155, 155, 255)", lwidth = 4), dims = 1)
     # push!(plots, plot_nodes(fens))
     render(plots; aspectratio = [1.0 1.0 4.0])
     true
@@ -51,7 +51,9 @@ function argyr_l_frame()
     push!(members, frame_member([L 0 L; L 0 0], n, cs))
     fens, fes = merge_members(members; tolerance = L / 10000);
 
-    plots = plot_nodes(fens)
+    plots = cat(plot_space_box([[0 -L/2 0]; [L L/2 L]]),
+        plot_nodes(fens), 
+        plot_midline(fens, fes; color = "rgb(155, 155, 255)", lwidth = 4), dims = 1)
     render(plots; aspectratio = [1.0 1.0 1.0])
     true
 end # argyr_l_frame
