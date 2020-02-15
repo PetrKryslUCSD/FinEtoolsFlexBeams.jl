@@ -118,6 +118,7 @@ uuid = "91bb5406-6c9a-523d-811d-0644c4229550"
 version = "4.0.5"
 
 [[FinEtoolsBeamsVis]]
+deps = ["FinEtools", "PlotlyJS"]
 path = "../FinEtoolsBeamsVis.jl"
 uuid = "bb026db7-cde0-4861-94fc-3e61400bfc65"
 version = "0.1.0"
