@@ -5,6 +5,7 @@ using Dierckx
 using LinearAlgebra: norm
 using FinEtools
 using ..FinEtoolsFlexBeams.FESetCorotBeamModule: FESetL2CorotBeam
+using ..FinEtoolsFlexBeams.FESetCorotBeamModule: cat
 
 # Mesh of a generally curved beam member given by the location of the
 # vertices of the spline curve.
@@ -65,6 +66,23 @@ function frame_member(xyz, nL, crosssection)
         _x1x2_vector[i] = deepcopy(x1x2_vector)
     end
     fes = FESetL2CorotBeam(connasarray(fes), crosssection, _A, _I1, _I2, _I3, _J, _x1x2_vector)
+    return fens, fes
+end
+
+function fuse_members(members; tolerance = 0.001)
+    Meshes = Array{Tuple{FENodeSet, AbstractFESet},1}()
+    for m in members
+        push!(Meshes, m)
+    end
+    return mergenmeshes(Meshes, tolerance);
+end
+
+function merge_members(members; tolerance = 0.001)
+    fens, allfes = fuse_members(members; tolerance = tolerance)
+    fes = allfes[1]
+    for ofes in allfes[2:end]
+        fes = cat(fes, ofes)
+    end
     return fens, fes
 end
 

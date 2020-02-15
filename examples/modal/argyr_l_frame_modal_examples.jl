@@ -6,10 +6,9 @@ module argyr_l_frame_modal_examples
 using FinEtools
 using FinEtoolsDeforLinear
 using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionRectangle
-using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member
+using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member, merge_members
 using FinEtoolsFlexBeams.FEMMCorotBeamModule
 using FinEtoolsFlexBeams.FEMMCorotBeamModule: FEMMCorotBeam
-using FinEtoolsFlexBeams.FESetCorotBeamModule: cat
 stiffness = FEMMCorotBeamModule.stiffness
 mass = FEMMCorotBeamModule.mass
 using FinEtoolsFlexBeams.RotUtilModule: initial_Rfield
@@ -42,11 +41,10 @@ neigvs = 2;
 # Select the number of elements per half the length.
 xyz = 
 n=8;
-Meshes = Array{Tuple{FENodeSet, AbstractFESet},1}()
-push!(Meshes, frame_member([0 0 L; L 0 L], n, cs))
-push!(Meshes, frame_member([L 0 L; L 0 0], n, cs))
-fens, outputfes = mergenmeshes(Meshes, L / 10000);
-@show fes = cat(outputfes[1], outputfes[2])
+members = []
+push!(members, frame_member([0 0 L; L 0 L], n, cs))
+push!(members, frame_member([L 0 L; L 0 0], n, cs))
+fens, fes = merge_members(members; tolerance = L / 10000);
 
 # Material properties
 material = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)

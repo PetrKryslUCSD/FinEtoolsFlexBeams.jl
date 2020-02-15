@@ -9,5 +9,5 @@ mesh_examples.allrun()
 # beam_modal_examples.allrun()
 
 
-# include(".\\examples\\modal\\argyr_l_frame_modal_examples.jl");   
-# argyr_l_frame_modal_examples.allrun()
+include(".\\examples\\modal\\argyr_l_frame_modal_examples.jl");   
+argyr_l_frame_modal_examples.allrun()
