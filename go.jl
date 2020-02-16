@@ -3,10 +3,11 @@ using Pkg; Pkg.activate("."); Pkg.instantiate()
 
 
 include(".\\examples\\meshing\\mesh_examples.jl");   
-mesh_examples.allrun()
+mesh_examples.curve_mesh_envelope()
+mesh_examples.argyr_l_frame_envelope()
 
-# include(".\\examples\\modal\\beam_modal_examples.jl"); 
-# beam_modal_examples.allrun()
+include(".\\examples\\modal\\beam_modal_examples.jl"); 
+beam_modal_examples.allrun()
 
 
 include(".\\examples\\modal\\argyr_l_frame_modal_examples.jl");   
