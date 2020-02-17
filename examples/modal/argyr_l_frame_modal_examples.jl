@@ -30,7 +30,7 @@ function argyr_l_frame_modal()
     # Reference frequencies
     reffs = [11.2732, 30.5269]
     neigvs = 2;
-    
+
     # Cross-sectional properties
     cs = CrossSectionRectangle(s -> b, s -> h, s -> [0.0, 1.0, 0.0])
 
@@ -68,8 +68,9 @@ function argyr_l_frame_modal()
     # Solve the eigenvalue problem
     d,v,nev,nconv = eigs(K, M; nev=2*neigvs, which=:SM)
     fs = real(sqrt.(complex(d)))/(2*pi)
-    println("Eigenvalues: $fs [Hz]")
-    
+    println("Natural frequencies: $fs [Hz]")
+    println("Reference: $fs [Hz]")
+
     # Visualize vibration modes
     scattersysvec!(dchi, v[:, 1])
     update_rotation_field!(Rfield0, dchi)
