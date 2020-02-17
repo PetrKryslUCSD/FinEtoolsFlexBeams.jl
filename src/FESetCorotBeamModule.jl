@@ -2,6 +2,7 @@ module FESetCorotBeamModule
 
 using FinEtools
 import FinEtools: cat, subset
+using FinEtools.MatrixUtilityModule: complete_lt! 
 using ..CrossSectionModule: AbstractCrossSectionType
 using LinearAlgebra: norm, Transpose, mul!
 
@@ -435,7 +436,7 @@ end
 function natural_forces!(PN, E, G, A, I2, I3, J, L, dN, DN)
     natural_stiffness!(DN, E, G, A, I2, I3, J, L);
     #     Natural forces
-    PN .= DN*dN;
+    mul!(PN, DN, dN);
     # Note that the non-constitutive stiffness due to pre-existing internal forces is currently omitted
 end
 
