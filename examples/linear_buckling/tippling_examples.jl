@@ -83,12 +83,13 @@ function tippling_1()
    println("Reference: $reffs [ND]")
 
    # Visualize vibration modes
-   scattersysvec!(dchi, v[:, 1])
+   scattersysvec!(dchi, 10*v[:, 1])
    update_rotation_field!(Rfield0, dchi)
-   plots = cat(plot_nodes(fens), 
+   plots = cat(plot_space_box([[-L/2 -L/2 0]; [L/2 L/2 1.1*L]]),
+    plot_nodes(fens), 
        plot_envelope(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield0.values);
        dims = 1)
-   render(plots; aspectratio = space_aspectratio(fens.xyz; margin = L/10))
+   render(plots)
    # @show p.plot.data
    true
 end # tippling_1
