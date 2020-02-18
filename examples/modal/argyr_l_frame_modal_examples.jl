@@ -54,8 +54,8 @@ function argyr_l_frame_modal()
     dchi = NodalField(zeros(size(fens.xyz,1), 6))
 
     # Apply EBC's
-    l1 = selectnode(fens; box = [0 0 0 0 L L], tolerance = L/10000)
-    for i in [1,2,3,4,5,6]
+    l1 = selectnode(fens; box = [0 0 0 0 L L], tolerance = L / 10000)
+    for i in [1, 2, 3, 4, 5, 6]
         setebc!(dchi, l1, true, i)
     end
     applyebc!(dchi)
@@ -144,7 +144,7 @@ function argyr_l_frame_modal_anim()
     plots = cat(tbox, tenv0; dims = 1)
     pl = render(plots; title = "Mode $(mode)")
     Rfield1 = deepcopy(Rfield0)
-    for xscale in scale.*sin.(collect(0:1:132).*(2*pi/21))
+    for xscale in scale.*sin.(collect(0:1:72).*(2*pi/21))
         scattersysvec!(dchi, xscale.*v[:, mode])
         Rfield1 = deepcopy(Rfield0)
         update_rotation_field!(Rfield1, dchi)
@@ -153,29 +153,6 @@ function argyr_l_frame_modal_anim()
         react!(pl, plots, pl.plot.layout)
         sleep(0.115)
     end
-    # for xscale in scale.*sin.(collect(0:1:5).*(2*pi/4))
-    #     println(xscale)
-    #     scattersysvec!(dchi, xscale.*v[:, 1])
-    #     Rfield1 = deepcopy(Rfield0)
-    #     update_rotation_field!(Rfield1, dchi)
-    #     for i in 1:length(pl.plot.data)
-    #         deletetraces!(pl, i)
-    #     end
-    #     println("length(pl.plot.data) = $(length(pl.plot.data))")
-    #     # plots = cat(plot_space_box([[-L/2 -L/2 0]; [L/2 L/2 1.1*L]]),
-    #     #     plot_nodes(fens),
-    #     #     plot_envelope(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield1.values);
-    #     #     dims = 1)
-    #         plots = cat(plot_space_box([[-L/2 -L/2 0]; [L/2 L/2 1.1*L]]),
-    #             plot_points(dchi.values[:, 1:3]);
-    #             dims = 1)
-    #     for tr in plots
-    #         addtraces!(pl, 1, tr)
-    #     end
-    #     println("length(pl.plot.data) = $(length(pl.plot.data))")
-    #     redraw!(pl)
-    #     sleep(5.0)
-    # end
 
     return true
 end # argyr_l_frame_modal_anim
@@ -184,6 +161,9 @@ function allrun()
     println("#####################################################")
     println("# argyr_l_frame_modal ")
     argyr_l_frame_modal()
+    println("#####################################################")
+    println("# argyr_l_frame_modal_anim ")
+    argyr_l_frame_modal_anim()
     return true
 end # function allrun
 
