@@ -102,7 +102,7 @@ function argyr_l_frame_modal_anim()
 
     # Select the number of elements per leg.
     xyz =
-    n=2;
+    n = 4;
     members = []
     push!(members, frame_member([0 0 L; L 0 L], n, cs))
     push!(members, frame_member([L 0 L; L 0 0], n, cs))
@@ -138,13 +138,14 @@ function argyr_l_frame_modal_anim()
     println("Reference: $reffs [Hz]")
 
     # Visualize vibration modes
+    mode = 2
     tbox = plot_space_box([[-L/2 -L/2 0]; [L/2 L/2 1.1*L]])
     tenv0 = plot_envelope(fens, fes; x = geom0.values, u = 0.0.*dchi.values[:, 1:3], R = Rfield0.values, facecolor = "rgb(125, 155, 125)", opacity = 0.3);
     plots = cat(tbox, tenv0; dims = 1)
-    pl = render(plots)
+    pl = render(plots; title = "Mode $(mode)")
     Rfield1 = deepcopy(Rfield0)
     for xscale in scale.*sin.(collect(0:1:132).*(2*pi/21))
-        scattersysvec!(dchi, xscale.*v[:, 2])
+        scattersysvec!(dchi, xscale.*v[:, mode])
         Rfield1 = deepcopy(Rfield0)
         update_rotation_field!(Rfield1, dchi)
         tenv1 = plot_envelope(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield1.values, facecolor = "rgb(25, 255, 25)");
