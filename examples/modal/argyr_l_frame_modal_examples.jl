@@ -70,7 +70,7 @@ function argyr_l_frame_modal()
     d,v,nev,nconv = eigs(K, M; nev=2*neigvs, which=:SM)
     fs = real(sqrt.(complex(d)))/(2*pi)
     println("Natural frequencies: $fs [Hz]")
-    println("Reference: $fs [Hz]")
+    println("Reference: $reffs [Hz]")
 
     # Visualize vibration modes
     scattersysvec!(dchi, v[:, 1])
@@ -91,7 +91,7 @@ function argyr_l_frame_modal_anim()
     b=3.0; h=30.0; L=240.0; # cross-sectional dimensions and length of each leg in millimeters
     # Choose the mass formulation:
     mass_type=2;
-    scale = 1.0
+    scale = 0.4
 
     # Reference frequencies
     reffs = [11.2732, 30.5269]
@@ -102,7 +102,7 @@ function argyr_l_frame_modal_anim()
 
     # Select the number of elements per leg.
     xyz =
-    n=8;
+    n=2;
     members = []
     push!(members, frame_member([0 0 L; L 0 L], n, cs))
     push!(members, frame_member([L 0 L; L 0 0], n, cs))
@@ -135,58 +135,22 @@ function argyr_l_frame_modal_anim()
     d,v,nev,nconv = eigs(K, M; nev=2*neigvs, which=:SM)
     fs = real(sqrt.(complex(d)))/(2*pi)
     println("Natural frequencies: $fs [Hz]")
-    println("Reference: $fs [Hz]")
+    println("Reference: $reffs [Hz]")
 
     # Visualize vibration modes
-    println("Original")
-    xscale = scale.*sin.(20.0*(2*pi/21))
-    scattersysvec!(dchi, xscale.*v[:, 1])
-    Rfield1 = deepcopy(Rfield0)
-    update_rotation_field!(Rfield1, dchi)
-    plots = cat(plot_space_box([[0 -L 0]; [1.1*L L 1.1*L]]),
-        plot_nodes(fens),
-        plot_envelope(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield1.values, facecolor = "rgb(25, 55, 125)");
-        dims = 1)
+    tbox = plot_space_box([[-L/2 -L/2 0]; [L/2 L/2 1.1*L]])
+    tenv0 = plot_envelope(fens, fes; x = geom0.values, u = 0.0.*dchi.values[:, 1:3], R = Rfield0.values, facecolor = "rgb(125, 155, 125)", opacity = 0.3);
+    plots = cat(tbox, tenv0; dims = 1)
     pl = render(plots)
-
-    sleep(5.0)
-
-    xscale = scale.*sin.(35.0*(2*pi/21))
-    scattersysvec!(dchi, xscale.*v[:, 1])
     Rfield1 = deepcopy(Rfield0)
-    update_rotation_field!(Rfield1, dchi)
-    # plots = cat(plot_space_box([[0 -L 0]; [1.1*L L 1.1*L]]),
-    #     plot_nodes(fens),
-    #     plot_envelope(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield0.values, facecolor = "rgb(25, 255, 25)");
-    #     dims = 1)
-    # react!(pl, plots, pl.plot.layout)
-    # display(pl)
-
-    # println("Change")
-    # for i in 1:3#1:length(pl.plot.data)
-    #     deletetraces!(pl, i)
-    # end
-    # for tr in plot_envelope(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield1.values, facecolor = "rgb(25, 255, 25)")
-    #     addtraces!(pl, 1, tr)
-    # end
-    # # pl = render(plots)
-    # redraw!(pl)
-
-scale = 0.5
-    for xscale in scale.*sin.(collect(0:1:25).*(2*pi/13))
-        println(xscale)
-        scattersysvec!(dchi, xscale.*v[:, 1])
+    for xscale in scale.*sin.(collect(0:1:132).*(2*pi/21))
+        scattersysvec!(dchi, xscale.*v[:, 2])
         Rfield1 = deepcopy(Rfield0)
         update_rotation_field!(Rfield1, dchi)
-        println("length(pl.plot.data) = $(length(pl.plot.data))")
-        # plots = cat(plot_space_box([[-L/2 -L/2 0]; [L/2 L/2 1.1*L]]),
-        #         plot_points(geom0.values + dchi.values[:, 1:3]);
-        #         dims = 1)
-                plots = cat(plot_space_box([[-L/2 -L/2 0]; [L/2 L/2 1.1*L]]),
-                        plot_envelope(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield1.values, facecolor = "rgb(25, 255, 25)");
-                        dims = 1)
+        tenv1 = plot_envelope(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield1.values, facecolor = "rgb(25, 255, 25)");
+        plots = cat(tbox, tenv0, tenv1; dims = 1)
         react!(pl, plots, pl.plot.layout)
-        sleep(0.15)
+        sleep(0.115)
     end
     # for xscale in scale.*sin.(collect(0:1:5).*(2*pi/4))
     #     println(xscale)
