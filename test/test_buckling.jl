@@ -79,7 +79,7 @@ function test()
     fs = 1.0 ./ (d) ./ magn_scale
     println("Buckling factors: $fs [ND]")
     println("Reference: $reffs [ND]")
-    @test norm(reffs - fs[1:length(reffs)]) ./ norm(reffs) <= 1.0e-3
+    @test norm(reffs - abs.(fs[2:3])) ./ norm(reffs) <= 1.0e-3
 
     # # Visualize vibration modes
     # scattersysvec!(dchi, 10*v[:, 1])
