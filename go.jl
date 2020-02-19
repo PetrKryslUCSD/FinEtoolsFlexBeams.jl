@@ -13,4 +13,4 @@ include(".\\examples\\modal\\argyr_l_frame_modal_examples.jl");
 argyr_l_frame_modal_examples.allrun()
 
 include(".\\examples\\linear_buckling\\tippling_examples.jl");
-tippling_examples.tippling_examples.allrun()
+tippling_examples.allrun()
