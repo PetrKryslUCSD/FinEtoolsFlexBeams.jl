@@ -473,7 +473,8 @@ end
 # 
 function local_forces!(FL, PN, L, aN)
     _local_cartesian_to_natural(aN, L);
-    FL.=aN'*PN;
+    mul!(FL, Transpose(aN), PN);
+    return FL
 end
 
 
