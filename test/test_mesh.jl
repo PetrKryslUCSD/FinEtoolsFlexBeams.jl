@@ -6,6 +6,8 @@ using Test
 function test()
     cs = CrossSectionCircle(s -> 5.9910, s -> [0.0, 0.0, 1.0])
     fes = FESetL2CorotBeam([1 2; 2 3; 3 4], cs)
+    @test count(fes) == 3
+    true
 end
 end
 using .m1
@@ -25,9 +27,11 @@ function test()
     L/4 0 L*3/4;
     0 0 L]
     nL = 20
-    
+
     cs = CrossSectionCircle(s -> 5.9910, s -> [0.0, 0.0, 1.0])
     fens, fes = frame_member(xyz, nL, cs)
+    @test count(fes) == 20
+    true
 end
 end
 using .m2

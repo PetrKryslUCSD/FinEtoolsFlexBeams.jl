@@ -67,7 +67,7 @@ function test()
         println("Natural frequencies: $fs [Hz]")
         println("Reference: $reffs [Hz]")
 
-        @test norm(reffs - fs[1:length(reffs)]) ./ norm(reffs) <= 1.0e-6
+        @test norm(reffs - fs[1:length(reffs)]) ./ norm(reffs) <= 3.0e-5
 
         # Visualize vibration modes
         # mode = 2
@@ -89,7 +89,6 @@ function test()
         return true
     end # argyr_l_frame_modal_anim
 
-end
 end
 using .mmodal1
 mmodal1.test()
