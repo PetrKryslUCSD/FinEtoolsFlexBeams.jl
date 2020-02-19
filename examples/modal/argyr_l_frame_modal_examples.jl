@@ -18,6 +18,7 @@ using LinearAlgebra
 using SparseArrays
 using FinEtoolsBeamsVis: plot_points, plot_nodes, plot_midline, render, plot_space_box, plot_solid, space_aspectratio
 using PlotlyJS
+using JSON
 
 function argyr_l_frame_modal()
     # Parameters:
@@ -142,7 +143,7 @@ function argyr_l_frame_modal_anim()
     tbox = plot_space_box([[-L/2 -L/2 0]; [L/2 L/2 1.1*L]])
     tenv0 = plot_solid(fens, fes; x = geom0.values, u = 0.0.*dchi.values[:, 1:3], R = Rfield0.values, facecolor = "rgb(125, 155, 125)", opacity = 0.3);
     plots = cat(tbox, tenv0; dims = 1)
-    pl = render(plots; title = "Mode $(mode)")
+    pl = render(plots; title = "Mode $(mode)", autosize = "true", options = Dict("autosize"=>true, "responsive"=>true))
     Rfield1 = deepcopy(Rfield0)
     for xscale in scale.*sin.(collect(0:1:72).*(2*pi/21))
         scattersysvec!(dchi, xscale.*v[:, mode])
@@ -153,6 +154,7 @@ function argyr_l_frame_modal_anim()
         react!(pl, plots, pl.plot.layout)
         sleep(0.115)
     end
+    savejson(pl, "plots.json")
 
     return true
 end # argyr_l_frame_modal_anim
