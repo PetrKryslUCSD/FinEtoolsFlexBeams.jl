@@ -14,7 +14,7 @@ using LinearAlgebra: dot
 using Arpack
 using LinearAlgebra
 using SparseArrays
-using FinEtoolsBeamsVis: plot_nodes, plot_midline, render, plot_space_box, plot_envelope, space_aspectratio
+using FinEtoolsBeamsVis: plot_nodes, plot_midline, render, plot_space_box, plot_solid, space_aspectratio
 
 function tippling_1()
    # Parameters:
@@ -38,7 +38,7 @@ function tippling_1()
    members = []
    push!(members, frame_member([0 0 0; 0 0 L], n, cs))
    fens, fes = merge_members(members; tolerance = L / 10000);
-   
+
    # Material properties
    material = MatDeforElastIso(DeforModelRed3D, E, nu)
 
@@ -75,7 +75,7 @@ function tippling_1()
    u0.values = dchi.values[:,1:3]
    update_rotation_field!(Rfield0, dchi)
    Kg = geostiffness(femm, geom0, u0, Rfield0, dchi);
-   
+
    # Solve the eigenvalue problem
    d,v,nev,nconv = eigs(-Kg, K; nev=neigvs, which=:LM)
    fs = 1.0 ./ (d) ./ magn_scale
@@ -86,8 +86,8 @@ function tippling_1()
    scattersysvec!(dchi, 10*v[:, 1])
    update_rotation_field!(Rfield0, dchi)
    plots = cat(plot_space_box([[-L/2 -L/2 0]; [L/2 L/2 1.1*L]]),
-    plot_nodes(fens), 
-       plot_envelope(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield0.values);
+       plot_nodes(fens),
+       plot_solid(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield0.values);
        dims = 1)
    render(plots)
    # @show p.plot.data
@@ -99,8 +99,8 @@ function allrun()
     println("# curve_mesh ")
     curve_mesh()
     println("#####################################################")
-    println("# curve_mesh_envelope ")
-    curve_mesh_envelope()
+    println("# curve_mesh_solid ")
+    curve_mesh_solid()
     println("#####################################################")
     println("# argyr_l_frame ")
     argyr_l_frame()
@@ -108,4 +108,3 @@ function allrun()
 end # function allrun
 
 end # tippling_examples
-

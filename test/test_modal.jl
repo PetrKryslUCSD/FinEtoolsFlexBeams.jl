@@ -72,7 +72,7 @@ function test()
         # Visualize vibration modes
         # mode = 2
         # tbox = plot_space_box([[-L/2 -L/2 0]; [L/2 L/2 1.1*L]])
-        # tenv0 = plot_envelope(fens, fes; x = geom0.values, u = 0.0.*dchi.values[:, 1:3], R = Rfield0.values, facecolor = "rgb(125, 155, 125)", opacity = 0.3);
+        # tenv0 = plot_solid(fens, fes; x = geom0.values, u = 0.0.*dchi.values[:, 1:3], R = Rfield0.values, facecolor = "rgb(125, 155, 125)", opacity = 0.3);
         # plots = cat(tbox, tenv0; dims = 1)
         # pl = render(plots; title = "Mode $(mode)")
         # Rfield1 = deepcopy(Rfield0)
@@ -80,7 +80,7 @@ function test()
         #     scattersysvec!(dchi, xscale.*v[:, mode])
         #     Rfield1 = deepcopy(Rfield0)
         #     update_rotation_field!(Rfield1, dchi)
-        #     tenv1 = plot_envelope(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield1.values, facecolor = "rgb(25, 255, 25)");
+        #     tenv1 = plot_solid(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield1.values, facecolor = "rgb(25, 255, 25)");
         #     plots = cat(tbox, tenv0, tenv1; dims = 1)
         #     react!(pl, plots, pl.plot.layout)
         #     sleep(0.115)

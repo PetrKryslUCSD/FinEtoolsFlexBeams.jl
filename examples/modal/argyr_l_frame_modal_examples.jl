@@ -16,7 +16,7 @@ using LinearAlgebra: dot
 using Arpack
 using LinearAlgebra
 using SparseArrays
-using FinEtoolsBeamsVis: plot_points, plot_nodes, plot_midline, render, plot_space_box, plot_envelope, space_aspectratio
+using FinEtoolsBeamsVis: plot_points, plot_nodes, plot_midline, render, plot_space_box, plot_solid, space_aspectratio
 using PlotlyJS
 
 function argyr_l_frame_modal()
@@ -76,7 +76,7 @@ function argyr_l_frame_modal()
     scattersysvec!(dchi, v[:, 1])
     update_rotation_field!(Rfield0, dchi)
     plots = cat(plot_nodes(fens),
-        plot_envelope(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield0.values);
+        plot_solid(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield0.values);
         dims = 1)
     render(plots; aspectratio = space_aspectratio(fens.xyz))
 
@@ -140,7 +140,7 @@ function argyr_l_frame_modal_anim()
     # Visualize vibration modes
     mode = 2
     tbox = plot_space_box([[-L/2 -L/2 0]; [L/2 L/2 1.1*L]])
-    tenv0 = plot_envelope(fens, fes; x = geom0.values, u = 0.0.*dchi.values[:, 1:3], R = Rfield0.values, facecolor = "rgb(125, 155, 125)", opacity = 0.3);
+    tenv0 = plot_solid(fens, fes; x = geom0.values, u = 0.0.*dchi.values[:, 1:3], R = Rfield0.values, facecolor = "rgb(125, 155, 125)", opacity = 0.3);
     plots = cat(tbox, tenv0; dims = 1)
     pl = render(plots; title = "Mode $(mode)")
     Rfield1 = deepcopy(Rfield0)
@@ -148,7 +148,7 @@ function argyr_l_frame_modal_anim()
         scattersysvec!(dchi, xscale.*v[:, mode])
         Rfield1 = deepcopy(Rfield0)
         update_rotation_field!(Rfield1, dchi)
-        tenv1 = plot_envelope(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield1.values, facecolor = "rgb(25, 255, 25)");
+        tenv1 = plot_solid(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield1.values, facecolor = "rgb(25, 255, 25)");
         plots = cat(tbox, tenv0, tenv1; dims = 1)
         react!(pl, plots, pl.plot.layout)
         sleep(0.115)

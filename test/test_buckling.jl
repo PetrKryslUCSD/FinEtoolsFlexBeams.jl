@@ -86,7 +86,7 @@ function test()
     # update_rotation_field!(Rfield0, dchi)
     # plots = cat(plot_space_box([[-L/2 -L/2 0]; [L/2 L/2 1.1*L]]),
     #  plot_nodes(fens),
-    #     plot_envelope(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield0.values);
+    #     plot_solid(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield0.values);
     #     dims = 1)
     # render(plots)
     # @show p.plot.data
