@@ -280,6 +280,148 @@ function local_geometric_stiffness!(SM, A, I2, I3, PN, L)
     return SM
 end
 
+function local_mass_CONSISTENT_NO_ROTATION_INERTIA!(MM, A, I1, I2, I3, rho, L)
+    # C
+    # C  CONSISTENT MASS MATRIX including ROTATIONAL MASSES
+    # C  Formulation of the (3.38), (3.39) equation from Dykstra's thesis
+    fill!(MM, 0.0)
+    c1 = (rho*A*L)::Float64
+    MM[1, 1] = c1 * (1/3)
+    MM[1, 7] = c1 * (1/6)
+    MM[2, 2] = c1 * (13/35)
+    MM[2, 6] = c1 * (11*L/210)
+    MM[2, 8] = c1 * (9/70)
+    MM[2, 12] = c1 * (-13*L/420)
+    MM[3, 3] = c1 * (13/35)
+    MM[3, 5] = c1 * (-11*L/210)
+    MM[3, 9] = c1 * (9/70)
+    MM[3, 11] = c1 * (13*L/420)
+    MM[4, 4] = c1 * (I1/3/A)
+    MM[4, 10] = c1 * (I1/6/A)
+    MM[5, 5] = c1 * (L^2/105)
+    MM[5, 9] = c1 * (-13*L/420)
+    MM[5, 11] = c1 * (-L^2/140)
+    MM[6, 6] = c1 * (L^2/105)
+    MM[6, 8] = c1 * (13*L/420)
+    MM[6, 12] = c1 * (-L^2/140)
+    MM[7, 7] = c1 * (1/3)
+    MM[8, 8] = c1 * (13/35)
+    MM[8, 12] = c1 * (-11*L/210)
+    MM[9, 9] = c1 * (13/35)
+    MM[9, 11] = c1 * (11*L/210)
+    MM[10, 10] = c1 * (I1/3/A)
+    MM[11, 11] = c1 * (L^2/105)
+    MM[12, 12] = c1 * (L^2/105)
+    # 1       2        3        4       5         6       7        8       9       10      11       12
+    complete_lt!(MM)
+    return MM
+end
+
+function local_mass_CONSISTENT_WITH_ROTATION_INERTIA!(MM, A, I1, I2, I3, rho, L)
+    # C
+    # C  CONSISTENT MASS MATRIX including ROTATIONAL MASSES
+    # C  Formulation of the (3.38), (3.39) equation from Dykstra's thesis
+    fill!(MM, 0.0)
+    c1 = (rho*A*L)::Float64
+    MM[1, 1] = c1 * (1/3)
+    MM[1, 7] = c1 * (1/6)
+    MM[2, 2] = c1 * (13/35)
+    MM[2, 6] = c1 * (11*L/210)
+    MM[2, 8] = c1 * (9/70)
+    MM[2, 12] = c1 * (-13*L/420)
+    MM[3, 3] = c1 * (13/35)
+    MM[3, 5] = c1 * (-11*L/210)
+    MM[3, 9] = c1 * (9/70)
+    MM[3, 11] = c1 * (13*L/420)
+    MM[4, 4] = c1 * (I1/3/A)
+    MM[4, 10] = c1 * (I1/6/A)
+    MM[5, 5] = c1 * (L^2/105)
+    MM[5, 9] = c1 * (-13*L/420)
+    MM[5, 11] = c1 * (-L^2/140)
+    MM[6, 6] = c1 * (L^2/105)
+    MM[6, 8] = c1 * (13*L/420)
+    MM[6, 12] = c1 * (-L^2/140)
+    MM[7, 7] = c1 * (1/3)
+    MM[8, 8] = c1 * (13/35)
+    MM[8, 12] = c1 * (-11*L/210)
+    MM[9, 9] = c1 * (13/35)
+    MM[9, 11] = c1 * (11*L/210)
+    MM[10, 10] = c1 * (I1/3/A)
+    MM[11, 11] = c1 * (L^2/105)
+    MM[12, 12] = c1 * (L^2/105)
+    c2 = (rho/L)::Float64
+    MM[2, 2] += c2 * (6/5*I2)
+    MM[2, 6] += c2 * (L/10*I2)
+    MM[2, 8] += c2 * (-6/5*I2)
+    MM[2, 12] += c2 * (L/10*I2)
+    MM[3, 3] += c2 * (6/5*I3)
+    MM[3, 5] += c2 * (-L/10*I3)
+    MM[3, 9] += c2 * (-6/5*I3)
+    MM[3, 11] += c2 * (-L/10*I3)
+    MM[5, 5] += c2 * (2*L^2/15*I3)
+    MM[5, 9] += c2 * (L/10*I3)
+    MM[5, 11] += c2 * (-L^2/30*I3)
+    MM[6, 6] += c2 * (2*L^2/15*I2)
+    MM[6, 8] += c2 * (-L/10*I2)
+    MM[6, 12] += c2 * (-L^2/30*I2)
+    MM[8, 8] += c2 * (6/5*I2)
+    MM[8, 12] += c2 * (-L/10*I2)
+    MM[9, 9] += c2 * (6/5*I3)
+    MM[9, 11] += c2 * (L/10*I3)
+    MM[11, 11] += c2 * (2*L^2/15*I3)
+    MM[12, 12] += c2 * (2*L^2/15*I2)
+    # 1       2        3        4       5         6       7        8       9       10      11       12
+    complete_lt!(MM)
+    return MM
+end
+
+function local_mass_LUMPED_DIAGONAL_WITH_ROTATION_INERTIA!(MM, A, I1, I2, I3, rho, L)
+    # C
+    # C  LUMPED DIAGONAL MASS MATRIX WITH ROTATIONAL MASSES
+    # C
+    HLM  = A*rho*L/2.;
+    HLI1 = rho*I1* L/2.;
+    HLI2 = rho*I2* L/2.;
+    HLI3 = rho*I3* L/2.;
+    CA = HLM;
+    CB = HLI1;
+    CC = HLI2;
+    CD = HLI3;
+    fill!(MM, 0.0);
+    MM[1,1]    = MM[1,1]    + CA;
+    MM[2,2]    = MM[2,2]    + CA;
+    MM[3,3]    = MM[3,3]    + CA;
+    MM[4,4]    = MM[4,4]    + CB;
+    MM[5,5]    = MM[5,5]    + CC;
+    MM[6,6]    = MM[6,6]    + CD;
+    MM[7,7]    = MM[7,7]    + CA;
+    MM[8,8]    = MM[8,8]    + CA;
+    MM[9,9]    = MM[9,9]    + CA;
+    MM[10,10]  = MM[10,10]  + CB;
+    MM[11,11]  = MM[11,11]  + CC;
+    MM[12,12]  = MM[12,12]  + CD;
+    return MM
+end
+
+function local_mass_LUMPED_DIAGONAL_NO_ROTATION_INERTIA!(MM, A, I1, I2, I3, rho, L)
+    # C
+    # C  LUMPED DIAGONAL ISOTROPIC MASS MATRIX WITHOUT ROTATIONAL MASSES
+    # C
+    HLM  = A*rho*L/2.;
+    CA = HLM;
+    CB = 0.0;
+    CC = 0.0;
+    CD = 0.0;
+    fill!(MM, 0.0);
+    MM[1,1]    = MM[1,1]    + CA;
+    MM[2,2]    = MM[2,2]    + CA;
+    MM[3,3]    = MM[3,3]    + CA;
+    MM[7,7]    = MM[7,7]    + CA;
+    MM[8,8]    = MM[8,8]    + CA;
+    MM[9,9]    = MM[9,9]    + CA;
+    return MM
+end
+
 # Mass matrix of the beam.
 #
 # function MM=local_mass (self, A, I1, I2, I3, rho, L)
@@ -296,6 +438,18 @@ end
 # MM = local mass matrix, 12 x 12
 # In the element frame the mass matrix is constant.
 function local_mass!(MM, A, I1, I2, I3, rho, L, mass_type)
+    if (mass_type == MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA)
+        return local_mass_CONSISTENT_WITH_ROTATION_INERTIA!(MM, A, I1, I2, I3, rho, L)
+    elseif (mass_type == MASS_TYPE_CONSISTENT_NO_ROTATION_INERTIA)
+        return local_mass_CONSISTENT_NO_ROTATION_INERTIA!(MM, A, I1, I2, I3, rho, L)
+    elseif (mass_type == MASS_TYPE_LUMPED_DIAGONAL_WITH_ROTATION_INERTIA)
+        return local_mass_LUMPED_DIAGONAL_WITH_ROTATION_INERTIA!(MM, A, I1, I2, I3, rho, L)
+    elseif (mass_type == MASS_TYPE_LUMPED_DIAGONAL_NO_ROTATION_INERTIA)
+        return local_mass_LUMPED_DIAGONAL_NO_ROTATION_INERTIA!(MM, A, I1, I2, I3, rho, L)
+    end
+end
+
+function local_mass_original!(MM, A, I1, I2, I3, rho, L, mass_type)
     if (mass_type == MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA)
         # C
         # C  CONSISTENT MASS MATRIX including ROTATIONAL MASSES
@@ -368,7 +522,7 @@ function local_mass!(MM, A, I1, I2, I3, rho, L, mass_type)
         MM[10,10]  = MM[10,10]  + CB;
         MM[11,11]  = MM[11,11]  + CC;
         MM[12,12]  = MM[12,12]  + CD;
-    elseif (self.mass_type == self.mass_type_lumped_diagonal_no_rotation_inertia)
+    elseif (mass_type == MASS_TYPE_LUMPED_DIAGONAL_NO_ROTATION_INERTIA)
         # C
         # C  LUMPED DIAGONAL ISOTROPIC MASS MATRIX WITHOUT ROTATIONAL MASSES
         # C
@@ -387,8 +541,6 @@ function local_mass!(MM, A, I1, I2, I3, rho, L, mass_type)
     end
     return MM
 end
-
-
 # Compute the local elastic stiffness matrix. 
 #
 # function SM = local_stiffness(self, E, G, A, I2, I3, J, L)

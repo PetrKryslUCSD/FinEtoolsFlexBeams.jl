@@ -5,6 +5,8 @@ using FinEtools
 using FinEtools.IntegDomainModule: IntegDomain
 import FinEtoolsDeforLinear.MatDeforElastIsoModule: MatDeforElastIso
 using ..FESetCorotBeamModule: FESetL2CorotBeam, local_frame_and_def!, local_mass!, local_stiffness!, natural_forces!, local_geometric_stiffness!, local_forces!, MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA
+using InteractiveUtils
+using Traceur
 
 """
     FEMMDeforLinear{MR<:AbstractDeforModelRed,  S<:AbstractFESet, F<:Function, M<:AbstractMatDeforLinearElastic} <: FEMMCorotBeam
@@ -200,7 +202,7 @@ function stiffness(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt},
     elmat, elmatTe = self._elmat, self._elmatTe
     aN, dN, DN = self._aN, self._dN, self._DN
     E = self.material.E
-    G = E / 2 / (1 + self.material.nu)
+    G = E / 2 / (1 + self.material.nu)::Float64
     A, I2, I3, J, x1x2_vector = fes.A, fes.I2, fes.I3, fes.J, fes.x1x2_vector
     startassembly!(assembler, size(elmat, 1), size(elmat, 2), count(fes), dchi.nfreedofs, dchi.nfreedofs);
     for i = 1:count(fes) # Loop over elements
