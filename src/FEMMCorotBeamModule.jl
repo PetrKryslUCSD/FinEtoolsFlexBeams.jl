@@ -14,6 +14,7 @@ Class for linear deformation finite element modeling machine.
 mutable struct FEMMCorotBeam{S<:AbstractFESet, F<:Function} <: AbstractFEMM
     integdomain::IntegDomain{S, F} # integration domain data
     material::MatDeforElastIso # material object
+    # The attributes below are buffers used in various operations.
     _ecoords0::FFltMat
     _ecoords1::FFltMat
     _edisp1::FFltMat
@@ -27,9 +28,12 @@ mutable struct FEMMCorotBeam{S<:AbstractFESet, F<:Function} <: AbstractFEMM
     _Te::FFltMat
     _tempelmat1::FFltMat
     _tempelmat2::FFltMat
+    _tempelmat3::FFltMat
     _elmat::FFltMat
     _elmatTe::FFltMat
+    _elmato::FFltMat
     _elvec::FFltVec
+    _elvecf::FFltVec
     _aN::FFltMat
     _dN::FFltVec
     _DN::FFltMat
@@ -37,38 +41,50 @@ mutable struct FEMMCorotBeam{S<:AbstractFESet, F<:Function} <: AbstractFEMM
     _LF::FFltVec
     _RI::FFltMat
     _RJ::FFltMat
-end
-
-function _buffers(self)
-    return self._ecoords0, self._ecoords1, self._edisp1, self._dofnums, self._F0, self._Ft, self._FtI, self._FtJ, self._Te, self._elmat, self._elmatTe, self._elvec, self._aN, self._dN, self._DN, self._PN, self._LF, self._RI, self._RJ
-end
-
-function _transfmat!(Te, Ft)
-    Te[1:3, 1:3] = Te[4:6, 4:6] = Te[7:9, 7:9] = Te[10:12, 10:12] = Ft
-    return Te
+    _OS::FFltMat
 end
 
 function FEMMCorotBeam(integdomain::IntegDomain{S, F}, material::MatDeforElastIso) where {S<:FESetL2CorotBeam, F<:Function}
-    _ecoords0 = fill(0.0, 2, 3)
+    _ecoords0 = fill(0.0, 2, 3); 
     _ecoords1 = fill(0.0, 2, 3)
-    _edisp1 = fill(0.0, 2, 3)
+    _edisp1 = fill(0.0, 2, 3); 
+    _evel1 = fill(0.0, 2, 6); 
+    _evel1f = fill(0.0, 2, 6)
     _dofnums = zeros(FInt, 1, 12); 
-    _F0 = fill(0.0, 3, 3)
-    _Ft = fill(0.0, 3, 3)
-    _FtI = fill(0.0, 3, 3)
+    _F0 = fill(0.0, 3, 3); 
+    _Ft = fill(0.0, 3, 3); 
+    _FtI = fill(0.0, 3, 3); 
     _FtJ = fill(0.0, 3, 3)
     _Te = fill(0.0, 12, 12)
-    _elmat = fill(0.0, 12, 12)
-    _elmatTe = fill(0.0, 12, 12)
-    _elvec = fill(0.0, 12)
+    _tempelmat1 = fill(0.0, 12, 12); 
+    _tempelmat2 = fill(0.0, 12, 12); 
+    _tempelmat3 = fill(0.0, 12, 12)
+    _elmat = fill(0.0, 12, 12);    
+    _elmatTe = fill(0.0, 12, 12);    
+    _elmato = fill(0.0, 12, 12)
+    _elvec = fill(0.0, 12);    
+    _elvecf = fill(0.0, 12)
     _aN = fill(0.0, 6, 12)
     _dN = fill(0.0, 6)
     _DN = fill(0.0, 6, 6)
     _PN = fill(0.0, 6)
     _LF = fill(0.0, 12)
-    _RI = fill(0.0, 3, 3)
-    _RJ = fill(0.0, 3, 3)
-    return FEMMCorotBeam(integdomain, material, _ecoords0, _ecoords1, _edisp1, _dofnums, _F0, _Ft, _FtI, _FtJ, _Te, _elmat, _elmatTe, _elvec, _aN, _dN, _DN, _PN, _LF, _RI, _RJ)
+    _RI = fill(0.0, 3, 3);    
+    _RJ = fill(0.0, 3, 3);    
+    _OS = fill(0.0, 3, 3)
+    return FEMMCorotBeam(integdomain, material,
+     _ecoords0, _ecoords1, _edisp1, _evel1, _evel1f, 
+     _dofnums, 
+     _F0, _Ft, _FtI, _FtJ, _Te,
+     _tempelmat1, _tempelmat2, _tempelmat3, _elmat, _elmatTe, _elmato, 
+     _elvec, _elvecf, 
+     _aN, _dN, _DN, _PN, _LF, 
+     _RI, _RJ, _OS)
+end
+
+function _transfmat!(Te, Ft)
+    Te[1:3, 1:3] = Te[4:6, 4:6] = Te[7:9, 7:9] = Te[10:12, 10:12] = Ft
+    return Te
 end
 
 
@@ -83,7 +99,11 @@ This is a general routine for the abstract linear-deformation  FEMM.
 """
 function mass(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{T}; mass_type=MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA) where {ASS<:AbstractSysmatAssembler, T<:Number}
     fes = self.integdomain.fes
-    ecoords0, ecoords1, edisp1, dofnums, F0, Ft, FtI, FtJ, Te, elmat, elmatTe, elvec, aN, dN, DN, PN, LF, R1I, R1J = _buffers(self)
+    ecoords0, ecoords1, edisp1, dofnums = self._ecoords0, self._ecoords1, self._edisp1, self._dofnums
+    F0, Ft, FtI, FtJ, Te = self._F0, self._Ft, self._FtI, self._FtJ, self._Te
+    R1I, R1J = self._RI, self._RJ
+    elmat, elmatTe = self._elmat, self._elmatTe
+    dN = self._dN
     rho = massdensity(self.material)
     A, I1, I2, I3, x1x2_vector = fes.A, fes.I1, fes.I2, fes.I3, fes.x1x2_vector
     startassembly!(assembler, size(elmat, 1), size(elmat, 2), count(fes), dchi.nfreedofs, dchi.nfreedofs);
@@ -122,14 +142,15 @@ This is a general routine for the abstract linear-deformation  FEMM.
 """
 function qmass(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, v1::NodalField{T}, dchi::NodalField{T}; mass_type=MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA) where {ASS<:AbstractSysmatAssembler, T<:Number}
     fes = self.integdomain.fes
-    ecoords0, ecoords1, edisp1, dofnums, F0, Ft, FtI, FtJ, Te, elmat, elmatTe, elvec, aN, dN, DN, PN, LF, R1I, R1J = _buffers(self)
-    evel1 = fill(0.0, 2, 6)
-    evel1f = fill(0.0, 2, 6)
-    Ge1 = deepcopy(elmat)
-    Ge2 = deepcopy(elmat)
-    Ge = deepcopy(elmat)
-    OmegaTilde = deepcopy(Te)
-    OS = deepcopy(F0)
+    ecoords0, ecoords1, edisp1, dofnums = self._ecoords0, self._ecoords1, self._edisp1, self._dofnums
+    F0, Ft, FtI, FtJ, Te = self._F0, self._Ft, self._FtI, self._FtJ, self._Te
+    R1I, R1J = self._RI, self._RJ
+    elmat, elmatTe = self._elmat, self._elmatTe
+    dN = self._dN
+    evel1, evel1f = self._evel1, self._evel1f
+    Ge1, Ge2, Ge = self._tempelmat1, self._tempelmat2, self._tempelmat3
+    OmegaTilde = self._elmato
+    OS = self._OS
     rho = massdensity(self.material)
     A, I1, I2, I3, x1x2_vector = fes.A, fes.I1, fes.I2, fes.I3, fes.x1x2_vector
     startassembly!(assembler, size(elmat, 1), size(elmat, 2), count(fes), dchi.nfreedofs, dchi.nfreedofs);
@@ -173,7 +194,11 @@ Compute the material stiffness matrix.
 """
 function stiffness(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{T}) where {ASS<:AbstractSysmatAssembler, T<:Number}
     fes = self.integdomain.fes
-    ecoords0, ecoords1, edisp1, dofnums, F0, Ft, FtI, FtJ, Te, elmat, elmatTe, elvec, aN, dN, DN, PN, LF, R1I, R1J = _buffers(self)
+    ecoords0, ecoords1, edisp1, dofnums = self._ecoords0, self._ecoords1, self._edisp1, self._dofnums
+    F0, Ft, FtI, FtJ, Te = self._F0, self._Ft, self._FtI, self._FtJ, self._Te
+    R1I, R1J = self._RI, self._RJ
+    elmat, elmatTe = self._elmat, self._elmatTe
+    aN, dN, DN = self._aN, self._dN, self._DN
     E = self.material.E
     G = E / 2 / (1 + self.material.nu)
     A, I2, I3, J, x1x2_vector = fes.A, fes.I2, fes.I3, fes.J, fes.x1x2_vector
@@ -209,7 +234,11 @@ Compute the geometric stiffness matrix.
 """
 function geostiffness(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{T}) where {ASS<:AbstractSysmatAssembler, T<:Number}
     fes = self.integdomain.fes
-    ecoords0, ecoords1, edisp1, dofnums, F0, Ft, FtI, FtJ, Te, elmat, elmatTe, elvec, aN, dN, DN, PN, LF, R1I, R1J = _buffers(self)
+    ecoords0, ecoords1, edisp1, dofnums = self._ecoords0, self._ecoords1, self._edisp1, self._dofnums
+    F0, Ft, FtI, FtJ, Te = self._F0, self._Ft, self._FtI, self._FtJ, self._Te
+    R1I, R1J = self._RI, self._RJ
+    elmat, elmatTe = self._elmat, self._elmatTe
+    aN, dN, DN, PN = self._aN, self._dN, self._DN, self._PN
     E = self.material.E
     G = E / 2 / (1 + self.material.nu)
     A, I2, I3, J, x1x2_vector = fes.A, fes.I2, fes.I3, fes.J, fes.x1x2_vector
@@ -245,7 +274,12 @@ Compute the vector of the restoring elastic forces
 """
 function restoringforce(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{T}) where {ASS<:AbstractSysvecAssembler, T<:Number}
     fes = self.integdomain.fes
-    ecoords0, ecoords1, edisp1, dofnums, F0, Ft, FtI, FtJ, Te, elmat, elmatTe, elvec, aN, dN, DN, PN, LF, R1I, R1J = _buffers(self)
+    ecoords0, ecoords1, edisp1, dofnums = self._ecoords0, self._ecoords1, self._edisp1, self._dofnums
+    F0, Ft, FtI, FtJ, Te = self._F0, self._Ft, self._FtI, self._FtJ, self._Te
+    R1I, R1J = self._RI, self._RJ
+    elmat, elmatTe = self._elmat, self._elmatTe
+    aN, dN, DN, PN, LF = self._aN, self._dN, self._DN, self._PN, self._LF
+    elvec = self._elvec
     E = self.material.E
     G = E / 2 / (1 + self.material.nu)
     A, I2, I3, J, x1x2_vector = fes.A, fes.I2, fes.I3, fes.J, fes.x1x2_vector
@@ -286,10 +320,14 @@ Note: the force intensity is given in the global coordinates.
 """
 function distribloads_global(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{T}, fi) where {ASS<:AbstractSysvecAssembler, T<:Number}
     fes = self.integdomain.fes
-    ecoords0, ecoords1, edisp1, dofnums, F0, Ft, FtI, FtJ, Te, elmat, elmatTe, elvec, aN, dN, DN, PN, LF, R1I, R1J = _buffers(self)
-    elvecf = deepcopy(elvec)
+    ecoords0, ecoords1, edisp1, dofnums = self._ecoords0, self._ecoords1, self._edisp1, self._dofnums
+    F0, Ft, FtI, FtJ, Te = self._F0, self._Ft, self._FtI, self._FtJ, self._Te
+    R1I, R1J = self._RI, self._RJ
+    elmat, elmatTe = self._elmat, self._elmatTe
+    aN, dN, DN, PN = self._aN, self._dN, self._DN, self._PN
+    elvec, elvecf = self._elvec, self._elvecf
     Lforce = fill(0.0, 3)
-    ignore = fill( 0.0 , 0, 0)
+    ignore = fill(0.0 , 0, 0)
     E = self.material.E
     G = E / 2 / (1 + self.material.nu)
     A, I2, I3, J, x1x2_vector = fes.A, fes.I2, fes.I3, fes.J, fes.x1x2_vector
