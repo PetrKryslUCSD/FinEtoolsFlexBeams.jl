@@ -103,9 +103,11 @@ function fasttop1()
     tipy = Float64[]
     push!(tipx, X[2,1])
     push!(tipy, X[2,2])
-    tbox = plot_space_box([[0 -0.05]; [0.06 0.03]])
+    tbox = scatter(;x=[0.0, 0.06], y=[-0.06, 0.02], mode="markers")
     plots = cat(tbox, scatter(;x=tipx./Length, y=tipy./Length, mode="markers+lines"); dims = 1)
-    pl = render(plots)
+    layout = Layout(width=500, height=500)
+    pl = plot(plots, layout)
+    display(pl)
 
     femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material)
     fi = ForceIntensity(q);
