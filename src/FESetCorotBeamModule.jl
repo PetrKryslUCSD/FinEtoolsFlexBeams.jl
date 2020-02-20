@@ -472,7 +472,7 @@ end
 # local coordinate system.
 # 
 function local_forces!(FL, PN, L, aN)
-    _local_cartesian_to_natural(aN, L);
+    local_cartesian_to_natural!(aN, L);
     mul!(FL, Transpose(aN), PN);
     return FL
 end
