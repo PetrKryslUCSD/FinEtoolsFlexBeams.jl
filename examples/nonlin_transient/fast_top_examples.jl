@@ -94,11 +94,18 @@ function fasttop1()
     Rfield1 = deepcopy(Rfield0)
     utol = 1e-13*dchi.nfreedofs;
 
-    tbox = plot_space_box([[-1.1*Width -1.1*Width 0]; [1.1*Width 1.1*Width 1.1*Length]])
-    tshape0 = plot_solid(fens, fes; x = geom0.values, u = 0.0.*dchi.values[:, 1:3], R = Rfield0.values, facecolor = "rgb(125, 155, 125)", opacity = 0.3);
-    plots = cat(tbox,  tshape0; dims = 1)
+    # tbox = plot_space_box([[-1.1*Width -1.1*Width 0]; [1.1*Width 1.1*Width 1.1*Length]])
+    # tshape0 = plot_solid(fens, fes; x = geom0.values, u = 0.0.*dchi.values[:, 1:3], R = Rfield0.values, facecolor = "rgb(125, 155, 125)", opacity = 0.3);
+    # plots = cat(tbox,  tshape0; dims = 1)
+    # pl = render(plots)
+    # sleep(3.5)
+    tipx = Float64[]
+    tipy = Float64[]
+    push!(tipx, X[2,1])
+    push!(tipy, X[2,2])
+    tbox = plot_space_box([[0 -0.05]; [0.06 0.03]])
+    plots = cat(tbox, scatter(;x=tipx./Length, y=tipy./Length, mode="markers+lines"); dims = 1)
     pl = render(plots)
-    sleep(3.5)
 
     femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material)
     fi = ForceIntensity(q);
@@ -146,10 +153,16 @@ function fasttop1()
         v0.values[:] = v1.values[:];       # update the velocities
         a0.values[:] = a1.values[:];       # update the accelerations
         
-        tshape1 = plot_solid(fens, fes; x = geom0.values, u = u1.values, R = Rfield1.values, facecolor = "rgb(125, 15, 15)");
-        plots = cat(tbox,  tshape0,  tshape1; dims = 1)
-        react!(pl, plots, pl.plot.layout)
-        sleep(0.115)
+        # tshape1 = plot_solid(fens, fes; x = geom0.values, u = u1.values, R = Rfield1.values, facecolor = "rgb(125, 15, 15)");
+        # plots = cat(tbox,  tshape0,  tshape1; dims = 1)
+        # react!(pl, plots, pl.plot.layout)
+        if (mod(step,20)==0)
+            push!(tipx, X[2,1]+u1.values[tipn[1], 1])
+            push!(tipy, X[2,2]+u1.values[tipn[1], 2])
+            plots = cat(tbox, scatter(;x=tipx./Length, y=tipy./Length, mode="markers+lines"); dims = 1)
+            react!(pl, plots, pl.plot.layout)
+            sleep(0.01)
+        end
 
         step=step+1;
     end
