@@ -125,7 +125,7 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[FinEtools]]
 deps = ["Arpack", "DelimitedFiles", "LinearAlgebra", "LoopVectorization", "Printf", "Random", "SparseArrays", "Statistics", "StatsBase", "Test", "Unicode"]
-git-tree-sha1 = "5979c6b23e23639ade3ae2fb242b4abb7e917748"
+git-tree-sha1 = "9126af303235789c8a54508ef8c82f732b561222"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/FinEtools.jl.git"
 uuid = "91bb5406-6c9a-523d-811d-0644c4229550"
@@ -332,6 +332,10 @@ version = "0.13.1"
 deps = ["Unicode"]
 uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
+[[Profile]]
+deps = ["Printf"]
+uuid = "9abbd945-dff8-562f-b5e8-e1ebf5ef1b79"
+
 [[REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
@@ -357,15 +361,15 @@ uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 
 [[SIMDPirates]]
 deps = ["VectorizationBase"]
-git-tree-sha1 = "456a334075b92d1770fc7c37a9c6944681e44793"
+git-tree-sha1 = "6d93eddeaf847073dfa36ad339d76015c59a9adb"
 uuid = "21efa798-c60a-11e8-04d3-e1a92915a26a"
-version = "0.3.12"
+version = "0.3.14"
 
 [[SLEEFPirates]]
 deps = ["Libdl", "SIMDPirates", "VectorizationBase"]
-git-tree-sha1 = "782448fc95bee4aab976a207cc63936a37e943dd"
+git-tree-sha1 = "d24858f03c87478cdacd5433454e2e322249d293"
 uuid = "476501e8-09a2-5ece-8869-fb82de89a1fa"
-version = "0.3.5"
+version = "0.3.6"
 
 [[Serialization]]
 uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
@@ -428,9 +432,9 @@ uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [[VectorizationBase]]
 deps = ["CpuId", "LinearAlgebra"]
-git-tree-sha1 = "5d9f62daaa09921c07d5fd7b4a686e0842bfdb0a"
+git-tree-sha1 = "e1093ff0fc183880a6f836026309ba06672c92ec"
 uuid = "3d5dd08c-fd9d-11e8-17fa-ed2836048c2f"
-version = "0.3.0"
+version = "0.3.1"
 
 [[WebIO]]
 deps = ["AssetRegistry", "Base64", "Distributed", "FunctionalCollections", "JSON", "Logging", "Observables", "Pkg", "Random", "Requires", "Sockets", "UUIDs", "WebSockets", "Widgets"]
