@@ -4,6 +4,7 @@ FinEtools used for the simulation of large-displacement response of three-dimens
 
 ## News
 
+- 02/20/2020: Nonlinear transient dynamic analysis implemented.
 - 02/16/2020: Buckling analysis implemented.
 
 ## Examples
