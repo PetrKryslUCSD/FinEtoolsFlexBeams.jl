@@ -19,3 +19,6 @@ tippling_examples.allrun()
 
 include(".\\examples\\nonlin_transient\\fast_top_examples.jl");
 @time fast_top_examples.fasttop2()
+
+include(".\\examples\\nonlin_transient\\slow_top_examples.jl");
+@time slow_top_examples.slowtop2()
