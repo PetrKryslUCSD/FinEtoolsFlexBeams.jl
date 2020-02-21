@@ -41,6 +41,9 @@ function FESetL2CorotBeam(conn::FIntMat, crosssection::CT, _A, _I1, _I2, _I3, _J
     return FESetL2CorotBeam(dummy.conn, dummy.label, crosssection, _A, _I1, _I2, _I3, _J, _x1x2_vector, _dimensions)
 end
 
+"""
+    Type of the mass matrix formulation.
+"""
 const MASS_TYPE_CONSISTENT_NO_ROTATION_INERTIA=0;
 const MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA=1;
 const MASS_TYPE_LUMPED_DIAGONAL_NO_ROTATION_INERTIA=2;
@@ -125,27 +128,32 @@ function current_local_frame!(Ft, xt, FtI, FtJ)
     return Lt, Ft
 end
 
-# Compute the current length of the element, the current element frame, 
-# and the natural deformations  
-#
-# Inputs:
-# x0= array of node coordinates, one node per row, in initial configuration
-# x1x2_vector= vector that lies in the x1-x2 local element coordinate
-#      plane, in initial configuration
-# xt= array of node coordinates, one node per row, in initial configuration
-# RI,RJ=nodal rotation (orthogonal) matrix 
-# 
-# Outputs:
-# Lt= current length of the element,
-# Ft= current element frame (orthogonal rotation matrix) whose columns are unit
-#      vectors: they are centered halfway between the current locations of
-#      the nodes, vector 1 points from node I to node J, vector 3 is
-#      orthogonal to the sum of the nodal cross-section frame vectors 2
-# dN= vector of natural deformations; dN(1)= total change in length 
-#      between configurations 0 and t; dN(2)= symmetric bending;
-#      dN(3)= anti-symmetric bending;    dN(4)= symmetric bending
-#      dN(5)= anti-symmetric bending; dN(6)=total axial torsion angle.
-# 
+
+"""
+    local_frame_and_def!(Ft, dN, F0, FtI, FtJ, x0, x1x2_vector, xt, RI, RJ)
+
+Compute the current length of the element, the current element frame, 
+and the natural deformations  
+
+# Arguments
+x0= array of node coordinates, one node per row, in initial configuration
+x1x2_vector= vector that lies in the x1-x2 local element coordinate
+     plane, in initial configuration
+xt= array of node coordinates, one node per row, in initial configuration
+RI,RJ=nodal rotation (orthogonal) matrix 
+
+# Outputs
+`Lt`= current length of the element,
+`Ft`= current element frame (orthogonal rotation matrix) whose columns are unit
+     vectors: they are centered halfway between the current locations of
+     the nodes, vector 1 points from node I to node J, vector 3 is
+     orthogonal to the sum of the nodal cross-section frame vectors 2
+`dN`= vector of natural deformations; dN(1)= total change in length 
+     between configurations 0 and t; dN(2)= symmetric bending;
+     dN(3)= anti-symmetric bending;    dN(4)= symmetric bending
+     dN(5)= anti-symmetric bending; dN(6)=total axial torsion angle.
+
+"""
 function local_frame_and_def!(Ft, dN, F0, FtI, FtJ, x0, x1x2_vector, xt, RI, RJ)
     # This is the element frame in the configuration t=0
     L0, F0 = initial_local_frame!(F0, x0, x1x2_vector)
@@ -179,21 +187,26 @@ function local_frame_and_def!(Ft, dN, F0, FtI, FtJ, x0, x1x2_vector, xt, RI, RJ)
     return Lt, Ft, dN
 end
 
-# Transformation from local Cartesian displacements to natural deformations 
-# of a beam element. 
-#
-# Matrix defined in Eq (4.8) of COMPUTER  METHODS  IN APPLIED  MECHANICS  AND  ENGINEERING   14  (1978)  401-451
-# ON LARGE  DISPLACEMENT-SMALL   STRAIN  ANALYSIS   OF  STRUCTURES
-# WITH  ROTATIONAL   DEGREES  OF  FREEDOM.
-# J.H.  ARGYRIS,   P.C.  DUNNE  and  D.W. SCHARPF
-# 
-# Inputs:
-# L= current length of the element
-# 
-# Outputs:
-# aN= transformation matrix to take Cartesian (local) displacement increments in the 
-#      element frame and to produce increments of natural deformations; 
-#      see local_frames() for the definition of the natural deformations 
+
+"""
+    local_cartesian_to_natural!(aN, L)
+
+Compute transformation from local Cartesian displacements to natural deformations 
+of a beam element. 
+
+Matrix defined in Eq (4.8) of COMPUTER  METHODS  IN APPLIED  MECHANICS  AND  ENGINEERING   14  (1978)  401-451
+ON LARGE  DISPLACEMENT-SMALL   STRAIN  ANALYSIS   OF  STRUCTURES
+WITH  ROTATIONAL   DEGREES  OF  FREEDOM.
+J.H.  ARGYRIS,   P.C.  DUNNE  and  D.W. SCHARPF
+
+# Arguments
+`L`= current length of the element
+
+# Outputs
+`aN`= transformation matrix to take Cartesian (local) displacement increments in the 
+     element frame and to produce increments of natural deformations; 
+     see `local_frame_and_def!` for the definition of the natural deformations 
+"""
 function local_cartesian_to_natural!(aN, L)
     fill!(aN, 0.0)
     aN[1, 1] = -1; aN[1, 7] = +1
@@ -211,32 +224,35 @@ function local_cartesian_to_natural!(aN, L)
         return aN
 end
 
-# Compute the local geometric stiffness matrix. 
-#
-# function SM = local_geometric_stiffness(self,A,I2,I3,PN,L)
-# 
-# Inputs:
-# A= cross-sectional area, 
-# I2, I3=central moment of inertia of the cross-section about the x2 and x3 
-# coordinate axis, 
-# PN= vector of natural forces; see natural_forces() for definitions
-# L= current length of the element, 
-# 
-# Outputs:
-# SM = local geometric stiffness matrix, 12 x 12
-# 
-# This geometric stiffness matrix this consistent with relationship between
-# the natural deformations and the natural forces that assumes there is
-# only a linear constitutive link: no non-constitutive effects (bowing
-# etc.) are included. This form of the geometric matrix was derived by
-# Krenk.
-# @BOOK{Krenk:2009,
-#   AUTHOR =       {S. Krenk},
-#   TITLE =        {Non-linear Modeling and Analysis of Solids and Structures },
-#   PUBLISHER =    {Cambridge University Press},
-#   YEAR =         {2009},
-#   isbn =         {9780521830546}
-# } 
+
+"""
+    local_geometric_stiffness!(SM, A, I2, I3, PN, L)
+
+Compute the local geometric stiffness matrix. 
+
+# Arguments
+`A`= cross-sectional area, 
+`I2`, `I3`=central moment of inertia of the cross-section about the x2 and x3 
+coordinate axis, 
+`PN`= vector of natural forces; see natural_forces() for definitions
+`L`= current length of the element, 
+
+# Outputs
+`SM` = local geometric stiffness matrix, 12 x 12
+
+This geometric stiffness matrix this consistent with relationship between
+the natural deformations and the natural forces that assumes there is
+only a linear constitutive link: no non-constitutive effects (bowing
+etc.) are included. This form of the geometric matrix was derived by
+Krenk.
+@BOOK{Krenk:2009,
+  AUTHOR =       {S. Krenk},
+  TITLE =        {Non-linear Modeling and Analysis of Solids and Structures },
+  PUBLISHER =    {Cambridge University Press},
+  YEAR =         {2009},
+  isbn =         {9780521830546}
+} 
+"""
 function local_geometric_stiffness!(SM, A, I2, I3, PN, L)
     N = PN[1];
     S_2 = -2*PN[3]/L;
@@ -422,21 +438,24 @@ function local_mass_LUMPED_DIAGONAL_NO_ROTATION_INERTIA!(MM, A, I1, I2, I3, rho,
     return MM
 end
 
-# Mass matrix of the beam.
-#
-# function MM=local_mass (self, A, I1, I2, I3, rho, L)
-#
-# Inputs:
-# A= cross-sectional area,
-# I1=central moment of inertia of the cross-section about the x1 axis,
-# I2, I3=central moment of inertia of the cross-section about the x2 and x3
-# coordinate axis, 
-# rho=mass density, 
-# L0= initial length of the element, 
-# 
-# Outputs:
-# MM = local mass matrix, 12 x 12
-# In the element frame the mass matrix is constant.
+
+"""
+    local_mass!(MM, A, I1, I2, I3, rho, L, mass_type)
+
+Mass matrix of the beam.
+
+# Arguments
+`A`= cross-sectional area,
+`I1`=central moment of inertia of the cross-section about the x1 axis,
+`I2`, `I3`=central moment of inertia of the cross-section about the x2 and x3
+coordinate axis, 
+`rho`=mass density, 
+`L`= initial length of the element, 
+
+# Outputs
+`MM` = local mass matrix, 12 x 12
+In the element frame the mass matrix is constant.
+"""
 function local_mass!(MM, A, I1, I2, I3, rho, L, mass_type)
     if (mass_type == MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA)
         return local_mass_CONSISTENT_WITH_ROTATION_INERTIA!(MM, A, I1, I2, I3, rho, L)
@@ -541,20 +560,24 @@ function local_mass_original!(MM, A, I1, I2, I3, rho, L, mass_type)
     end
     return MM
 end
-# Compute the local elastic stiffness matrix. 
-#
-# function SM = local_stiffness(self, E, G, A, I2, I3, J, L)
-# 
-# Inputs:
-# E, G= Young's and shear modulus, 
-# A= cross-sectional area, 
-# I2, I3=central moment of inertia of the cross-section about the x2 and x3 
-# coordinate axis, 
-# J=St Venant torsion constant, 
-# L= current length of the element, 
-# 
-# Outputs:
-# SM = local stiffness matrix, 12 x 12
+
+
+"""
+    local_stiffness!(SM, E, G, A, I2, I3, J, L, aN, DN)
+
+Compute the local elastic stiffness matrix. 
+
+# Arguments
+`E`, `G`= Young's and shear modulus, 
+`A`= cross-sectional area, 
+`I2`, `I3`=central moment of inertia of the cross-section about the x2 and x3 
+coordinate axis, 
+`J`=St Venant torsion constant, 
+`L`= current length of the element, 
+
+# Outputs
+`SM` = local stiffness matrix, 12 x 12
+"""
 function local_stiffness!(SM, E, G, A, I2, I3, J, L, aN, DN)
     local_cartesian_to_natural!(aN, L);
     natural_stiffness!(DN, E, G, A, I2, I3, J, L);
@@ -562,29 +585,29 @@ function local_stiffness!(SM, E, G, A, I2, I3, J, L, aN, DN)
     return SM
 end
 
+"""
+    natural_forces!(PN, E, G, A, I2, I3, J, L, dN, DN)
 
-# Compute the natural forces from the natural deformations.
-#
-# function PN = natural_forces (self, E, G, A, I2, I3, J, L, dN)
-#
-# Inputs:
-# E, G= Young's and shear modulus, 
-# A= cross-sectional area, 
-# I2, I3=central moment of inertia of the cross-section about the x2 and x3 
-# coordinate axis, 
-# J=St Venant torsion constant, 
-# L= current length of the element, 
-# dN= column vector of natural deformations; see local_frames() 
-# 
-# Outputs:
-#    PN = column vector of natural forces; 
-#      PN(1)= axial force; 
-#      PN(2)= symmetric bending moment in the plane x1-x2; 
-#      PN(3)= anti-symmetric bending bending moment in the plane x1-x2;    
-#      PN(4)= symmetric bending bending moment in the plane x1-x3;
-#      PN(5)= anti-symmetric bending bending moment in the plane x1-x3; 
-#      PN(6)= axial torque. 
-# 
+Compute the natural forces from the natural deformations.
+
+# Argument
+`E`, `G`= Young's and shear modulus, 
+`A`= cross-sectional area, 
+`I2`, `I3`=central moment of inertia of the cross-section about the x2 and x3 
+coordinate axis, 
+`J`=St Venant torsion constant, 
+`L`= current length of the element, 
+`dN`= column vector of natural deformations; see local_frames() 
+
+# Outputs
+`PN` = column vector of natural forces; 
+     `PN[1]`= axial force; 
+     `PN[2]`= symmetric bending moment in the plane x1-x2; 
+     `PN[3]`= anti-symmetric bending bending moment in the plane x1-x2;    
+     `PN[4]`= symmetric bending bending moment in the plane x1-x3;
+     `PN[5]`= anti-symmetric bending bending moment in the plane x1-x3; 
+     `PN[6]`= axial torque. 
+"""
 function natural_forces!(PN, E, G, A, I2, I3, J, L, dN, DN)
     natural_stiffness!(DN, E, G, A, I2, I3, J, L);
     #     Natural forces
@@ -592,22 +615,24 @@ function natural_forces!(PN, E, G, A, I2, I3, J, L, dN, DN)
     # Note that the non-constitutive stiffness due to pre-existing internal forces is currently omitted
 end
 
+"""
+    natural_stiffness!(DN, E, G, A, I2, I3, J, L)
 
-# Compute the natural stiffness matrix.
-#
-# function DN= natural_stiffness(self, E, G, A, I2, I3, J, L) 
-#
-# Inputs:
-# E, G= Young's and shear modulus, 
-# A= cross-sectional area, 
-# I2, I3=central moment of inertia of the cross-section about the x2 and x3 
-# coordinate axis, 
-# J=St Venant torsion constant, 
-# L= current length of the element, 
-# 
-# Outputs:
-# DN = 6 x 6 natural stiffness matrix
-# 
+Compute the natural stiffness matrix.
+
+function DN= natural_stiffness(self, E, G, A, I2, I3, J, L) 
+
+# Arguments
+`E`, `G`= Young's and shear modulus, 
+`A`= cross-sectional area, 
+`I2`, `I3`=central moment of inertia of the cross-section about the x2 and x3 
+coordinate axis, 
+`J`=St Venant torsion constant, 
+`L`= current length of the element, 
+
+# Outputs
+`DN` = 6 x 6 natural stiffness matrix
+"""
 function natural_stiffness!(DN, E, G, A, I2, I3, J, L)
     fill!(DN, 0.0)
     DN[1, 1] = E*A/L
@@ -620,9 +645,23 @@ function natural_stiffness!(DN, E, G, A, I2, I3, J, L)
 end
 
 
-# Compute forces through which the element acts on the nodes in the
-# local coordinate system.
-# 
+
+"""
+    local_forces!(FL, PN, L, aN)
+
+Compute forces through which the element acts on the nodes in the
+local coordinate system.
+
+# Arguments
+`PN` = column vector of natural forces; 
+`L`= current length of the element, 
+`aN`= transformation matrix to take Cartesian (local) displacement increments in the 
+     element frame and to produce increments of natural deformations; 
+     see `local_frame_and_def!` for the definition of the natural deformations 
+
+# Outputs
+FL = vector of forces acting on the nodes in the local coordinate system
+"""
 function local_forces!(FL, PN, L, aN)
     local_cartesian_to_natural!(aN, L);
     mul!(FL, Transpose(aN), PN);
