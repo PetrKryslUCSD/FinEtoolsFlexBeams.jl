@@ -1,6 +1,7 @@
 
 using Pkg; Pkg.activate("."); Pkg.instantiate()
 
+using FinEtoolsFlexBeams
 
 include(".\\examples\\meshing\\mesh_examples.jl");
 mesh_examples.allrun()
@@ -17,4 +18,4 @@ include(".\\examples\\linear_buckling\\tippling_examples.jl");
 tippling_examples.allrun()
 
 include(".\\examples\\nonlin_transient\\fast_top_examples.jl");
-fast_top_examples.fasttop1()
+@time fast_top_examples.fasttop2()
