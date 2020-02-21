@@ -11,3 +11,6 @@ end
 @time @testset "Buckling" begin
     include("test_buckling.jl")
 end
+@time @testset "Transient dynamics" begin
+    include("test_dyn.jl")
+end
