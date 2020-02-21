@@ -195,7 +195,7 @@ function fasttop1()
     return true
 end # fasttop1
 
-function speedtest()
+function fasttop2()
     # Parameters:
     E = 71240.0;#MPa
     nu = 0.31;# Poisson ratio
@@ -212,7 +212,7 @@ function speedtest()
     utol = 1e-3;
     maxit = 12
     dt = min(2*pi/norm(Omega0)/10, 0.005);
-    tend = 0.08;
+    tend = 0.8;
     ng = 1/2; nb = 1/4*(1/2+ng)^2;
     # Choose the mass formulation:
     mass_type=1;
@@ -223,7 +223,7 @@ function speedtest()
     # Select the number of elements per leg.
     spin_vector = R0*[0, 0, Omega0];
     X=[0 0 0;    reshape(R0*[0,0,Length], 1, 3)];
-    n=500;
+    n=8;
     tolerance=Length/n/100;
     members = []
     push!(members, frame_member(X, n, cs))
@@ -231,7 +231,6 @@ function speedtest()
 
     # Material properties
     material = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
-
     
     # Construct the requisite fields, geometry and displacement
     # Initialize configuration variables
@@ -272,19 +271,99 @@ function speedtest()
     TMPv = deepcopy(rhs)
     utol = 1e-13*dchi.nfreedofs;
 
+    # tbox = plot_space_box([[-1.1*Width -1.1*Width 0]; [1.1*Width 1.1*Width 1.1*Length]])
+    # tshape0 = plot_solid(fens, fes; x = geom0.values, u = 0.0.*dchi.values[:, 1:3], R = Rfield0.values, facecolor = "rgb(125, 155, 125)", opacity = 0.3);
+    # plots = cat(tbox,  tshape0; dims = 1)
+    # pl = render(plots)
+    # sleep(3.5)
+
+    tipx = Float64[]
+    tipy = Float64[]
+    push!(tipx, X[2,1])
+    push!(tipy, X[2,2])
+    tbox = scatter(;x=[0.0, 0.06], y=[-0.06, 0.02], mode="markers")
+    plots = cat(tbox, scatter(;x=tipx./Length, y=tipy./Length, mode="markers+lines"); dims = 1)
+    layout = Layout(width=500, height=500)
+    pl = plot(plots, layout)
+    display(pl)
+
     femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material)
     fi = ForceIntensity(q);
 
-    @time for trial in 1:100
-        # F = distribloads_global(femm, geom0, u1, Rfield1, dchi, fi)
-        # Fr = restoringforce(femm, geom0, u1, Rfield1, dchi);       # Internal forces
-        # K = stiffness(femm, geom0, u1, Rfield1, dchi);
-        M = mass(femm, geom0, u1, Rfield1, dchi);
-        G = qmass(femm, geom0, u1, Rfield1, v1, dchi);
+    t = 0.0; #
+    step = 0;
+    while (t <= tend)
+        t = t + dt;
+        println("Time $(t)"); # pause
+        # Initialization
+        applyebc!(dchi) # Apply boundary conditions
+        u1.values[:] = u0.values[:]; # guess
+        Rfield1.values[:] = Rfield0.values[:]; # guess
+        stepdchi.values[:] .= 0.0;# Total increment in current step
+        a1.values[:] = -(1/nb/dt)*v0.values[:] -(1/2-nb)/nb*a0.values[:];
+        v1.values[:] = v0.values[:] + dt*((1-ng)*a0.values[:] + ng*a1.values[:]);
+        gathersysvec!(v0, v0v)
+        gathersysvec!(a0, a0v)
+        dchipv = dt*v0v + (dt^2/2*(1-2*nb))*a0v
+        vpv = v0v +(dt*(1-ng))*a0v;
+        
+        iter = 1;
+        while true
+            F = distribloads_global(femm, geom0, u1, Rfield1, dchi, fi)
+            Fr = restoringforce(femm, geom0, u1, Rfield1, dchi);       # Internal forces
+            @. rhs = F + Fr;
+            K = stiffness(femm, geom0, u1, Rfield1, dchi);
+            M = mass(femm, geom0, u1, Rfield1, dchi);
+            G = qmass(femm, geom0, u1, Rfield1, v1, dchi);
+            gathersysvec!(stepdchi, stepdchiv)
+            @. TMPv = ((-1/(nb*dt^2))*stepdchiv+(1/(nb*dt^2))*dchipv)
+            rhs .+= M*TMPv
+            @. TMPv = ((-ng/nb/dt)*stepdchiv+(ng/nb/dt)*dchipv - vpv)
+            rhs .+= G*TMPv;
+            dchi = scattersysvec!(dchi, (K+(ng/nb/dt)*G+(1/(nb*dt^2))*M)\rhs); # Disp. incr
+            u1.values[:] += (dchi.values[:,1:3])[:];   # increment displacement
+            stepdchi.values[:] += dchi.values[:]
+            v1.values[:] += (ng/nb/dt)*dchi.values[:];
+            a1.values[:] += (1/nb/dt^2)*dchi.values[:];
+            update_rotation_field!(Rfield1, dchi)
+            if maximum(abs.(dchi.values[:])) < utol# convergence check
+                break; 
+            end
+            if (iter > maxit)# bailout for failed convergence
+                error("Possible failed convergence");
+            end
+            iter += 1;
+        end
+        u0.values[:] = u1.values[:];       # update the displacement
+        Rfield0.values[:] = Rfield1.values[:]; # update the rotations
+        v0.values[:] = v1.values[:];       # update the velocities
+        a0.values[:] = a1.values[:];       # update the accelerations
+        
+        # tshape1 = plot_solid(fens, fes; x = geom0.values, u = u1.values, R = Rfield1.values, facecolor = "rgb(125, 15, 15)");
+        # plots = cat(tbox,  tshape0,  tshape1; dims = 1)
+        # react!(pl, plots, pl.plot.layout)
+
+        if (mod(step,20)==0)
+            push!(tipx, X[2,1]+u1.values[tipn[1], 1])
+            push!(tipy, X[2,2]+u1.values[tipn[1], 2])
+            plots = cat(tbox, scatter(;x=tipx./Length, y=tipy./Length, mode="markers+lines"); dims = 1)
+            react!(pl, plots, pl.plot.layout)
+            sleep(0.01)
+        end
+
+        step=step+1;
     end
 
+    # # Visualize vibration modes
+    # scattersysvec!(dchi, v[:, 1])
+    # update_rotation_field!(Rfield0, dchi)
+    # plots = cat(plot_nodes(fens),
+    #     plot_solid(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield0.values);
+    #     dims = 1)
+    # render(plots; aspectratio = space_aspectratio(fens.xyz))
+
     return true
-end # speedtest
+end # fasttop2
 
 function allrun()
     println("#####################################################")
