@@ -23,5 +23,8 @@ using FinEtoolsFlexBeams
 # include(".\\examples\\nonlin_transient\\slow_top_examples.jl");
 # @time slow_top_examples.slowtop3()
 
+# include(".\\examples\\nonlin_transient\\argyr_swing_examples.jl");                                                                         
+# argyr_swing_examples.argyr_swing_animated() 
+
 include(".\\examples\\nonlin_transient\\argyr_swing_examples.jl");                                                                         
-argyr_swing_examples.argyr_swing_animated() 
+argyr_swing_examples.argyr_swing_compare() 
