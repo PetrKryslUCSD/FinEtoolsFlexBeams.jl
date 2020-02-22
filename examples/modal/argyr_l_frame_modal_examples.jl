@@ -37,7 +37,6 @@ function argyr_l_frame_modal()
     cs = CrossSectionRectangle(s -> b, s -> h, s -> [0.0, 1.0, 0.0])
 
     # Select the number of elements per leg.
-    xyz =
     n=8;
     members = []
     push!(members, frame_member([0 0 L; L 0 L], n, cs))
