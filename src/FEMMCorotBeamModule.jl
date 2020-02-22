@@ -117,9 +117,9 @@ function mass(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt}, u1::
         R1J[:] .= Rfield1.values[fes.conn[i][2], :];
         fill!(elmat,  0.0); # Initialize element matrix
         L1, Ft, dN = local_frame_and_def!(Ft, dN, F0, FtI, FtJ, ecoords0, x1x2_vector[i], ecoords1, R1I, R1J);
+        _transfmat!(Te, Ft)
         L0 = norm(ecoords0[2,:]-ecoords0[1,:]); 
         local_mass!(elmat, A[i], I1[i], I2[i], I3[i], rho, L0, mass_type);
-        _transfmat!(Te, Ft)
         mul!(elmatTe, elmat, Transpose(Te))
         mul!(elmat, Te, elmatTe)
         gatherdofnums!(dchi, dofnums, fes.conn[i]); # degrees of freedom
@@ -164,9 +164,9 @@ function qmass(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt}, u1:
         R1J[:] .= Rfield1.values[fes.conn[i][2], :];
         fill!(elmat,  0.0); # Initialize element matrix
         L1, Ft, dN = local_frame_and_def!(Ft, dN, F0, FtI, FtJ, ecoords0, x1x2_vector[i], ecoords1, R1I, R1J);
+        _transfmat!(Te, Ft)
         L0 = norm(ecoords0[2,:]-ecoords0[1,:]); 
         local_mass!(elmat, A[i], I1[i], I2[i], I3[i], rho, L0, mass_type);
-        _transfmat!(Te, Ft)
         mul!(elmatTe, elmat, Transpose(Te))
         mul!(elmat, Te, elmatTe)
         gathervalues_asmat!(v1, evel1, fes.conn[i]);
@@ -213,8 +213,8 @@ function stiffness(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt},
         R1J[:] .= Rfield1.values[fes.conn[i][2], :];
         fill!(elmat,  0.0); # Initialize element matrix
         L1, Ft, dN = local_frame_and_def!(Ft, dN, F0, FtI, FtJ, ecoords0, x1x2_vector[i], ecoords1, R1I, R1J);
-        local_stiffness!(elmat, E, G, A[i], I2[i], I3[i], J[i], L1, aN, DN);
         _transfmat!(Te, Ft)
+        local_stiffness!(elmat, E, G, A[i], I2[i], I3[i], J[i], L1, aN, DN);
         mul!(elmatTe, elmat, Transpose(Te))
         mul!(elmat, Te, elmatTe)
         gatherdofnums!(dchi, dofnums, fes.conn[i]); # degrees of freedom
@@ -253,9 +253,9 @@ function geostiffness(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFl
         R1J[:] .= Rfield1.values[fes.conn[i][2], :];
         fill!(elmat,  0.0); # Initialize element matrix
         L1, Ft, dN = local_frame_and_def!(Ft, dN, F0, FtI, FtJ, ecoords0, x1x2_vector[i], ecoords1, R1I, R1J);
+        _transfmat!(Te, Ft)
         natural_forces!(PN, E, G, A[i], I2[i], I3[i], J[i], L1, dN, DN)
         local_geometric_stiffness!(elmat, A[i], I2[i], I3[i], PN, L1)
-        _transfmat!(Te, Ft)
         mul!(elmatTe, elmat, Transpose(Te))
         mul!(elmat, Te, elmatTe)
         gatherdofnums!(dchi, dofnums, fes.conn[i]); # degrees of freedom
@@ -294,6 +294,7 @@ function restoringforce(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{F
         R1J[:] .= Rfield1.values[fes.conn[i][2], :];
         fill!(elmat,  0.0); # Initialize element matrix
         L1, Ft, dN = local_frame_and_def!(Ft, dN, F0, FtI, FtJ, ecoords0, x1x2_vector[i], ecoords1, R1I, R1J);
+        _transfmat!(Te, Ft)
         natural_forces!(PN, E, G, A[i], I2[i], I3[i], J[i], L1, dN, DN)
         local_forces!(LF, PN, L1, aN)
         mul!(elvec, Te, -LF)
@@ -342,6 +343,7 @@ function distribloads_global(self::FEMMCorotBeam, assembler::ASS, geom0::NodalFi
         R1J[:] .= Rfield1.values[fes.conn[i][2], :];
         fill!(elmat,  0.0); # Initialize element matrix
         L1, Ft, dN = local_frame_and_def!(Ft, dN, F0, FtI, FtJ, ecoords0, x1x2_vector[i], ecoords1, R1I, R1J);
+        _transfmat!(Te, Ft)
         L0 = norm(ecoords0[2,:]-ecoords0[1,:]); 
         force = updateforce!(fi, ignore, ignore, fes.label[i]); # retrieve the applied load
         Lforce = Ft' * force # local distributed load components
