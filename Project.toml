@@ -6,6 +6,7 @@ version = "0.1.0"
 [deps]
 Arpack = "7d9fca2a-8960-54d3-9f78-7d1dccf2cb97"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+Debugger = "31a5f54b-26ea-5ae9-a837-f05ce5417438"
 Dierckx = "39dd38d3-220a-591b-8e3c-4c3a8c710a94"
 FinEtools = "91bb5406-6c9a-523d-811d-0644c4229550"
 FinEtoolsBeamsVis = "bb026db7-cde0-4861-94fc-3e61400bfc65"

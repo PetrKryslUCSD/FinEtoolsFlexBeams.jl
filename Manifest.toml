@@ -55,6 +55,12 @@ git-tree-sha1 = "f6a148cadd38ba328bd2c03442037ef801a6aa05"
 uuid = "7057c7e9-c182-5462-911a-8362d720325c"
 version = "0.3.1"
 
+[[CodeTracking]]
+deps = ["InteractiveUtils", "UUIDs"]
+git-tree-sha1 = "0becdab7e6fbbcb7b88d8de5b72e5bb2f28239f3"
+uuid = "da1fd8a2-8d9e-5ec2-8556-3022fb5608a2"
+version = "0.5.8"
+
 [[ColorTypes]]
 deps = ["FixedPointNumbers", "Random"]
 git-tree-sha1 = "b9de8dc6106e09c79f3f776c27c62360d30e5eb8"
@@ -103,6 +109,12 @@ version = "1.0.0"
 [[Dates]]
 deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
+
+[[Debugger]]
+deps = ["CodeTracking", "Crayons", "Highlights", "InteractiveUtils", "JuliaInterpreter", "Markdown", "REPL"]
+git-tree-sha1 = "0b5e62b2ec174866953276bbd384c2154f178642"
+uuid = "31a5f54b-26ea-5ae9-a837-f05ce5417438"
+version = "0.6.4"
 
 [[DefaultApplication]]
 deps = ["InteractiveUtils"]
@@ -180,6 +192,12 @@ git-tree-sha1 = "6187bb2d5fcbb2007c39e7ac53308b0d371124bd"
 uuid = "9fb69e20-1954-56bb-a84f-559cc56a8ff7"
 version = "0.2.2"
 
+[[Highlights]]
+deps = ["DocStringExtensions", "InteractiveUtils", "REPL"]
+git-tree-sha1 = "f823a2d04fb233d52812c8024a6d46d9581904a4"
+uuid = "eafb193a-b7ab-5a9e-9068-77385905fa72"
+version = "0.4.5"
+
 [[IniFile]]
 deps = ["Test"]
 git-tree-sha1 = "098e4d2c533924c921f9f9847274f2ad89e018b8"
@@ -206,6 +224,12 @@ deps = ["Dates", "Mmap", "Parsers", "Unicode"]
 git-tree-sha1 = "b34d7cef7b337321e97d22242c3c2b91f476748e"
 uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 version = "0.21.0"
+
+[[JuliaInterpreter]]
+deps = ["CodeTracking", "InteractiveUtils", "Random", "UUIDs"]
+git-tree-sha1 = "6541c738c4f454a48645678e0bbffcd8564fb2ad"
+uuid = "aa1ae85d-cabe-5617-a682-6adf51b2e16a"
+version = "0.7.12"
 
 [[LaTeXStrings]]
 deps = ["Compat"]
@@ -300,10 +324,10 @@ uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 version = "1.1.0"
 
 [[PGFPlotsX]]
-deps = ["ArgCheck", "Crayons", "DataStructures", "Dates", "DefaultApplication", "DocStringExtensions", "MacroTools", "Missings", "Parameters", "Requires", "StatsBase", "Unicode"]
-git-tree-sha1 = "169528d1574e4695db9b5e8304ddfeb4bb717a3f"
+deps = ["ArgCheck", "DataStructures", "Dates", "DefaultApplication", "DocStringExtensions", "MacroTools", "Parameters", "Requires", "StatsBase"]
+git-tree-sha1 = "7881c52d84f12ca77b0d6eafcbad488ada2b4a94"
 uuid = "8314cec4-20b6-5062-9cdb-752b83310925"
-version = "1.1.0"
+version = "1.2.4"
 
 [[Parameters]]
 deps = ["OrderedCollections"]
@@ -372,9 +396,9 @@ uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 
 [[SIMDPirates]]
 deps = ["VectorizationBase"]
-git-tree-sha1 = "6d93eddeaf847073dfa36ad339d76015c59a9adb"
+git-tree-sha1 = "f62bec2edf3dc415ac06547e8c9ef07b55d46c0a"
 uuid = "21efa798-c60a-11e8-04d3-e1a92915a26a"
-version = "0.3.14"
+version = "0.3.15"
 
 [[SLEEFPirates]]
 deps = ["Libdl", "SIMDPirates", "VectorizationBase"]
@@ -449,9 +473,9 @@ uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [[VectorizationBase]]
 deps = ["CpuId", "LinearAlgebra"]
-git-tree-sha1 = "e1093ff0fc183880a6f836026309ba06672c92ec"
+git-tree-sha1 = "2a377190de71d8d3c7a65da8c6283e1d2c7f0507"
 uuid = "3d5dd08c-fd9d-11e8-17fa-ed2836048c2f"
-version = "0.3.1"
+version = "0.4.0"
 
 [[WebIO]]
 deps = ["AssetRegistry", "Base64", "Distributed", "FunctionalCollections", "JSON", "Logging", "Observables", "Pkg", "Random", "Requires", "Sockets", "UUIDs", "WebSockets", "Widgets"]
