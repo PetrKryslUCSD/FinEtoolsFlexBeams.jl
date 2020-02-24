@@ -37,6 +37,53 @@ using PlotlyJS
 using JSON
 
 
+# Comparison with reference solution.
+
+izzelna_ux =[    0.0317    0.6048
+-0.0628    0.6048
+8.7273   34.7095
+16.6668   85.8664
+23.7557  134.8918
+32.6404  213.7587
+37.8389  264.9157
+41.7141  318.2041
+44.9277  382.1503
+47.9523  446.0965
+50.4098  510.0426
+51.9220  578.2519
+53.9069  657.1188
+53.9069  657.1188];
+
+izzelna_uy =[-0.1574    0.6048
+0.0317    2.7364
+1.1659   73.0772
+2.7727  132.7603
+4.9466  211.6272
+7.1205  284.0995
+8.9164  350.1772
+10.2396  414.1234
+11.3738  480.2011
+13.1697  548.4104
+14.0203  618.7511
+14.6820  657.1188
+14.5875  657.1188];
+
+izzelna_uz =[   -0.5354    2.7364
+-0.2519    2.7364
+-1.1970   51.7618
+-2.2367   90.1295
+-4.3161  124.2341
+-6.8681  183.9172
+-9.1366  235.0741
+-11.8776  288.3626
+-14.5241  354.4403
+-16.9815  411.9919
+-19.3445  475.9380
+-21.7074  550.5419
+-23.9759  618.7511
+-25.3936  661.3819];
+
+
 function curved_cantilever()
     # Parameters:
     E=1e7;# lb.in^-2
@@ -97,8 +144,9 @@ function curved_cantilever()
     loadbdry = FESetP1(reshape(tipn, 1, 1))
     lfemm = FEMMBase(IntegDomain(loadbdry, PointRule()))
     
-    load_parameters = 0.05:0.05:1;
-    tip_displacement=[];
+    load_parameters = 0.0:0.05:1;
+    tip_displacement = fill(0.0, length(load_parameters), 3);
+    step = 0
     for load_parameter in load_parameters
         applyebc!(dchi) # Apply boundary conditions
         u1.values[:] = u0.values[:]; # guess
@@ -115,7 +163,7 @@ function curved_cantilever()
             dchi = scattersysvec!(dchi, (K)\rhs); # Disp. incr
             u1.values[:] += (dchi.values[:,1:3])[:];   # increment displacement
             update_rotation_field!(Rfield1, dchi)
-            @show iter, maximum(abs.(dchi.values[:]))
+            print("$iter: ||du||=$(maximum(abs.(dchi.values[:])))\n")
             if maximum(abs.(dchi.values[:])) < utol # convergence check
                 break;
             end
@@ -127,18 +175,28 @@ function curved_cantilever()
         u0.values[:] = u1.values[:];       # update the displacement
         Rfield0.values[:] = Rfield1.values[:]; # update the rotations
         
-        # if mod(step, 4) == 0
-        #     @show step
-        #     tshape1 = plot_solid(fens, fes; x = geom0.values, u = u1.values, R = Rfield1.values, facecolor = "rgb(125, 15, 15)");
-        #     plots = cat(tbox,  tshape0,  tshape1; dims = 1)
-        #     pl.plot.layout[:title] = "t=$t"
-        #     react!(pl, plots, pl.plot.layout)
-        #     sleep(0.5)
-        # end
+        
+        step = step + 1
+        tip_displacement[step, :] .= u1.values[tipn[1], :]
+
     end
+    step = step + 1
+    
+    plots = cat(
+    scatter(;x=tip_displacement[:,1], y=load_parameters.*Fmag, mode="lines", line_color = "rgb(0, 0, 0)", name="Tip-x"),
+    scatter(;x=tip_displacement[:,2], y=load_parameters.*Fmag, mode="lines", line_color = "rgb(0, 0, 0)", name="Tip-y"),
+    scatter(;x=tip_displacement[:,3], y=load_parameters.*Fmag, mode="lines", line_color = "rgb(0, 0, 0)", name="Tip-z"),
+    scatter(;x=izzelna_ux[:,1], y=izzelna_ux[:,2], mode="markers", line_color = "rgb(255, 0, 0)", name="Ref-x"),
+    scatter(;x=izzelna_uy[:,1], y=izzelna_uy[:,2], mode="markers", line_color = "rgb(0, 255, 0)", name="Ref-y"),
+    scatter(;x=izzelna_uz[:,1], y=izzelna_uz[:,2], mode="markers", line_color = "rgb(0, 0, 255)", name="Ref-z"); 
+    dims = 1)
+    layout = Layout(width=700, height=500, xaxis=attr(title="Tip displacement [in]"),
+    yaxis=attr(title="Load [lb]"))
+    pl = plot(plots, layout)
+    display(pl)
     
     return true
-end # simo_vuquoc_animated
+end # curved_cantilever
 
 function allrun()
     println("#####################################################")
