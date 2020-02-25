@@ -2,9 +2,17 @@
 using Pkg; Pkg.activate("."); Pkg.instantiate()
 
 using FinEtoolsFlexBeams
+using PlotlyJS
+using JSON
+using ORCA
 
 include(".\\examples\\nonlin_statics\\twisting_circle_examples.jl");                                                                         
-twisting_circle_examples.twisting_circle() 
+pl = twisting_circle_examples.twisting_circle_1() 
+savejson(pl, "plot.json")
+open("plot.json", "r") do f; plot(JSON.parse(Plot, String(read(f)))) end
+
+# include(".\\examples\\nonlin_statics\\twisting_circle_examples.jl");                                                                         
+# twisting_circle_examples.twisting_circle() 
 
 # snapnum(n) = begin
 #     s = ""
