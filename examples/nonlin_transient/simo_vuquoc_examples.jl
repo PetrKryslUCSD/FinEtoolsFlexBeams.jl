@@ -116,13 +116,13 @@ function simo_vuquoc_animated()
     box = fill(0.0, 6)
     # The pinned end is
     initbox!(box, [0,L,0])
-    pinnedn = selectnode(fens; box = box, tolerance = tolerance)
+    pinnedn = selectnode(fens; box = box, inflate = tolerance)
     # The force is applied at the elbow
     initbox!(box, [L,L,0])
-    elbown = selectnode(fens; box = box, tolerance = tolerance)
+    elbown = selectnode(fens; box = box, inflate = tolerance)
     # Tip is tracked
     initbox!(box, [L,0,0])
-    tipn = selectnode(fens; box = box, tolerance = tolerance)
+    tipn = selectnode(fens; box = box, inflate = tolerance)
 
 
     # Apply EBC's
@@ -270,13 +270,13 @@ function simo_vuquoc_compare()
     box = fill(0.0, 6)
     # The pinned end is
     initbox!(box, [0,L,0])
-    pinnedn = selectnode(fens; box = box, tolerance = tolerance)
+    pinnedn = selectnode(fens; box = box, inflate = tolerance)
     # The force is applied at the elbow
     initbox!(box, [L,L,0])
-    elbown = selectnode(fens; box = box, tolerance = tolerance)
+    elbown = selectnode(fens; box = box, inflate = tolerance)
     # Tip is tracked
     initbox!(box, [L,0,0])
-    tipn = selectnode(fens; box = box, tolerance = tolerance)
+    tipn = selectnode(fens; box = box, inflate = tolerance)
 
 
     # Apply EBC's
@@ -419,13 +419,13 @@ function argyr_swing_compare()
     box = fill(0.0, 6)
     # The pinned end is
     initbox!(box, [0,L,0])
-    pinnedn = selectnode(fens; box = box, tolerance = tolerance)
+    pinnedn = selectnode(fens; box = box, inflate = tolerance)
     # The force is applied at the elbow
     initbox!(box, [L,L,0])
-    elbown = selectnode(fens; box = box, tolerance = tolerance)
+    elbown = selectnode(fens; box = box, inflate = tolerance)
     # Tip is tracked
     initbox!(box, [L,0,0])
-    tipn = selectnode(fens; box = box, tolerance = tolerance)
+    tipn = selectnode(fens; box = box, inflate = tolerance)
 
 
     # Apply EBC's

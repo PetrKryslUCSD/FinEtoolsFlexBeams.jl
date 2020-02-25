@@ -72,9 +72,9 @@ function fasttop1()
     # Apply EBC's
      box = fill(0.0, 6)
     initbox!(box, X[1,:])
-    supportn = selectnode(fens; box = box, tolerance = tolerance)
+    supportn = selectnode(fens; box = box, inflate = tolerance)
     initbox!(box, X[2,:])
-    tipn = selectnode(fens; box = box, tolerance = tolerance)
+    tipn = selectnode(fens; box = box, inflate = tolerance)
     for i in [1, 2, 3]
         setebc!(dchi, supportn, true, i)
     end
@@ -242,9 +242,9 @@ function fasttop2()
     # Apply EBC's
      box = fill(0.0, 6)
     initbox!(box, X[1,:])
-    supportn = selectnode(fens; box = box, tolerance = tolerance)
+    supportn = selectnode(fens; box = box, inflate = tolerance)
     initbox!(box, X[2,:])
-    tipn = selectnode(fens; box = box, tolerance = tolerance)
+    tipn = selectnode(fens; box = box, inflate = tolerance)
     for i in [1, 2, 3]
         setebc!(dchi, supportn, true, i)
     end
