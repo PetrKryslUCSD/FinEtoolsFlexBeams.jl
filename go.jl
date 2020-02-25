@@ -3,8 +3,11 @@ using Pkg; Pkg.activate("."); Pkg.instantiate()
 
 using FinEtoolsFlexBeams
 
-include(".\\examples\\nonlin_transient\\twisting_circle_examples.jl");                                                                         
+include(".\\examples\\nonlin_statics\\twisting_circle_examples.jl");                                                                         
 twisting_circle_examples.twisting_circle() 
+
+# include(".\\examples\\nonlin_transient\\twisting_circle_examples.jl");                                                                         
+# twisting_circle_examples.twisting_circle() 
 
 # include(".\\examples\\nonlin_statics\\curved_cantilever_examples.jl");                                                                         
 # curved_cantilever_examples.curved_cantilever_thin() 
