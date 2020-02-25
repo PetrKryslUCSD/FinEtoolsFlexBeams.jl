@@ -26,7 +26,7 @@ geostiffness = FEMMCorotBeamModule.geostiffness
 mass = FEMMCorotBeamModule.mass
 distribloads_global = FEMMCorotBeamModule.distribloads_global
 restoringforce = FEMMCorotBeamModule.restoringforce
-qmass = FEMMCorotBeamModule.qmass
+gyroscopic = FEMMCorotBeamModule.gyroscopic
 using FinEtoolsFlexBeams.RotUtilModule: initial_Rfield, linear_update_rotation_field!, update_rotation_field!
 using LinearAlgebra: dot
 using Arpack

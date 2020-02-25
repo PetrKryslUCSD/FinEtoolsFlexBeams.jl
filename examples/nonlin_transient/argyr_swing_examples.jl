@@ -15,7 +15,7 @@ stiffness = FEMMCorotBeamModule.stiffness
 mass = FEMMCorotBeamModule.mass
 distribloads_global = FEMMCorotBeamModule.distribloads_global
 restoringforce = FEMMCorotBeamModule.restoringforce
-qmass = FEMMCorotBeamModule.qmass
+gyroscopic = FEMMCorotBeamModule.gyroscopic
 using FinEtoolsFlexBeams.RotUtilModule: initial_Rfield, linear_update_rotation_field!, update_rotation_field!
 using LinearAlgebra: dot
 using Arpack
@@ -1137,7 +1137,7 @@ function argyr_swing_animated()
             @. rhs = F + Fr;
             K = stiffness(femm, geom0, u1, Rfield1, dchi);
             M = mass(femm, geom0, u1, Rfield1, dchi);
-            G = qmass(femm, geom0, u1, Rfield1, v1, dchi);
+            G = gyroscopic(femm, geom0, u1, Rfield1, v1, dchi);
             gathersysvec!(stepdchi, stepdchiv)
             @. TMPv = ((-1/(nb*dt^2))*stepdchiv+(1/(nb*dt^2))*dchipv)
             rhs .+= M*TMPv
@@ -1294,7 +1294,7 @@ function argyr_swing_compare()
             @. rhs = F + Fr;
             K = stiffness(femm, geom0, u1, Rfield1, dchi);
             M = mass(femm, geom0, u1, Rfield1, dchi);
-            G = qmass(femm, geom0, u1, Rfield1, v1, dchi);
+            G = gyroscopic(femm, geom0, u1, Rfield1, v1, dchi);
             gathersysvec!(stepdchi, stepdchiv)
             @. TMPv = ((-1/(nb*dt^2))*stepdchiv+(1/(nb*dt^2))*dchipv)
             rhs .+= M*TMPv

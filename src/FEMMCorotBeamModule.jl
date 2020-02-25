@@ -134,15 +134,15 @@ function mass(self::FEMMCorotBeam, geom0::NodalField{FFlt}, u1::NodalField{T}, R
 end
 
 """
-    qmass(self::FEMMCorotBeam,  assembler::A,
+    gyroscopic(self::FEMMCorotBeam,  assembler::A,
       geom::NodalField{FFlt},
       u::NodalField{T}) where {A<:AbstractSysmatAssembler, T<:Number}
 
-Compute the quadratic-inertial term mass matrix
+Compute the quadratic-inertial-term (gyroscopic) mass matrix
 
 This is a general routine for the abstract linear-deformation  FEMM.
 """
-function qmass(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, v1::NodalField{T}, dchi::NodalField{T}; mass_type=MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA) where {ASS<:AbstractSysmatAssembler, T<:Number}
+function gyroscopic(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, v1::NodalField{T}, dchi::NodalField{T}; mass_type=MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA) where {ASS<:AbstractSysmatAssembler, T<:Number}
     fes = self.integdomain.fes
     ecoords0, ecoords1, edisp1, dofnums = self._ecoords0, self._ecoords1, self._edisp1, self._dofnums
     F0, Ft, FtI, FtJ, Te = self._F0, self._Ft, self._FtI, self._FtJ, self._Te
@@ -184,9 +184,9 @@ function qmass(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt}, u1:
     return makematrix!(assembler);
 end
 
-function qmass(self::FEMMCorotBeam, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, v1::NodalField{T}, dchi::NodalField{T}; mass_type=MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA) where {T<:Number}
+function gyroscopic(self::FEMMCorotBeam, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, v1::NodalField{T}, dchi::NodalField{T}; mass_type=MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA) where {T<:Number}
     assembler = SysmatAssemblerSparseSymm();
-    return qmass(self, assembler, geom0, u1, Rfield1, v1, dchi; mass_type = mass_type);
+    return gyroscopic(self, assembler, geom0, u1, Rfield1, v1, dchi; mass_type = mass_type);
 end
 
 """
