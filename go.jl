@@ -6,6 +6,27 @@ using FinEtoolsFlexBeams
 include(".\\examples\\nonlin_statics\\twisting_circle_examples.jl");                                                                         
 twisting_circle_examples.twisting_circle() 
 
+# snapnum(n) = begin
+#     s = ""
+#     if n <= 9
+#         s = "00$(n)"
+#     elseif n <= 99
+#         s = "0$(n)"
+#     else
+#         s = "$(n)"
+#     end
+#     s
+# end
+# run(`cp ../twi*.png .`)
+# K = 1
+# for i in 1:5:501
+#     if mod(i, 10) == 1   
+#         run(`cp "twisting_circle-$(i).png" "snap$(snapnum(K)).png"`) 
+#         global K += 1    
+#     end
+# end
+# run(`magick snap*.png anim.gif`)
+
 # include(".\\examples\\nonlin_transient\\twisting_circle_examples.jl");                                                                         
 # twisting_circle_examples.twisting_circle() 
 
