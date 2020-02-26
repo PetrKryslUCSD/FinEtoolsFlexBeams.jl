@@ -5,6 +5,7 @@
 *.jls
 *.jld
 *.png
+*.json
 *.sublime-workspace
 docs/build/
 .vscode/
