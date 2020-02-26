@@ -8,8 +8,8 @@ using ORCA
 
 include(".\\examples\\nonlin_statics\\twisting_circle_examples.jl");                                                                         
 pl = twisting_circle_examples.twisting_circle_1() 
-savejson(pl, "plot.json")
-open("plot.json", "r") do f; plot(JSON.parse(Plot, String(read(f)))) end
+# savejson(pl, "plot.json")
+# open("plot.json", "r") do f; plot(JSON.parse(Plot, String(read(f)))) end
 
 # include(".\\examples\\nonlin_statics\\twisting_circle_examples.jl");                                                                         
 # twisting_circle_examples.twisting_circle() 
@@ -49,7 +49,6 @@ open("plot.json", "r") do f; plot(JSON.parse(Plot, String(read(f)))) end
 
 # include(".\\examples\\modal\\beam_modal_examples.jl");
 # beam_modal_examples.allrun()
-
 
 # include(".\\examples\\modal\\argyr_l_frame_modal_examples.jl");
 # # argyr_l_frame_modal_examples.allrun()
