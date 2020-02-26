@@ -46,9 +46,9 @@ version = "0.5.8"
 
 [[Blink]]
 deps = ["Base64", "BinDeps", "Distributed", "JSExpr", "JSON", "Lazy", "Logging", "MacroTools", "Mustache", "Mux", "Reexport", "Sockets", "WebIO", "WebSockets"]
-git-tree-sha1 = "8357e8049299a06ed5ed4db3285cebf2f9ead26b"
+git-tree-sha1 = "0572de26fd4e4ffe041af0dd8800c3c4613a1300"
 uuid = "ad839575-38b3-5650-b840-f874b8c74a25"
-version = "0.12.1"
+version = "0.12.2"
 
 [[Cassette]]
 git-tree-sha1 = "f6a148cadd38ba328bd2c03442037ef801a6aa05"
@@ -103,9 +103,9 @@ version = "1.1.0"
 
 [[DataStructures]]
 deps = ["InteractiveUtils", "OrderedCollections"]
-git-tree-sha1 = "b7720de347734f4716d1815b00ce5664ed6bbfd4"
+git-tree-sha1 = "5a431d46abf2ef2a4d5d00bd0ae61f651cf854c8"
 uuid = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-version = "0.17.9"
+version = "0.17.10"
 
 [[DataValueInterfaces]]
 git-tree-sha1 = "bfc1187b79289637fa0ef6d4436ebdfe6905cbd6"
@@ -153,7 +153,7 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[FinEtools]]
 deps = ["Arpack", "DelimitedFiles", "LinearAlgebra", "LoopVectorization", "Printf", "Random", "SparseArrays", "Statistics", "StatsBase", "Test", "Unicode"]
-git-tree-sha1 = "1af6e448fb69630843f4344f7b33bee3aca88d56"
+git-tree-sha1 = "c95e178317980688f68ad1dc9f9a0b56b9a797e7"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/FinEtools.jl.git"
 uuid = "91bb5406-6c9a-523d-811d-0644c4229550"
@@ -161,7 +161,7 @@ version = "4.0.5"
 
 [[FinEtoolsBeamsVis]]
 deps = ["FinEtools", "LinearAlgebra", "PlotlyJS", "WebIO"]
-git-tree-sha1 = "3455414a865d920e8343731f3673f1018660d9c6"
+git-tree-sha1 = "c4a712a4c2089c5674ccf5f4b8b6d5e4e75d7ccb"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/FinEtoolsBeamsVis.jl.git"
 uuid = "bb026db7-cde0-4861-94fc-3e61400bfc65"
