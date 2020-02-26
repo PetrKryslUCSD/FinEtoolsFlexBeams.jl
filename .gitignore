@@ -4,6 +4,7 @@
 *.vtk
 *.jls
 *.jld
+*.png
 *.sublime-workspace
 docs/build/
 .vscode/
