@@ -27,10 +27,10 @@ version = "0.1.0"
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
 [[BenchmarkTools]]
-deps = ["JSON", "Printf", "Statistics"]
-git-tree-sha1 = "90b73db83791c5f83155016dd1cc1f684d4e1361"
+deps = ["JSON", "Logging", "Printf", "Statistics", "UUIDs"]
+git-tree-sha1 = "9e62e66db34540a0c919d72172cc2f642ac71260"
 uuid = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
-version = "0.4.3"
+version = "0.5.0"
 
 [[BinDeps]]
 deps = ["Libdl", "Pkg", "SHA", "URIParser", "Unicode"]
@@ -153,15 +153,15 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[FinEtools]]
 deps = ["Arpack", "DelimitedFiles", "LinearAlgebra", "LoopVectorization", "Printf", "Random", "SparseArrays", "Statistics", "StatsBase", "Test", "Unicode"]
-git-tree-sha1 = "9126af303235789c8a54508ef8c82f732b561222"
+git-tree-sha1 = "1af6e448fb69630843f4344f7b33bee3aca88d56"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/FinEtools.jl.git"
 uuid = "91bb5406-6c9a-523d-811d-0644c4229550"
 version = "4.0.5"
 
 [[FinEtoolsBeamsVis]]
-deps = ["FinEtools", "LinearAlgebra", "PlotlyJS"]
-git-tree-sha1 = "92192c8d660c78789bc2e5fadc6c0873aae56c07"
+deps = ["FinEtools", "LinearAlgebra", "PlotlyJS", "WebIO"]
+git-tree-sha1 = "3455414a865d920e8343731f3673f1018660d9c6"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/FinEtoolsBeamsVis.jl.git"
 uuid = "bb026db7-cde0-4861-94fc-3e61400bfc65"
