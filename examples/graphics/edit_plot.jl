@@ -26,15 +26,7 @@ layout[:showEditInChartStudio] = true
 @show layout
 
 pl = plot(plots, layout; 
-    options=Dict(:showLink => true, :toImageButtonOptions => Dict(:format=>"webp")))
+    options=Dict(:showSendToCloud=>true, :showLink => true, :toImageButtonOptions => Dict(:format=>"webp")))
 display(pl)
-savejson(pl, "plot.json")
 
-pl = plot_from_json("plot.json")
-sleep(0.5)
-for eyex in 1.0:-0.1:-1.0
-    pl.plot.layout["scene"][:camera][:eye][:x] = eyex
-    react!(pl, pl.plot.data, pl.plot.layout)
-    sleep(0.5)
-end
 
