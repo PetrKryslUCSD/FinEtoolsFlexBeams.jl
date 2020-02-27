@@ -14,7 +14,7 @@ using LinearAlgebra: dot
 using Arpack
 using LinearAlgebra
 using SparseArrays
-using FinEtoolsBeamsVis: plot_nodes, plot_midline, render, plot_space_box, plot_solid, space_aspectratio
+using FinEtoolsBeamsVis: plot_nodes, plot_midline, render, plot_space_box, plot_solid, space_aspectratio, save_to_json
 
 function tippling_1()
     # Parameters:
@@ -24,7 +24,7 @@ function tippling_1()
     b =  0.5; # width
     h =  4.0; # height
     magn = -0.2056167583560*1e4/L^2;
-    magn_scale = 1000
+    magn_scale = 10000
     neigvs = 4;
 
     # Reference frequencies
@@ -89,7 +89,8 @@ function tippling_1()
     plot_nodes(fens),
     plot_solid(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield0.values);
     dims = 1)
-    render(plots)
+    pl = render(plots)
+    save_to_json(pl, "plot.json")
     # @show p.plot.data
     true
 end # tippling_1
