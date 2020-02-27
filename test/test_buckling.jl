@@ -67,7 +67,7 @@ function test()
     # Solve the static problem
     U = K\F
     scattersysvec!(dchi, U[:])
-    @show  dchi.values[tipn, :]
+    # @show  dchi.values[tipn, :]
 
     # Compute the geometric stiffness
     u0.values = dchi.values[:,1:3]
@@ -77,8 +77,8 @@ function test()
     # Solve the eigenvalue problem
     d,v,nev,nconv = eigs(-Kg, K; nev=neigvs, which=:LM)
     fs = 1.0 ./ (d) ./ magn_scale
-    println("Buckling factors: $fs [ND]")
-    println("Reference: $reffs [ND]")
+    # println("Buckling factors: $fs [ND]")
+    # println("Reference: $reffs [ND]")
     @test norm(reffs - abs.(fs[2:3])) ./ norm(reffs) <= 1.0e-3
 
     # # Visualize vibration modes

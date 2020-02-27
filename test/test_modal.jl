@@ -64,8 +64,8 @@ function test()
         # Solve the eigenvalue problem
         d,v,nev,nconv = eigs(K, M; nev=2*neigvs, which=:SM)
         fs = real(sqrt.(complex(d)))/(2*pi)
-        println("Natural frequencies: $fs [Hz]")
-        println("Reference: $reffs [Hz]")
+        # println("Natural frequencies: $fs [Hz]")
+        # println("Reference: $reffs [Hz]")
 
         @test norm(reffs - fs[1:length(reffs)]) ./ norm(reffs) <= 3.0e-5
 
