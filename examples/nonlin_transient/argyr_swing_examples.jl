@@ -1166,7 +1166,7 @@ function argyr_swing_animated()
             @show step
             tshape1 = plot_solid(fens, fes; x = geom0.values, u = u1.values, R = Rfield1.values, facecolor = "rgb(125, 15, 15)");
             plots = cat(tbox,  tshape0,  tshape1; dims = 1)
-            pl.plot.layout[:title] = "t=$t"
+            pl.plot.layout[:title] = "t=$(round(t * 10000) / 10000)"
             react!(pl, plots, pl.plot.layout)
             sleep(0.5)
         end
