@@ -19,15 +19,14 @@ fens, fes = frame_member(xyz, nL, cs)
 plots = cat(plot_nodes(fens),
     plot_midline(fens, fes; color = "rgb(155, 155, 255)", lwidth = 4),
     dims = 1)
-layout = default_layout_3d(width = 500, height = 500)
-layout[:showSendToCloud] = true
-layout[:showLegend] = true
-layout[:showEditInChartStudio] = true
-@show layout
+layout = default_layout_3d()
 
+# options=Dict(:showSendToCloud=>true, 
+#     :fillFrame=>true,
+#     :autosizable=> true,
+#     :showLink => true)
 pl = plot(plots, layout; 
-    options=Dict(:showSendToCloud=>true, :responsive=>true,
-        :showLink => true, :toImageButtonOptions => Dict(:format=>"webp")))
+    options=Dict(:showSendToCloud=>true))
 display(pl)
 
 
