@@ -26,7 +26,8 @@ layout[:showEditInChartStudio] = true
 @show layout
 
 pl = plot(plots, layout; 
-    options=Dict(:showSendToCloud=>true, :showLink => true, :toImageButtonOptions => Dict(:format=>"webp")))
+    options=Dict(:showSendToCloud=>true, :responsive=>true,
+        :showLink => true, :toImageButtonOptions => Dict(:format=>"webp")))
 display(pl)
 
 
