@@ -161,7 +161,7 @@ version = "4.0.5"
 
 [[FinEtoolsBeamsVis]]
 deps = ["FinEtools", "JSON", "LinearAlgebra", "PlotlyJS", "WebIO"]
-git-tree-sha1 = "44d861b48c21d0b216af1575b46775efb2034deb"
+git-tree-sha1 = "11b6902acd987f924bd751dd8e9c33f9575ac3dc"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/FinEtoolsBeamsVis.jl.git"
 uuid = "bb026db7-cde0-4861-94fc-3e61400bfc65"
@@ -407,9 +407,9 @@ uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 
 [[SIMDPirates]]
 deps = ["VectorizationBase"]
-git-tree-sha1 = "0be25063d6e4306eb656778bb613d32c2ed9268b"
+git-tree-sha1 = "50927844385458b3ca21b7dbd1751a8c307de102"
 uuid = "21efa798-c60a-11e8-04d3-e1a92915a26a"
-version = "0.6.1"
+version = "0.6.2"
 
 [[SLEEFPirates]]
 deps = ["Libdl", "SIMDPirates", "VectorizationBase"]
