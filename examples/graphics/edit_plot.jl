@@ -19,14 +19,16 @@ fens, fes = frame_member(xyz, nL, cs)
 plots = cat(plot_nodes(fens),
     plot_midline(fens, fes; color = "rgb(155, 155, 255)", lwidth = 4),
     dims = 1)
-layout = default_layout_3d()
+layout = default_layout_3d(width = 500, height = 500)
+layout[:showLegend] = true
+@show layout
 
 # options=Dict(:showSendToCloud=>true, 
 #     :fillFrame=>true,
 #     :autosizable=> true,
 #     :showLink => true)
 pl = plot(plots, layout; 
-    options=Dict(:showSendToCloud=>true))
+    options=Dict(:showSendToCloud=>true, :showLink => true)))
 display(pl)
 
 
