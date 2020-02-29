@@ -161,7 +161,7 @@ version = "4.0.5"
 
 [[FinEtoolsBeamsVis]]
 deps = ["FinEtools", "JSON", "LinearAlgebra", "PlotlyJS", "WebIO"]
-git-tree-sha1 = "11b6902acd987f924bd751dd8e9c33f9575ac3dc"
+git-tree-sha1 = "983944d00d8dc3c00c7428ff3d45b77aa35a05b2"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/FinEtoolsBeamsVis.jl.git"
 uuid = "bb026db7-cde0-4861-94fc-3e61400bfc65"
@@ -188,9 +188,9 @@ version = "0.5.0"
 
 [[HTTP]]
 deps = ["Base64", "Dates", "IniFile", "MbedTLS", "Sockets"]
-git-tree-sha1 = "d52325a46b4df64bdf38ffbbaef00f0a0296943c"
+git-tree-sha1 = "8d9bdd55c9d0d6ddf08f8b5229f90b7f274b6777"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-version = "0.8.11"
+version = "0.8.12"
 
 [[Hiccup]]
 deps = ["MacroTools", "Test"]
@@ -285,10 +285,16 @@ deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[MbedTLS]]
-deps = ["BinaryProvider", "Dates", "Libdl", "Random", "Sockets"]
-git-tree-sha1 = "85f5947b53c8cfd53ccfa3f4abae31faa22c2181"
+deps = ["Dates", "MbedTLS_jll", "Random", "Sockets"]
+git-tree-sha1 = "709797fadd2d3b7e3f040a9f6e12726a6d6d2bf5"
 uuid = "739be429-bea8-5141-9913-cc70e7f3736d"
-version = "0.7.0"
+version = "1.0.0"
+
+[[MbedTLS_jll]]
+deps = ["Libdl", "Pkg"]
+git-tree-sha1 = "066a4467008745eed36dad973ceb66405785a621"
+uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
+version = "2.16.0+1"
 
 [[Missings]]
 deps = ["DataAPI"]
@@ -324,9 +330,9 @@ version = "0.3.1"
 
 [[OpenBLAS_jll]]
 deps = ["Libdl", "Pkg"]
-git-tree-sha1 = "e2551d7c25d52f35b76d86a50917a3ba8988f519"
+git-tree-sha1 = "adc45e596df7007d48bf6829efb1dc64fdec3ddc"
 uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
-version = "0.3.7+5"
+version = "0.3.7+6"
 
 [[OrderedCollections]]
 deps = ["Random", "Serialization", "Test"]
