@@ -1,6 +1,14 @@
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
+[![Build Status](https://travis-ci.com/PetrKryslUCSD/FinEtoolsFlexBeams.jl.svg?branch=master)](https://travis-ci.com/PetrKryslUCSD/FinEtoolsFlexBeams.jl)
+
+[![][docs-latest-img]][docs-latest-url]
+
+[docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
+[docs-latest-url]: http://petrkryslucsd.github.io/FinEtoolsFlexBeams.jl/latest/
+
 # FinEtoolsFlexBeams.jl
 
-FinEtools used for the simulation of large-displacement response of three-dimensional flexible-beam structures. Linear static analysis, modal analysis, linear buckling analysis.
+FinEtools used for the simulation of large-displacement response of three-dimensional flexible-beam structures. Linear static analysis, modal analysis, linear buckling analysis. Nonlinear statics and dynamics.
 
 ![](http://hogwarts.ucsd.edu/~pkrysl/site.images/circle-twist-anim.gif)
 
