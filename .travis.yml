@@ -24,7 +24,10 @@ jobs:
       julia: 1.4
       os: linux
       script:
-        - julia --project=docs/ -e 'using Pkg; Pkg.add("Documenter"); Pkg.add("FinEtools"); Pkg.add(PackageSpec(url="https://github.com/PetrKryslUCSD/FinEtoolsBeamsVis.jl.git"));  Pkg.add(PackageSpec(url="https://https://github.com/PetrKryslUCSD/FinEtoolsFlexBeams.jl")); Pkg.instantiate()'
+        - julia --project=docs/ -e 'using Pkg; Pkg.instantiate(); Pkg.add("Documenter"); Pkg.add("FinEtools"); Pkg.add(PackageSpec(url="https://github.com/PetrKryslUCSD/FinEtoolsBeamsVis.jl.git"));  Pkg.develop(PackageSpec(path=pwd()));'
         - julia --project=docs/ docs/make.jl
+      name: "HTML"
+      after_success: skip
+/make.jl
       name: "HTML"
       after_success: skip
