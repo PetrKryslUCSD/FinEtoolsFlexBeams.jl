@@ -311,12 +311,15 @@ function curved_cantilever_thin()
     display(pl)
     
     return true
-end # curved_cantilever
+end # curved_cantilever_thin
 
 function allrun()
     println("#####################################################")
-    println("# slowtop1 ")
-    slowtop1()
+    println("# curved_cantilever ")
+    curved_cantilever()
+    println("#####################################################")
+    println("# curved_cantilever_thin ")
+    curved_cantilever_thin()
     return true
 end # function allrun
 

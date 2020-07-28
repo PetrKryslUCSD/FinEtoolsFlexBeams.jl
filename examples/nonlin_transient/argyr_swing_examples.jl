@@ -1336,12 +1336,15 @@ function argyr_swing_compare()
     end
 
     return true
-end # argyr_swing_animated
+end # argyr_swing_compare
 
 function allrun()
     println("#####################################################")
-    println("# slowtop1 ")
-    slowtop1()
+    println("# argyr_swing_animated ")
+    argyr_swing_animated()
+    println("#####################################################")
+    println("# argyr_swing_compare ")
+    argyr_swing_compare()
     return true
 end # function allrun
 

@@ -28,7 +28,7 @@ layout[:showLegend] = true
 #     :autosizable=> true,
 #     :showLink => true)
 pl = plot(plots, layout; 
-    options=Dict(:showSendToCloud=>true, :showLink => true)))
+    options=Dict(:plotlyServerURL=>"https://chart-studio.plotly.com", :showSendToCloud=>true, :showLink => true))
 display(pl)
 
 

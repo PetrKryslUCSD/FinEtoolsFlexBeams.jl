@@ -144,7 +144,7 @@ function twisting_circle()
     end
     
     return true
-end # curved_cantilever
+end # twisting_circle
 
 function twisting_circle_frames()
     # Parameters:
@@ -263,9 +263,9 @@ function twisting_circle_frames()
     end
    
     return true
-end # curved_cantilever
+end # twisting_circle_frames
 
-function twisting_circle_1()
+function twisting_circle_frames_alt()
     # Parameters:
     E = 200000.0;
     nu = 0.3;# Poisson ratio
@@ -331,7 +331,7 @@ function twisting_circle_1()
     tshape0 = plot_solid(fens, fes; x = geom0.values, u = 0.0.*dchi.values[:, 1:3], R = Rfield0.values, facecolor = "rgb(125, 155, 125)", opacity = 0.3);
     plots = cat(tbox,  tshape0; dims = 1)
 
-    layout = Layout(width="300", height="300", autosize=true, title="title",
+    layout = Layout(width="500", height="500", autosize=true, title="title",
         scene=attr(
             xaxis=attr(title="X", gridcolor="rgb(255, 255, 255)",
               zerolinecolor="rgb(255, 255, 255)",
@@ -404,12 +404,18 @@ function twisting_circle_1()
     end
     
     return true
-end # twisting_circle_1
+end # twisting_circle_frames_alt
 
 function allrun()
     println("#####################################################")
-    println("# slowtop1 ")
-    slowtop1()
+    println("# twisting_circle ")
+    twisting_circle()
+    println("#####################################################")
+    println("# twisting_circle_frames ")
+    twisting_circle_frames()
+    println("#####################################################")
+    println("# twisting_circle_frames_alt ")
+    twisting_circle_frames_alt()
     return true
 end # function allrun
 
