@@ -20,9 +20,8 @@ using LinearAlgebra: dot
 using Arpack
 using LinearAlgebra
 using SparseArrays
-using FinEtoolsBeamsVis: plot_points, plot_nodes, plot_midline, render, plot_space_box, plot_solid, space_aspectratio
 using PlotlyJS
-using JSON
+using FinEtoolsFlexBeams.VisUtilModule: plot_points, plot_nodes, plot_midline, render, plot_space_box, plot_solid, space_aspectratio
 
 function fasttop1()
     # Parameters:
@@ -369,6 +368,9 @@ function allrun()
     println("#####################################################")
     println("# fasttop1 ")
     fasttop1()
+    println("#####################################################")
+    println("# fasttop2 ")
+    fasttop2()
     return true
 end # function allrun
 
