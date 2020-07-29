@@ -9,10 +9,9 @@
 
 # - 
 
-# using LinearAlgebra: dot
-# using LinearAlgebra
-# using SparseArrays
 # using PlotlyJS
+
+# ## Definition of the basic inputs
 
 # The finite element code realize on the basic functionality implemented in this
 # package.
@@ -23,18 +22,17 @@ using FinEtools
 E = 30002.0*phun("ksi") 
 nu = 0.0;
 
-# The mass density is expressed using the gravitational acceleration and the
-# weight of unit volume:
-g = 32.17*12*phun("in/sec^2");
-rho = 0.2*phun("lbm")/g;
+# The mass density is expressed in customary units as
+rho = 4.65*phun("oz/in ^3")
 # Here are the cross-sectional dimensions and the length of the beam between supports.
-b = 18*phun("in"); h = 18*phun("in"); L = 300*phun("in");
+b = 1.8*phun("in"); h = 1.8*phun("in"); L = 100*phun("in");
 
 # ## Analytical frequencies 
-# 
-# The analytical frequencies were taken from table 8-1 of Formulas for
-# natural frequency and mode shape, Robert D. Blevins, Krieger publishing
-# company, Malabar Florida, reprint edition 2001.
+
+# The analytical frequencies were taken from table 8-1 of Formulas for natural
+# frequency and mode shape, Robert D. Blevins, Krieger publishing company,
+# Malabar Florida, reprint edition 2001. Available also in FORMULAS FOR
+# DYNAMICS, ACOUSTICS AND VIBRATION, by the same author, Wiley, 2016, Table 4.2.
 # 
 # The beam is aligned with the $Y$ global Cartesian coordinate. The beam
 # behaves as a simply supported beam in the vertical plane (global Cartesian
@@ -52,6 +50,8 @@ I3 = b^3*h/12;# cm^4
 # analytical natural frequencies.
 neigvs = length(analyt_freq);
  
+ # ## Cross-section
+
 # Cross-sectional properties are incorporated in the cross-section property. The
 # three arguments supplied are functions. All are returning "constants". In
 # particular the first two functions each return the dimension of the
@@ -77,11 +77,13 @@ fens, fes = frame_member(xyz, n, cs);
 # Note  that the cross-sectional properties are incorporated through `cs`.
 
 # ## Material
+
 # Material properties can be now used to create a material: isotropic elasticity model of the `FinEtoolsDeforLinear` package is instantiated.
 using FinEtoolsDeforLinear
 material = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
 
 # ## Fields
+
 # Now we start constructing the discrete finite element model.
 # We begin by constructing the requisite fields, geometry and displacement.
 # These are the so-called "configuration variables", all initialized to 0.
@@ -161,9 +163,26 @@ M = CB.mass(femm, geom0, u0, Rfield0, dchi);
 @show size(K)
 
 # ## Solve the free-vibration problem
+
+# The Arnoldi algorithm implemented in the well-known `Arpack` package is used
+# to solve the generalized eigenvalue problem with the sparse matrices. As is
+# common in structural dynamics, we request the smallest eigenvalues in
+# absolute value (`:SM`). 
 using Arpack
 d,v,nev,nconv = eigs(K, M; nev=2*neigvs, which=:SM)
-fs = real(sqrt.(complex(d)))/(2*pi)
+# The eigenvalues (i. e. the squares of the angular frequencies) are returned in
+# the vector `d`. The mode shapes constitute the columns of the matrix `v`.
+@show size(v)
+# The natural frequencies are obtained from the squares of the angular
+# frequencies. We note the use of `sqrt.` which broadcast the square root over
+# the array `d`.
+fs = sqrt.(d)/(2*pi)
+# The approximate and analytical frequencies are now reported.
 println("Approximate frequencies: $fs [Hz]")
 println("Analytical frequencies: $analyt_freq [Hz]")
   
+# Close agreement between the approximate and analytical frequencies can be
+# observed: The error of the numerical solution is a fraction of a percent.
+@show fs[1:length(analyt_freq)] ./ analyt_freq
+
+
