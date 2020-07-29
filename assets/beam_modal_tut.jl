@@ -11,6 +11,7 @@
 
 # 
 
+##
 # ## Definition of the basic inputs
 
 # The finite element code realize on the basic functionality implemented in this
@@ -27,6 +28,7 @@ rho = 4.65*phun("oz/in ^3")
 # Here are the cross-sectional dimensions and the length of the beam between supports.
 b = 1.8*phun("in"); h = 1.8*phun("in"); L = 100*phun("in");
 
+##
 # ## Analytical frequencies 
 
 # The analytical frequencies were taken from table 8-1 of Formulas for natural
@@ -50,6 +52,7 @@ I3 = b^3*h/12;# cm^4
 # analytical natural frequencies.
 neigvs = length(analyt_freq);
  
+##
  # ## Cross-section
 
 # Cross-sectional properties are incorporated in the cross-section property. The
@@ -66,7 +69,7 @@ cs = CrossSectionRectangle(s -> b, s -> h, s -> [1.0, 0.0, 0.0])
 # Now we generate the mesh of the beam. The locations of its two endpoints are:
 xyz = [[0 -L/2 0]; [0 L/2 0]]
 # We will generate
-n = 8
+n = 4
 # beam elements along the member.
 using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member
 fens, fes = frame_member(xyz, n, cs);
@@ -146,7 +149,7 @@ numberdofs!(dchi);
 
 # ## Assemble the global discrete system
 using FinEtoolsFlexBeams.FEMMCorotBeamModule: FEMMCorotBeam
-femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material)
+femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material);
 
 # For disambiguation we will refer to the stiffness and mass functions by qualifying them with the corotational-beam module, `FEMMCorotBeamModule`.
 using FinEtoolsFlexBeams.FEMMCorotBeamModule
@@ -169,17 +172,21 @@ M = CB.mass(femm, geom0, u0, Rfield0, dchi);
 # common in structural dynamics, we request the smallest eigenvalues in
 # absolute value (`:SM`). 
 using Arpack
-d,v,nconv = eigs(K, M; nev=neigvs, which=:SM);
+evals, evecs, nconv = eigs(K, M; nev=neigvs, which=:SM);
 # First  we should check that the requested eigenvalues actually converged:
 @show nconv == neigvs
 
 # The eigenvalues (i. e. the squares of the angular frequencies) are returned in
-# the vector `d`. The mode shapes constitute the columns of the matrix `v`.
-@show size(v)
+# the vector `evals`. The mode shapes constitute the columns of the matrix `evecs`.
+@show size(evecs)
 # The natural frequencies are obtained from the squares of the angular
 # frequencies. We note the use of `sqrt.` which broadcast the square root over
-# the array `d`.
-fs = sqrt.(d)/(2*pi);
+# the array `evals`.
+fs = sqrt.(evals)/(2*pi);
+
+##
+# ## Comparison of computed and analytical results
+
 # The approximate and analytical frequencies are now reported.
 println("Approximate frequencies: $fs [Hz]")
 println("Analytical frequencies: $analyt_freq [Hz]")
@@ -190,29 +197,33 @@ println("Analytical frequencies: $analyt_freq [Hz]")
 errs = abs.(analyt_freq .- fs) ./ analyt_freq
 println("Relative errors of frequencies: $errs [ND]")
 
+##
 # ## Visualize vibration modes
 using FinEtoolsFlexBeams.RotUtilModule: update_rotation_field!
 using PlotlyJS
-using FinEtoolsBeamsVis: plot_space_box, plot_solid, render, react!, default_layout_3d
+using FinEtoolsFlexBeams.VisUtilModule: plot_space_box, plot_solid, render, react!, default_layout_3d, save_to_json
 scale = 3.0
-mode = 2
+mode = 1
 let
     tbox = plot_space_box([[-0.1*L -L/2 -0.1*L]; [+0.1*L L/2 +0.1*L]])
     tenv0 = plot_solid(fens, fes; x = geom0.values, u = 0.0.*dchi.values[:, 1:3], R = Rfield0.values, facecolor = "rgb(125, 155, 125)", opacity = 0.3);
     plots = cat(tbox, tenv0; dims = 1)
     layout = default_layout_3d(;width = 600, height = 600)
-    layout[:scene][:camera][:eye] = Dict(:x=>1.02, :y=> 1.02, :z=> 0.836)
-    layout[:scene][:camera][:center] = Dict(:x=>0.058, :y=>0.065, :z=>-0.122)
+    layout[:scene][:aspectmode] = "data"
+    # layout[:scene][:camera][:eye] = Dict(:x=>1.02, :y=> 1.02, :z=> 0.836)
+    # layout[:scene][:camera][:center] = Dict(:x=>0.058, :y=>0.065, :z=>-0.122)
     pl = render(plots; layout = layout, title = "Mode $(mode)")
     Rfield1 = deepcopy(Rfield0)
-    for xscale in scale.*sin.(collect(0:1:72).*(2*pi/21))
-        scattersysvec!(dchi, xscale.*v[:, mode])
+    for xscale in scale.*sin.(collect(0:1:89).*(2*pi/21))
+        scattersysvec!(dchi, xscale.*evecs[:, mode])
         Rfield1 = deepcopy(Rfield0)
         update_rotation_field!(Rfield1, dchi)
-        tenv1 = plot_solid(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield1.values, facecolor = "rgb(250, 255, 25)");
+        tenv1 = plot_solid(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield1.values, facecolor = "rgb(150, 255, 25)");
         plots = cat(tbox, tenv0, tenv1; dims = 1)
         react!(pl, plots, pl.plot.layout)
         sleep(0.115)
     end
-    savejson(pl, "plots.json")
+    save_to_json(pl, "plots.json")
 end
+using FinEtoolsFlexBeams.VisUtilModule: plot_from_json
+plot_from_json("plots.json")

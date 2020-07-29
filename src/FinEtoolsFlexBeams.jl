@@ -1,10 +1,11 @@
 module FinEtoolsFlexBeams
 
-__precompile__(false)
+# __precompile__(false)
 
 using FinEtools
 
 include("RotUtilModule.jl")
+include("VisUtilModule.jl")
 include("CrossSectionModule.jl")
 include("FESetCorotBeamModule.jl")
 include("MeshFrameMemberModule.jl")

@@ -146,12 +146,6 @@ git-tree-sha1 = "45acb34275e69878b50e554bc16546886b4804e6"
 uuid = "91bb5406-6c9a-523d-811d-0644c4229550"
 version = "4.3.0"
 
-[[FinEtoolsBeamsVis]]
-deps = ["FinEtools", "JSON", "LinearAlgebra", "PlotlyJS", "WebIO"]
-path = "../../../FinEtoolsBeamsVis.jl"
-uuid = "bb026db7-cde0-4861-94fc-3e61400bfc65"
-version = "0.1.1"
-
 [[FinEtoolsDeforLinear]]
 deps = ["Arpack", "BenchmarkTools", "FinEtools", "LinearAlgebra", "Literate", "PGFPlotsX", "SparseArrays", "Statistics", "StatsBase", "Test"]
 git-tree-sha1 = "f569103a97c3f4319aedfe616ef82f0448bcc935"
