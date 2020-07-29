@@ -21,6 +21,25 @@ FinEtools used for the simulation of large-displacement response of three-dimens
 
 ## Examples
 
+
+Clone the package to your working directory:
+```
+git clone https://github.com/PetrKryslUCSD/FinEtoolsFlexBeams.jl.git
+```
+
+Change your working directory to `FinEtoolsFlexBeams`. Start Julia and run
+the following:
+```
+using Pkg; Pkg.activate("."); Pkg.instantiate()
+Pkg.build()
+```
+
+In general the tutorials require the folder `FinEtoolsFlexBeams.jl/notebooks` to be the working directory since the scripts assume that the input files will be found in the current directory. So to run a tutorial, do
+```
+using IJulia    
+IJulia.notebook(dir = pwd(), detached = true)
+```
+head over to the `notebooks` folder, open the tutorial notebook, and evaluate in Jupyter.
 Activate and instantiate the environment:
 
 ```julia
