@@ -19,8 +19,7 @@ FinEtools used for the simulation of large-displacement response of three-dimens
 - 02/20/2020: Nonlinear transient dynamic analysis implemented.
 - 02/16/2020: Buckling analysis implemented.
 
-## Examples
-
+## Tutorials
 
 Clone the package to your working directory:
 ```
@@ -40,12 +39,8 @@ using IJulia
 IJulia.notebook(dir = pwd(), detached = true)
 ```
 head over to the `notebooks` folder, open the tutorial notebook, and evaluate in Jupyter.
-Activate and instantiate the environment:
 
-```julia
-using Pkg
-Pkg.activate("."); Pkg.instantiate()
-```
+## Examples
 
 There are a number of examples, which may be executed as described in the conceptual guide to [`FinEtools`](https://github.com/PetrKryslUCSD/FinEtools.jl).
 
