@@ -9,7 +9,7 @@
 
 # - 
 
-# using PlotlyJS
+# 
 
 # ## Definition of the basic inputs
 
@@ -66,7 +66,7 @@ cs = CrossSectionRectangle(s -> b, s -> h, s -> [1.0, 0.0, 0.0])
 # Now we generate the mesh of the beam. The locations of its two endpoints are:
 xyz = [[0 -L/2 0]; [0 L/2 0]]
 # We will generate
-n = 4
+n = 8
 # beam elements along the member.
 using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member
 fens, fes = frame_member(xyz, n, cs);
@@ -190,4 +190,29 @@ println("Analytical frequencies: $analyt_freq [Hz]")
 errs = abs.(analyt_freq .- fs) ./ analyt_freq
 println("Relative errors of frequencies: $errs [ND]")
 
-
+# ## Visualize vibration modes
+using FinEtoolsFlexBeams.RotUtilModule: update_rotation_field!
+using PlotlyJS
+using FinEtoolsBeamsVis: plot_space_box, plot_solid, render, react!, default_layout_3d
+scale = 3.0
+mode = 2
+let
+    tbox = plot_space_box([[-0.1*L -L/2 -0.1*L]; [+0.1*L L/2 +0.1*L]])
+    tenv0 = plot_solid(fens, fes; x = geom0.values, u = 0.0.*dchi.values[:, 1:3], R = Rfield0.values, facecolor = "rgb(125, 155, 125)", opacity = 0.3);
+    plots = cat(tbox, tenv0; dims = 1)
+    layout = default_layout_3d(;width = 600, height = 600)
+    layout[:scene][:camera][:eye] = Dict(:x=>1.02, :y=> 1.02, :z=> 0.836)
+    layout[:scene][:camera][:center] = Dict(:x=>0.058, :y=>0.065, :z=>-0.122)
+    pl = render(plots; layout = layout, title = "Mode $(mode)")
+    Rfield1 = deepcopy(Rfield0)
+    for xscale in scale.*sin.(collect(0:1:72).*(2*pi/21))
+        scattersysvec!(dchi, xscale.*v[:, mode])
+        Rfield1 = deepcopy(Rfield0)
+        update_rotation_field!(Rfield1, dchi)
+        tenv1 = plot_solid(fens, fes; x = geom0.values, u = dchi.values[:, 1:3], R = Rfield1.values, facecolor = "rgb(250, 255, 25)");
+        plots = cat(tbox, tenv0, tenv1; dims = 1)
+        react!(pl, plots, pl.plot.layout)
+        sleep(0.115)
+    end
+    savejson(pl, "plots.json")
+end
