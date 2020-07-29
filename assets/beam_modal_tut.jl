@@ -2,7 +2,7 @@
 
 # ## Description
 
-# Vibration analysis of beam which is simply supported in one plane, and clamped
+# Vibration analysis of a beam simply supported in one plane, and clamped
 # in another. The results are compared with analytical expressions.
 
 # ## Goals
@@ -53,7 +53,7 @@ I3 = b^3*h/12;# cm^4
 neigvs = length(analyt_freq);
  
 ##
- # ## Cross-section
+# ## Cross-section
 
 # Cross-sectional properties are incorporated in the cross-section property. The
 # three arguments supplied are functions. All are returning "constants". In
@@ -79,12 +79,14 @@ fens, fes = frame_member(xyz, n, cs);
 @show fes
 # Note  that the cross-sectional properties are incorporated through `cs`.
 
+##
 # ## Material
 
 # Material properties can be now used to create a material: isotropic elasticity model of the `FinEtoolsDeforLinear` package is instantiated.
 using FinEtoolsDeforLinear
 material = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
 
+##
 # ## Fields
 
 # Now we start constructing the discrete finite element model.
@@ -108,6 +110,9 @@ Rfield0 = initial_Rfield(fens)
 # incremental displacements and incremental rotations. In total, 6 unknowns per
 # node.
 dchi = NodalField(zeros(size(fens.xyz,1), 6))
+
+##
+# ## Support conditions
 
 # Now we apply the essential boundary conditions (EBCs) to enforce the action of
 # the supports at the ends of the beam. 
@@ -146,8 +151,9 @@ numberdofs!(dchi);
 # field, not by the displacement or the rotation fields. 
 
 
-
+##
 # ## Assemble the global discrete system
+
 using FinEtoolsFlexBeams.FEMMCorotBeamModule: FEMMCorotBeam
 femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material);
 
@@ -165,6 +171,7 @@ M = CB.mass(femm, geom0, u0, Rfield0, dchi);
 # freedom that are unknown (20).
 @show size(K)
 
+##
 # ## Solve the free-vibration problem
 
 # The Arnoldi algorithm implemented in the well-known `Arpack` package is used
