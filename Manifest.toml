@@ -142,9 +142,9 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[FinEtools]]
 deps = ["Arpack", "DelimitedFiles", "LinearAlgebra", "LoopVectorization", "Printf", "Random", "SparseArrays", "Statistics", "StatsBase", "Test", "Unicode"]
-git-tree-sha1 = "7af31280fc800748f1ac6ee5e468ae71432c0151"
+git-tree-sha1 = "45acb34275e69878b50e554bc16546886b4804e6"
 uuid = "91bb5406-6c9a-523d-811d-0644c4229550"
-version = "4.2.1"
+version = "4.3.0"
 
 [[FinEtoolsBeamsVis]]
 deps = ["FinEtools", "JSON", "LinearAlgebra", "PlotlyJS", "WebIO"]
