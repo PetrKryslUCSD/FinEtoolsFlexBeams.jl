@@ -148,9 +148,7 @@ version = "4.3.0"
 
 [[FinEtoolsBeamsVis]]
 deps = ["FinEtools", "JSON", "LinearAlgebra", "PlotlyJS", "WebIO"]
-git-tree-sha1 = "b6af954dd1ebe5c624a9a3e02d504ab1c575e110"
-repo-rev = "master"
-repo-url = "https://github.com/PetrKryslUCSD/FinEtoolsBeamsVis.jl.git"
+path = "../../../FinEtoolsBeamsVis.jl"
 uuid = "bb026db7-cde0-4861-94fc-3e61400bfc65"
 version = "0.1.1"
 
