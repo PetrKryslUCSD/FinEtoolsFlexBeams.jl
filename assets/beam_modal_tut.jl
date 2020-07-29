@@ -169,20 +169,25 @@ M = CB.mass(femm, geom0, u0, Rfield0, dchi);
 # common in structural dynamics, we request the smallest eigenvalues in
 # absolute value (`:SM`). 
 using Arpack
-d,v,nev,nconv = eigs(K, M; nev=2*neigvs, which=:SM)
+d,v,nconv = eigs(K, M; nev=neigvs, which=:SM);
+# First  we should check that the requested eigenvalues actually converged:
+@show nconv == neigvs
+
 # The eigenvalues (i. e. the squares of the angular frequencies) are returned in
 # the vector `d`. The mode shapes constitute the columns of the matrix `v`.
 @show size(v)
 # The natural frequencies are obtained from the squares of the angular
 # frequencies. We note the use of `sqrt.` which broadcast the square root over
 # the array `d`.
-fs = sqrt.(d)/(2*pi)
+fs = sqrt.(d)/(2*pi);
 # The approximate and analytical frequencies are now reported.
 println("Approximate frequencies: $fs [Hz]")
 println("Analytical frequencies: $analyt_freq [Hz]")
+
   
 # Close agreement between the approximate and analytical frequencies can be
 # observed: The error of the numerical solution is a fraction of a percent.
-@show fs[1:length(analyt_freq)] ./ analyt_freq
+errs = abs.(analyt_freq .- fs) ./ analyt_freq
+println("Relative errors of frequencies: $errs [ND]")
 
 
