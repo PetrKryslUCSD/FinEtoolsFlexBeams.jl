@@ -182,16 +182,19 @@ function integrate(CB, geom0, u0, Rfield0, dchi, v0)
     tipy = Float64[]
     push!(tipx, X[2,1])
     push!(tipy, X[2,2])
-    tbox = scatter(;x=[0.0, 0.06], y=[-0.06, 0.02], mode="markers")
+    tbox = scatter(;x=[0.0, 0.06], y=[-0.06, 0.02], mode="markers", name = "", line_color = "rgb(255, 255, 255)")
     refv = readdlm("fast_top_ref.txt", ',')
-    tref = scatter(;x=refv[:, 1], y=refv[:, 2], mode="lines", color = "rgb(15, 15, 15)")
+    tref = scatter(;x=refv[:, 1], y=refv[:, 2], mode="lines", name = "Reference", line_color = "rgb(15, 15, 15)")
     plots = cat(tbox, tref, scatter(;x=tipx./Length, y=tipy./Length, mode="markers+lines"); dims = 1)
-    layout = Layout(width=500, height=500)
+    layout = Layout(;width=500, height=500, xaxis=attr(title="x-coordinate", zeroline=false),
+                         yaxis=attr(title="y-coordinate", zeroline=false))
     pl = plot(plots, layout)
     display(pl)
-    sleep(11.0)
+    sleep(1.0)
     
-    
+    layout = Layout(;title="Quarter 1 Growth",
+                         xaxis=attr(title="GDP per Capital", showgrid=false, zeroline=false),
+                         yaxis=attr(title="Percent", zeroline=false))
     t = 0.0;
     step = 0;
     while (t <= tend)
@@ -248,7 +251,7 @@ function integrate(CB, geom0, u0, Rfield0, dchi, v0)
         if (mod(step,20)==0)
             push!(tipx, X[2,1]+u1.values[tipn[1], 1])
             push!(tipy, X[2,2]+u1.values[tipn[1], 2])
-            plots = cat(tbox, tref, scatter(;x=tipx./Length, y=tipy./Length, mode="markers+lines"); dims = 1)
+            plots = cat(tbox, tref, scatter(;x=tipx./Length, y=tipy./Length, mode="markers", name = "Sol", line_color = "rgb(155, 15, 15)"); dims = 1)
             react!(pl, plots, pl.plot.layout)
             sleep(0.01)
         end
