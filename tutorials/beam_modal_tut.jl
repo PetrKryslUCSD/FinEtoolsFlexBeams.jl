@@ -236,13 +236,13 @@ let
     layout = default_layout_3d(;width=600, height=600, options = Dict(:responsive=>true))
     # Set the aspect mode to get the correct proportions.
     layout[:scene][:aspectmode] = "data"
-    # Render the structure without 
+    # Render the undeformed structure
     pl = render(plots; layout=layout, title="Mode $(mode)")
     sleep(2.115)
     # This is the animation loop. 
     # 1. Distribute a fraction of the selected eigenvector into the incremental displacement/rotation field.
     # 2. Create the deformed configuration by defining displacement field `u1` and rotation field `Rfield1`.
-    # 3. Create the plot for the deformed configuration, and added to the list of plots.
+    # 3. Create the plot for the deformed configuration, and add it to the list of plots.
     # 4. Call the `react!` function to update the display. Sleep for a brief period of time to give the display a chance to become current.
     for xscale in scale .* sin.(collect(0:1:89) .* (2 * pi / 21))
         scattersysvec!(dchi, xscale .* evecs[:, mode])
