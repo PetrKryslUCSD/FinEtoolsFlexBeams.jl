@@ -12,6 +12,7 @@
 # - 
 
 using LinearAlgebra
+using PlotlyJS
 
 ##
 # ## Definition of the basic inputs
@@ -152,6 +153,7 @@ fi = ForceIntensity(q);
 
 
 using FinEtoolsFlexBeams.RotUtilModule: initial_Rfield, linear_update_rotation_field!, update_rotation_field!
+using DelimitedFiles
 
 function integrate(CB, geom0, u0, Rfield0, dchi, v0)
     # Additional fields
@@ -176,16 +178,18 @@ function integrate(CB, geom0, u0, Rfield0, dchi, v0)
     # pl = render(plots)
     # sleep(3.5)
     
-    # tipx = Float64[]
-    # tipy = Float64[]
-    # push!(tipx, X[2,1])
-    # push!(tipy, X[2,2])
-    # tbox = scatter(;x=[0.0, 0.06], y=[-0.06, 0.02], mode="markers")
-    # plots = cat(tbox, scatter(;x=tipx./Length, y=tipy./Length, mode="markers+lines"); dims = 1)
-    # layout = Layout(width=500, height=500)
-    # pl = plot(plots, layout)
-    # display(pl)
-    
+    tipx = Float64[]
+    tipy = Float64[]
+    push!(tipx, X[2,1])
+    push!(tipy, X[2,2])
+    tbox = scatter(;x=[0.0, 0.06], y=[-0.06, 0.02], mode="markers")
+    refv = readdlm("fast_top_ref.txt", ',')
+    tref = scatter(;x=refv[:, 1], y=refv[:, 2], mode="lines", color = "rgb(15, 15, 15)")
+    plots = cat(tbox, tref, scatter(;x=tipx./Length, y=tipy./Length, mode="markers+lines"); dims = 1)
+    layout = Layout(width=500, height=500)
+    pl = plot(plots, layout)
+    display(pl)
+    sleep(11.0)
     
     
     t = 0.0;
@@ -241,13 +245,13 @@ function integrate(CB, geom0, u0, Rfield0, dchi, v0)
         # plots = cat(tbox,  tshape0,  tshape1; dims = 1)
         # react!(pl, plots, pl.plot.layout)
         
-        # if (mod(step,20)==0)
-        #     push!(tipx, X[2,1]+u1.values[tipn[1], 1])
-        #     push!(tipy, X[2,2]+u1.values[tipn[1], 2])
-        #     plots = cat(tbox, scatter(;x=tipx./Length, y=tipy./Length, mode="markers+lines"); dims = 1)
-        #     react!(pl, plots, pl.plot.layout)
-        #     sleep(0.01)
-        # end
+        if (mod(step,20)==0)
+            push!(tipx, X[2,1]+u1.values[tipn[1], 1])
+            push!(tipy, X[2,2]+u1.values[tipn[1], 2])
+            plots = cat(tbox, tref, scatter(;x=tipx./Length, y=tipy./Length, mode="markers+lines"); dims = 1)
+            react!(pl, plots, pl.plot.layout)
+            sleep(0.01)
+        end
         
         step=step+1;
     end

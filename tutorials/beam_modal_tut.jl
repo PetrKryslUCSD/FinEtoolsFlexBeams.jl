@@ -215,6 +215,7 @@ println("Relative errors of frequencies: $errs [ND]")
 using FinEtoolsFlexBeams.RotUtilModule: update_rotation_field!
 
 # The visualization utilities take advantage of the PlotlyJS library.
+using PlotlyJS
 using FinEtoolsFlexBeams.VisUtilModule: plot_space_box, plot_solid, render, react!, default_layout_3d, save_to_json
 
 # The magnitude of the vibration modes (displacements  and rotations) will be amplified with this scale factor:
@@ -232,7 +233,7 @@ let
     # Initially the plot consists of the box and the undeformed geometry.
     plots = cat(tbox, tenv0; dims=1)
     # Create the layout for the plot. Set the size of the window.
-    layout = default_layout_3d(;width=600, height=600)
+    layout = default_layout_3d(;width=600, height=600, options = Dict(:responsive=>true))
     # Set the aspect mode to get the correct proportions.
     layout[:scene][:aspectmode] = "data"
     # Render the structure without 

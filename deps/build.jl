@@ -7,7 +7,7 @@ for tut1 in readdir(sources_dir)
     if occursin(r".*_tut.jl", tut1)
         # Literate.markdown(tut1, "."; documenter=false);
         # Literate.notebook(tut1, "."; execute=false, documenter=false);
-        Literate.notebook(joinpath(sources_dir, tut1), notebooks_dir; documenter=false, execute=false)
+        Literate.markdown(joinpath(sources_dir, tut1), notebooks_dir; documenter=false, execute=false)
     end
 end
 
