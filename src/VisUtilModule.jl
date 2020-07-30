@@ -93,13 +93,29 @@ end
 
 Plot the midline
 """
-function plot_midline(fens, fes; color = "rgb(155, 155, 255)", lwidth = 4)
+function plot_midline(fens, fes; kwargs...)
+    x = deepcopy(fens.xyz)
+    if :x in keys(kwargs)
+        x = kwargs[:x]; kwargs = removepair(kwargs, :x)
+    end
+    u = fill(0.0, size(x))
+    if :u in keys(kwargs)
+        u = kwargs[:u]; kwargs = removepair(kwargs, :u)
+    end
+    lwidth = 4
+    if :lwidth in keys(kwargs)
+        lwidth = kwargs[:lwidth]; kwargs = removepair(kwargs, :lwidth)
+    end
+    color = "rgb(155, 155, 255)"
+    if :color in keys(kwargs)
+        color = kwargs[:color]; kwargs = removepair(kwargs, :color)
+    end
     xyz = fill(0.0, 2, 3)
     t = PlotlyBase.GenericTrace[]
     for c in fes.conn
-        xyz[1, :] .= fens.xyz[c[1], :]
-        xyz[2, :] .= fens.xyz[c[2], :]
-        push!(t, scatter3d(;x=xyz[:, 1],y=xyz[:, 2], z=xyz[:, 3], mode="lines", line=attr(color=color, width=lwidth)))
+        xyz[1, :] .= x[c[1], :] .+ u[c[1], :]
+        xyz[2, :] .= x[c[2], :] .+ u[c[2], :]
+        push!(t, scatter3d(;x=xyz[:, 1], y=xyz[:, 2], z=xyz[:, 3], mode="lines", line=attr(color=color, width=lwidth)))
     end
     return t
 end
