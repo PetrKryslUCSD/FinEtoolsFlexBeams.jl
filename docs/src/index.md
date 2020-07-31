@@ -1,16 +1,8 @@
 # FinEtools (Finite Element tools) Documentation
 
+## Tutorials
 
-## Conceptual guide
-
-The construction of the toolkit is described: the composition of modules, the basic data structures, the methodology of computing quantities required in the finite element methodology, and more.
-
-```@contents
-Pages = [
-    "guide/guide.md",
-]
-Depth = 1
-```
+Tutorials in the form of scripts.
 
 ## Manual
 
@@ -22,4 +14,15 @@ Pages = [
     "man/functions.md",
 ]
 Depth = 2
+```
+
+## Conceptual guide
+
+The construction of the toolkit is described: the composition of modules, the basic data structures, the methodology of computing quantities required in the finite element methodology, and more.
+
+```@contents
+Pages = [
+    "guide/guide.md",
+]
+Depth = 1
 ```
