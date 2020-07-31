@@ -17,7 +17,7 @@ using LinearAlgebra: dot
 using Arpack
 using LinearAlgebra
 using SparseArrays
-using FinEtoolsBeamsVis: plot_points, plot_nodes, plot_midline, render, plot_space_box, plot_solid, space_aspectratio
+using FinEtoolsFlexBeams.VisUtilModule: plot_space_box, plot_midline, plot_solid, render, react!, default_layout_3d, save_to_json
 using PlotlyJS
 using JSON
 
@@ -176,8 +176,8 @@ end # twisting_circle
 
 function allrun()
     println("#####################################################")
-    println("# slowtop1 ")
-    slowtop1()
+    println("# twisting_circle ")
+    twisting_circle()
     return true
 end # function allrun
 

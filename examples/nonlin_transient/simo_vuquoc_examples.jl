@@ -19,7 +19,7 @@ using LinearAlgebra: dot
 using Arpack
 using LinearAlgebra
 using SparseArrays
-using FinEtoolsBeamsVis: plot_points, plot_nodes, plot_midline, render, plot_space_box, plot_solid, space_aspectratio
+using FinEtoolsFlexBeams.VisUtilModule: plot_space_box, plot_midline, plot_solid, render, react!, default_layout_3d, save_to_json
 using PlotlyJS
 using JSON
 
@@ -541,8 +541,14 @@ end # argyr_swing_animated
 
 function allrun()
     println("#####################################################")
-    println("# slowtop1 ")
-    slowtop1()
+    println("# simo_vuquoc_animated ")
+    simo_vuquoc_animated()
+    println("#####################################################")
+    println("# simo_vuquoc_compare ")
+    simo_vuquoc_compare()
+    println("#####################################################")
+    println("# argyr_swing_compare ")
+    argyr_swing_compare()
     return true
 end # function allrun
 
