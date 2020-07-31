@@ -71,7 +71,7 @@ neigvs = 1;
 # Now we generate the mesh of the beam. The locations of its two endpoints are:
 xyz = [[0 -L/2 0]; [0 L/2 0]]
 # We will generate
-n = 8
+n = 20
 # beam elements along the member.
 using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member
 fens, fes = frame_member(xyz, n, cs);
