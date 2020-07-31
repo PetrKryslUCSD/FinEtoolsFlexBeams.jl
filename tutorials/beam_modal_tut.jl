@@ -24,7 +24,8 @@ E = 30002.0 * phun("ksi")
 nu = 0.0;
 
 # The mass density is expressed in customary units as
-rho = 4.65 * phun("oz/in ^3")
+g = 32.17*12 * phun("in/sec^2")
+rho = 4.65 * phun("oz/in ^3") / g
 # Here are the cross-sectional dimensions and the length of the beam between supports.
 b = 1.8 * phun("in"); h = 1.8 * phun("in"); L = 100 * phun("in");
 
@@ -219,7 +220,7 @@ using PlotlyJS
 using FinEtoolsFlexBeams.VisUtilModule: plot_space_box, plot_solid, render, react!, default_layout_3d, save_to_json
 
 # The magnitude of the vibration modes (displacements  and rotations) will be amplified with this scale factor:
-scale = 3.0
+scale = 1.5
 
 # This is the mode that will be animated:
 mode = 1
@@ -227,7 +228,7 @@ mode = 1
 # In order to handle variables inside loops correctly, we create a local scope with the `let end` block.
 let
     # The extents of the box will be preserved during animation in order to eliminate changes in the viewing parameters.
-    tbox = plot_space_box([[-0.1 * L -L / 2 -0.1 * L]; [+0.1 * L L / 2 +0.1 * L]])
+    tbox = plot_space_box([[-0.2 * L -L / 2 -0.2 * L]; [+0.2 * L L / 2 +0.2 * L]])
     # This is the geometry of the structure without deformation (undeformed). It is displayed as gray, partially transparent.
     tenv0 = plot_solid(fens, fes; x=geom0.values, u=0.0 .* dchi.values[:, 1:3], R=Rfield0.values, facecolor="rgb(125, 155, 125)", opacity=0.3);
     # Initially the plot consists of the box and the undeformed geometry.
