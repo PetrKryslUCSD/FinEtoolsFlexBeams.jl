@@ -57,6 +57,8 @@ cs_tailh = CrossSectionRectangle(s -> L/10, s -> L, s -> [0.0, 0.0, 1.0])
 cs_conn = CrossSectionRectangle(s -> L/10, s -> L/10, s -> [1.0, 0.0, 1.0])
 # Massless connector between the body and the wings.
 cs_connw = CrossSectionRectangle(s -> L/2, s -> L/2, s -> [1.0, 0.0, 1.0])
+# Massless connector between the body and the tail.
+cs_connt = CrossSectionRectangle(s -> L, s -> L/5, s -> [1.0, 0.0, 1.0])
 # Viscoelastic connecting layer.
 cs_vconstr = CrossSectionRectangle(s -> L*(1.1/100), s -> L*(76.2/100), s -> [0.0, 0.0, 1.0])
 
@@ -70,13 +72,16 @@ meshes = Tuple{FENodeSet, AbstractFESet}[]
 # Define the constituent parts of the body of the aircraft.
 push!(meshes, frame_member([-9*L 0 0; -8.5*L 0 0], 1, cs_body; label = 1))
 push!(meshes, frame_member([-8.5*L 0 0; -8.0*L 0 0], 1, cs_body; label = 1))
-push!(meshes, frame_member([-8.0*L 0 0; 0 0 0], 2, cs_body; label = 1))
+push!(meshes, frame_member([-8.0*L 0 0; -2.0*L 0 0], 2, cs_body; label = 1))
+push!(meshes, frame_member([-2.0*L 0 0; 0 0 0], 1, cs_body; label = 1))
 push!(meshes, frame_member([0 0 0; 6*L 0 0], 2, cs_body; label = 1))
 
 # Define the aluminum parts of the wings.
-for i in 1:16
-    push!(meshes, frame_member([0 (i-1)*.375*L .805*L;  0 0.375*i*L .805*L], 1, cs_wing; label = 2))
-    push!(meshes, frame_member([0 -(i-1)*.375*L .805*L;  0 -0.375*i*L .805*L], 1, cs_wing; label = 2))
+push!(meshes, frame_member([0 0 .805*L;  0 0.25*L .805*L], 1, cs_wing; label = 2))
+push!(meshes, frame_member([0 0 .805*L;  0 -0.25*L .805*L], 1, cs_wing; label = 2))
+for i in 1:15
+    push!(meshes, frame_member([0 (0.25+(i-1)*5.75/15)*L .805*L;  0 (0.25+5.75/15*i)*L .805*L], 1, cs_wing; label = 2))
+    push!(meshes, frame_member([0 -(0.25+(i-1)*5.75/15)*L .805*L;  0 -(0.25+5.75/15*i)*L .805*L], 1, cs_wing; label = 2))
 end
 for i in 1:8
     push!(meshes, frame_member([0 (6*L+(i-1)*.5*L) .805*L; 0 (6*L + 0.5*i*L) .805*L], 1, cs_wing; label = 2))
@@ -90,15 +95,17 @@ push!(meshes, frame_member([0 -9.5*L +0.91*L; +2*L -9.5*L +0.91*L], 1, cs_drum; 
 push!(meshes, frame_member([0 -9.5*L +0.91*L; -2*L -9.5*L +0.91*L], 1, cs_drum; label = 3))
 
 # Define the horizontal and vertical parts of the tail.
-push!(meshes, frame_member([-8*L 0 .75*L; -8*L 0 3.35*L], 1, cs_tailv; label = 4))
-push!(meshes, frame_member([-8*L 0 3.35*L; -8*L 0 3.75*L], 1, cs_tailv; label = 4))
-push!(meshes, frame_member([-8*L 0 3.8*L; -8*L 2*L 3.8*L], 1, cs_tailh; label = 5))
-push!(meshes, frame_member([-8*L 0 3.8*L; -8*L -2*L 3.8*L], 1, cs_tailh; label = 5))
+push!(meshes, frame_member([-8*L 0 .75*L; -8*L 0 3.35*L], 2, cs_tailv; label = 4))
+push!(meshes, frame_member([-8*L 0 3.35*L; -8*L 0 3.75*L], 2, cs_tailv; label = 4))
+push!(meshes, frame_member([-8*L 0 3.8*L; -8*L 2*L 3.8*L], 2, cs_tailh; label = 5))
+push!(meshes, frame_member([-8*L 0 3.8*L; -8*L -2*L 3.8*L], 2, cs_tailh; label = 5))
 
 # Define the parts of the viscoelastic constraining layer.
-for i in 1:16
-    push!(meshes, frame_member([-.119*L (i-1)*.375*L .8606*L;  -.119*L 0.375*i*L .8606*L], 1, cs_vconstr; label = 6))
-    push!(meshes, frame_member([-.119*L -(i-1)*.375*L .8606*L;  -.119*L -0.375*i*L .8606*L], 1, cs_vconstr; label = 6))
+push!(meshes, frame_member([-.119*L 0 .8606*L;  -.119*L 0.25*L .8606*L], 1, cs_vconstr; label = 6))
+push!(meshes, frame_member([-.119*L 0 .8606*L;  -.119*L -0.25*L .8606*L], 1, cs_vconstr; label = 6))
+for i in 1:15
+    push!(meshes, frame_member([-.119*L (0.25+(i-1)*5.75/15)*L .8606*L;  -.119*L (0.25+5.75/15*i)*L .8606*L], 1, cs_vconstr; label = 6))
+    push!(meshes, frame_member([-.119*L -(0.25+(i-1)*5.75/15)*L .8606*L;  -.119*L -(0.25+5.75/15*i)*L .8606*L], 1, cs_vconstr; label = 6))
 end
 for i in 1:5
     push!(meshes, frame_member([-.119*L (6*L+(i-1)*.5*L) .8606*L; -.119*L (6*L+0.5*i*L) .8606*L], 1, cs_vconstr; label = 6))
@@ -112,7 +119,7 @@ push!(meshes, frame_member([0 -9.5*L +0.805*L;0 -9.5*L +0.91*L], 1, cs_conn; lab
 # Body-Wing
 push!(meshes, frame_member([0 0 0; 0 0 .805*L], 1, cs_connw; label = 7))
 # Body-Tail
-push!(meshes, frame_member([-8*L 0 0; -8*L 0 .75*L], 1, cs_conn; label = 7))
+push!(meshes, frame_member([-8*L 0 0; -8*L 0 .75*L], 1, cs_connt; label = 7))
 # Tail-Taildrum
 push!(meshes, frame_member([-8*L 0 3.75*L; -8*L 0 3.8*L], 1, cs_conn; label = 7))
 
@@ -121,13 +128,15 @@ push!(meshes, frame_member([-8*L 0 3.75*L; -8*L 0 3.8*L], 1, cs_conn; label = 7)
 push!(meshes, frame_member([0 0 .805*L; -.119*L 0 .8606*L], 1, cs_conn; label = 7))
 
 # Connectors created for both wings
-for i in 1:16
-    push!(meshes, frame_member([0 i*.375*L .805*L; -.119*L 0.375*i*L 0.8606*L], 1, cs_conn; label = 7))
-    push!(meshes, frame_member([0 -i*.375*L .805*L; -.119*L -0.375*i*L 0.8606*L], 1, cs_conn; label = 7))
+push!(meshes, frame_member([0 0.25*L .805*L;  -.119*L 0.25*L 0.8606*L], 1, cs_conn; label = 7))
+push!(meshes, frame_member([0 0.25*L .805*L;  -.119*L -0.25*L 0.8606*L], 1, cs_conn; label = 7))
+for i in 1:15
+    push!(meshes, frame_member([0 (0.25+(i-1)*5.75/15)*L 0.805*L;  -.119*L (0.25+(i-1)*5.75/15)*L .8606*L], 1, cs_conn; label = 7))
+    push!(meshes, frame_member([0 -(0.25+(i-1)*5.75/15)*L 0.805*L;  -.119*L -(0.25+(i-1)*5.75/15)*L .8606*L], 1, cs_conn; label = 7))
 end
-for i in 1:6
-    push!(meshes, frame_member([0 (6*L+(i-1)*.5*L) .805*L; -.119*L (6*L + 0.5*(i-1)*L) 0.8606*L], 1, cs_conn; label = 7))
-    push!(meshes, frame_member([0 (-6*L-(i-1)*.5*L) .805*L; -.119*L (-6*L-0.5*(i-1)*L) 0.8606*L], 1, cs_conn; label = 7))
+for i in 1:5
+    push!(meshes, frame_member([0 (6*L+(i-1)*.5*L) .805*L; -.119*L (6*L+(i-1)*.5*L) .8606*L], 1, cs_conn; label = 7))
+    push!(meshes, frame_member([0 (-6*L-(i-1)*.5*L) .805*L; -.119*L -(6*L+(i-1)*.5*L) .8606*L], 1, cs_conn; label = 7))
 end
 
 # Massless Sensor Connectors
@@ -147,6 +156,7 @@ push!(meshes, frame_member([2*L -9.5*L .91*L ; 1.8*L -9.8*L .96*L], 1, cs_conn; 
 # Merge all the meshes of individual parts. This will glued together notes which are in the "same" location.
 fens, fesa = mergenmeshes(meshes, tolerance)
 
+
 # The geometry is visualized in the tutorial garteur_geometry_tut.
 
 ##
@@ -156,12 +166,16 @@ fens, fesa = mergenmeshes(meshes, tolerance)
 using FinEtoolsDeforLinear
 # The material of the structure is aluminum.
 alu = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
+# The material of the structure is viscoelastic layer.
+layer = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
 # Material for the massless connectors has the mass density set to zero; otherwise it has the same properties as the aluminum material  of the structure.
 massless = MatDeforElastIso(DeforModelRed3D, 0.0, E, nu, 0.0)
 
 # This simple function returns material based on the label of the beam elements.
 material(labl) = begin
-    if labl == 7 || labl == 8
+    if labl == 6
+        return layer
+    elseif labl == 7 || labl == 8
         return massless
     end
     return alu
@@ -205,8 +219,8 @@ numberdofs!(dchi);
 # ## Identify support points and locations of sensors
 
 # Suspension points
-suspln = selectnode(fens; box = initbox!(Float64[], vec([0.0*L 0.375*L 0.805*L])), inflate = tolerance)
-susprn = selectnode(fens; box = initbox!(Float64[], vec([0.0*L -0.375*L 0.805*L])), inflate = tolerance)
+suspln = selectnode(fens; box = initbox!(Float64[], vec([0.0*L 0.0*L 0.805*L])), inflate = tolerance)
+susprn = selectnode(fens; box = initbox!(Float64[], vec([0.0*L -0.0*L 0.805*L])), inflate = tolerance)
 suspbn = selectnode(fens; box = initbox!(Float64[], vec([-2.0*L 0.0*L 0.0*L])), inflate = tolerance)
 
 # The sensors at the tip of the left and right wing drum
@@ -268,20 +282,21 @@ Mp = PM.mass(femmcm1, geom0, u0, Rfield0, dchi) + PM.mass(femmcm2, geom0, u0, Rf
 
 using LinearAlgebra
 
-using FinEtoolsFlexBeams.FEMMPointGroundedSpring
-BS = FEMMPointGroundedSpring
+using FinEtoolsFlexBeams.FEMMPointGroundedSpringModule
+BS = FEMMPointGroundedSpringModule
 
 # There are three suspension points at the top of the fuselage. We assume that these bungee supports exert only reaction in the vertical direction.
-femmbs =  BS.FEMMPointMass(IntegDomain(FESetP1(reshape([suspln; susprn; suspbn;], 3, 1)), PointRule()), 
-    FFltMat([bungeecoefficient*[0;0;1]*[0;0;1]' 0*I(3); 0*I(3) 0*I(3)]));
+femmbs =  BS.FEMMPointGroundedSpring(IntegDomain(FESetP1(reshape([suspln; susprn; suspbn;], 3, 1)), PointRule()), 
+FFltMat([bungeecoefficient*[0;0;1]*[0;0;1]' 0*I(3); 0*I(3) 0*I(3)]));
 
 Kb = BS.stiffness(femmbs, geom0, u0, Rfield0, dchi)
 
-
+Kt = K + Kb
+Mt = M + Mp
 
 # We can compare the size of the stiffness matrix with the number of degrees of
 # freedom that are unknown (20).
-@show size(K)
+@show size(Kt)
 
 ##
 # ## Solve the free-vibration problem
@@ -293,7 +308,7 @@ oshift = (2*pi*0.5)^2;
 # common in structural dynamics, we request the smallest eigenvalues in
 # absolute value (`:SM`). 
 using Arpack
-evals, evecs, nconv = eigs(K + oshift * (M + Mp), (M + Mp); nev=neigvs, which=:SM);
+evals, evecs, nconv = eigs(Kt + oshift * Mt, Mt; nev=neigvs, which=:SM);
 # First  we should check that the requested eigenvalues actually converged:
 @show nconv == neigvs
 
@@ -324,46 +339,37 @@ using PlotlyJS
 using FinEtoolsFlexBeams.VisUtilModule: plot_space_box, plot_solid, render, react!, default_layout_3d, save_to_json
 
 # The magnitude of the vibration modes (displacements  and rotations) will be amplified with this scale factor:
-scale = 1.5
+scale = 0.3
 
 # This is the mode that will be animated:
-mode = 7
+mode = 9
 
-# In order to handle variables inside loops correctly, we create a local scope with the `let end` block.
 let
-    # The extents of the box will be preserved during animation in order to eliminate changes in the viewing parameters.
-    tbox = plot_space_box([[-1.2 * radius -1.2 * radius -1.2 * radius]; [+1.2 * radius +1.2 * radius +1.2 * radius]])
-    # This is the geometry of the structure without deformation (undeformed). It is displayed as gray, partially transparent.
-    tenv0 = plot_solid(fens, fes; x=geom0.values, u=0.0 .* dchi.values[:, 1:3], R=Rfield0.values, facecolor="rgb(125, 155, 125)", opacity=0.3);
-    # Initially the plot consists of the box and the undeformed geometry.
-    plots = cat(tbox, tenv0; dims=1)
-    # Create the layout for the plot. Set the size of the window.
+    tbox = plot_space_box(reshape(inflatebox!(boundingbox(fens.xyz), 4*L), 2, 3))
+    tenv0 = tbox
+    for fes in fesa
+        t = plot_solid(fens, fes; x=geom0.values, u=0.0 .* dchi.values[:, 1:3], R=Rfield0.values, facecolor="rgb(125, 155, 125)", opacity=0.3);
+        tenv0 = cat(tenv0, t; dims=1)
+    end
+    plots = tenv0
     layout = default_layout_3d(;width=600, height=600, options = Dict(:responsive=>true))
-    # Set the aspect mode to get the correct proportions.
     layout[:scene][:aspectmode] = "data"
-    # Render the undeformed structure
     pl = render(plots; layout=layout, title="Mode $(mode)")
-    sleep(2.115)
-    # This is the animation loop. 
-    # 1. Distribute a fraction of the selected eigenvector into the incremental displacement/rotation field.
-    # 2. Create the deformed configuration by defining displacement field `u1` and rotation field `Rfield1`.
-    # 3. Create the plot for the deformed configuration, and add it to the list of plots.
-    # 4. Call the `react!` function to update the display. Sleep for a brief period of time to give the display a chance to become current.
+    sleep(0.115)
     for xscale in scale .* sin.(collect(0:1:89) .* (2 * pi / 21))
         scattersysvec!(dchi, xscale .* evecs[:, mode])
         u1 = deepcopy(u0)
         u1.values .= dchi.values[:, 1:3]
         Rfield1 = deepcopy(Rfield0)
         update_rotation_field!(Rfield1, dchi)
-        tenv1 = plot_solid(fens, fes; x=geom0.values, u=dchi.values[:, 1:3], R=Rfield1.values, facecolor="rgb(50, 55, 125)");
-        plots = cat(tbox, tenv0, tenv1; dims=1)
+        plots = tenv0
+        for fes in fesa
+            tenv1 = plot_solid(fens, fes; x=geom0.values, u=dchi.values[:, 1:3], R=Rfield1.values, facecolor="rgb(50, 55, 125)");
+            plots = cat(plots, tenv1; dims=1)
+        end
         react!(pl, plots, pl.plot.layout)
-        sleep(0.115)
+        sleep(0.08)
     end
-    # Save the plot to a Json file. It can be then re-displayed later.
-    save_to_json(pl, "deformed_plot.json")
 end
 
-# Load the plot from a file.
-using FinEtoolsFlexBeams.VisUtilModule: plot_from_json
-plot_from_json("deformed_plot.json")
+true
