@@ -17,7 +17,7 @@ using ..FinEtoolsFlexBeams.FESetCorotBeamModule: cat
 # constructor=constructor of the finite element set, default @fe_set_beam3
 # Parameters= see fe_set_beam3
 # 
-function frame_member(xyz, nL, crosssection)
+function frame_member(xyz, nL, crosssection; label = 0)
     npts = size(xyz,1);
     s = fill(0.0, npts);
     for j in 2:npts
@@ -68,6 +68,7 @@ function frame_member(xyz, nL, crosssection)
         _dimensions[i] = deepcopy(dimensions)
     end
     fes = FESetL2CorotBeam(connasarray(fes), crosssection, _A, _I1, _I2, _I3, _J, _x1x2_vector, _dimensions)
+    setlabel!(fes, label)
     return fens, fes
 end
 
