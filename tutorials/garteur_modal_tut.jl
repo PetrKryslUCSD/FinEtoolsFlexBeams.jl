@@ -2,8 +2,16 @@
 
 # ## Description
 
-# Vibration analysis of a beam simply supported in one plane, and clamped
-# in another. The results are compared with analytical expressions.
+# This virtual test application is based on the test article  
+#     used by the GARTEUR Structures & Materials Action Group 19  
+#     which organized a Round Robin exercise where 12 European laboratories  
+#     tested a single structure between 1995 and 1997. The benchmark structure   
+#     was a laboratory structure built to simulate the dynamic behaviour  
+#     of an aeroplane. The structure was initially built for a benchmark  
+#     study on experimental modal analysis conducted by the  
+#     Structures and Materials Action Group (SM-AG19) of the Group  
+#     for Aeronautical Research and Technology in EURope (GARTEUR).  
+#         The test-bed was designed and manufactured by ONERA, France.
 
 # ## Goals
 
@@ -29,24 +37,34 @@ rho = 2700 * phun("kg/m^3")
 # expressed in terms of multiples of this characteristic unit.
 L = 0.1*phun("m");
 
+
 ##
 # ## Cross-section
 
 # Cross-sectional properties are incorporated in the cross-section property. 
 using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionRectangle
+# Body of the frame.
 cs_body = CrossSectionRectangle(s -> 1.5*L, s -> L/2, s -> [1.0, 0.0, 1.0])
+# Wing beam.
 cs_wing = CrossSectionRectangle(s -> L/10, s -> L, s -> [0.0, 0.0, 1.0])
+# Wing drums.
 cs_drum = CrossSectionRectangle(s -> L/10, s -> L, s -> [0.0, 0.0, 1.0])
+# Vertical part of the tail.
 cs_tailv = CrossSectionRectangle(s -> L, s -> L/10, s -> [1.0, 0.0, 1.0])
+# Horizontal part of the tail.
 cs_tailh = CrossSectionRectangle(s -> L/10, s -> L, s -> [0.0, 0.0, 1.0])
+# Massless connectors of the structural parts.
 cs_conn = CrossSectionRectangle(s -> L/10, s -> L/10, s -> [1.0, 0.0, 1.0])
+# Massless connector between the body and the wings.
 cs_connw = CrossSectionRectangle(s -> L/2, s -> L/2, s -> [1.0, 0.0, 1.0])
+# Viscoelastic connecting layer.
 cs_vconstr = CrossSectionRectangle(s -> L*(1.1/100), s -> L*(76.2/100), s -> [0.0, 0.0, 1.0])
 
 # 
 using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member
 tolerance = L/10000;
 
+# The parts of the mesh can be distinguished based on the label.
 meshes = Tuple{FENodeSet, AbstractFESet}[]
 
 # Define the constituent parts of the body of the aircraft.
@@ -116,7 +134,7 @@ end
 # Tail Sensors
 push!(meshes, frame_member([-8*L 2*L 3.8*L; -(153/20)*L (37/20)*L 3.85*L], 1, cs_conn; label = 8))# 303
 push!(meshes, frame_member([-8*L -2*L 3.8*L; -(153/20)*L -(37/20)*L 3.85*L], 1, cs_conn; label = 8))# 301
- 
+
 # Wingdrum Sensors
 push!(meshes, frame_member([0 9.5*L .91*L ; 0 9.8*L .96*L], 1, cs_conn; label = 8))# 101
 push!(meshes, frame_member([-2*L 9.5*L .91*L ; -1.8*L 9.8*L .96*L], 1, cs_conn; label = 8))# 112
@@ -126,45 +144,31 @@ push!(meshes, frame_member([0 -9.5*L .91*L ; 0 -9.8*L .96*L], 1, cs_conn; label 
 push!(meshes, frame_member([-2*L -9.5*L .91*L ; -1.8*L -9.8*L .96*L], 1, cs_conn; label = 8))# 12
 push!(meshes, frame_member([2*L -9.5*L .91*L ; 1.8*L -9.8*L .96*L], 1, cs_conn; label = 8))# 11
 
-
+# Merge all the meshes of individual parts. This will glued together notes which are in the "same" location.
 fens, fesa = mergenmeshes(meshes, tolerance)
 
-
-using PlotlyJS
-using FinEtoolsFlexBeams.VisUtilModule: plot_solid, plot_space_box, render, default_layout_3d, save_to_json
-
-colors = [
-"rgb(125, 155, 155)",  # 1 body
-"rgb(125, 155, 155)",  # 2 wing
-"rgb(125, 155, 155)",  # 3 drums
-"rgb(125, 155, 155)",  # 4 vertical tail
-"rgb(125, 155, 155)",  # 5 horizontal tail
-"rgb(125, 155, 15)",  # 6 viscoelastic constraining layer
-"rgb(15, 15, 155)",  # 7 massless connectors
-"rgb(125, 15, 15)",  # 8 sensor connectors
-]
-
-tbox = plot_space_box([[-1.2 * L -1.2 * L -1.2 * L]; [+1.2 * L +1.2 * L +1.2 * L]])
-traces = let traces = tbox
-    for fes in fesa
-        lab  = fes.label[1]
-        tm = plot_solid(fens, fes; facecolor=colors[lab]);
-        traces = cat(traces, tm; dims = 1)
-    end
-    traces
-end
-layout = default_layout_3d(;width=900, height=900, options = Dict(:responsive=>true))
-layout[:scene][:aspectmode] = "data"
-pl = render(traces; layout = layout)
-sleep(2.115)
+# The geometry is visualized in the tutorial garteur_geometry_tut.
 
 ##
 # ## Material
 
 # Material properties can be now used to create a material: isotropic elasticity model of the `FinEtoolsDeforLinear` package is instantiated.
 using FinEtoolsDeforLinear
+# The material of the structure is aluminum.
 alu = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
-mlconn = MatDeforElastIso(DeforModelRed3D, 0.0, E, nu, 0.0)
+# Material for the massless connectors has the mass density set to zero; otherwise it has the same properties as the aluminum material  of the structure.
+massless = MatDeforElastIso(DeforModelRed3D, 0.0, E, nu, 0.0)
+
+# This simple function returns material based on the label of the beam elements.
+material(labl) = begin
+    if labl == 7 || labl == 8
+        return massless
+    end
+    return alu
+end
+
+bungeecoefficient = 4000*phun("N/m");
+
 
 ##
 # ## Fields
@@ -197,38 +201,99 @@ applyebc!(dchi)
 # (unknown) degrees of freedom is equal to the total number of degrees of freedom in the system.
 numberdofs!(dchi);
 
+##
+# ## Identify support points and locations of sensors
+
+# Suspension points
+suspln = selectnode(fens; box = initbox!(Float64[], vec([0.0*L 0.375*L 0.805*L])), inflate = tolerance)
+susprn = selectnode(fens; box = initbox!(Float64[], vec([0.0*L -0.375*L 0.805*L])), inflate = tolerance)
+suspbn = selectnode(fens; box = initbox!(Float64[], vec([-2.0*L 0.0*L 0.0*L])), inflate = tolerance)
+
+# The sensors at the tip of the left and right wing drum
+sensor112n = selectnode(fens; box = initbox!(Float64[], vec([+1.8*L 9.8*L 0.96*L])), inflate = tolerance)
+sensor12n = selectnode(fens; box = initbox!(Float64[], vec([+1.8*L -9.8*L .96*L])), inflate = tolerance)
+sensor111n = selectnode(fens; box = initbox!(Float64[], vec([-1.8*L 9.8*L 0.96*L])), inflate = tolerance)
+sensor11n = selectnode(fens; box = initbox!(Float64[], vec([-1.8*L -9.8*L .96*L])), inflate = tolerance)
+
+# The Connection between the horizontal and vertical tail parts
+sensor202n = selectnode(fens; box = initbox!(Float64[], vec([-8*L 0 3.8*L])), inflate = tolerance)
 
 ##
 # ## Assemble the global discrete system
 
-using FinEtoolsFlexBeams.FEMMCorotBeamModule: FEMMCorotBeam
-femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material);
 
 # For disambiguation we will refer to the stiffness and mass functions by qualifying them with the corotational-beam module, `FEMMCorotBeamModule`.
 using FinEtoolsFlexBeams.FEMMCorotBeamModule
 CB = FEMMCorotBeamModule
+
 # Thus we can construct the stiffness and mass matrix as follows:
 # Note that the finite element machine is the first argument. This provides
 # access to the integration domain. The next argument is the geometry field,
 # followed by the displacement, rotations, and incremental
 # displacement/rotation fields. 
-K = CB.stiffness(femm, geom0, u0, Rfield0, dchi);
-M = CB.mass(femm, geom0, u0, Rfield0, dchi);
+using  SparseArrays
+
+K, M = let
+    K = spzeros(dchi.nfreedofs, dchi.nfreedofs)
+    M = spzeros(dchi.nfreedofs, dchi.nfreedofs)
+    for fes in fesa
+        labl  = fes.label[1]
+        femm = CB.FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material(labl));
+        K += CB.stiffness(femm, geom0, u0, Rfield0, dchi);
+        M += CB.mass(femm, geom0, u0, Rfield0, dchi);
+    end
+    K, M
+end
+
+##
+# ## Additional concentrated masses.
+
+
+using LinearAlgebra
+
+using FinEtoolsFlexBeams.FEMMPointMassModule
+PM = FEMMPointMassModule
+
+# There is a sensor on the tail.
+femmcm1 =  PM.FEMMPointMass(IntegDomain(FESetP1(reshape([sensor202n;], 1, 1)), PointRule()), FFltMat(2*L*L/5*L/5*2*rho*I(3)));
+
+# These are the sensors on the wing drums.
+femmcm2 =  PM.FEMMPointMass(IntegDomain(FESetP1(reshape([sensor112n; sensor12n; sensor111n; sensor11n], 4, 1)), PointRule()), FFltMat(0.1*phun("kg")*I(3)));
+
+Mp = PM.mass(femmcm1, geom0, u0, Rfield0, dchi) + PM.mass(femmcm2, geom0, u0, Rfield0, dchi);
+
+##
+# ## Bungee supports 
+
+
+using LinearAlgebra
+
+using FinEtoolsFlexBeams.FEMMPointGroundedSpring
+BS = FEMMPointGroundedSpring
+
+# There are three suspension points at the top of the fuselage. We assume that these bungee supports exert only reaction in the vertical direction.
+femmbs =  BS.FEMMPointMass(IntegDomain(FESetP1(reshape([suspln; susprn; suspbn;], 3, 1)), PointRule()), 
+    FFltMat([bungeecoefficient*[0;0;1]*[0;0;1]' 0*I(3); 0*I(3) 0*I(3)]));
+
+Kb = BS.stiffness(femmbs, geom0, u0, Rfield0, dchi)
+
+
+
 # We can compare the size of the stiffness matrix with the number of degrees of
 # freedom that are unknown (20).
 @show size(K)
 
 ##
 # ## Solve the free-vibration problem
-
-oshift = (2*pi*5)^2
+neigvs = 20
+oshift = (2*pi*0.5)^2;
 
 # The Arnoldi algorithm implemented in the well-known `Arpack` package is used
 # to solve the generalized eigenvalue problem with the sparse matrices. As is
 # common in structural dynamics, we request the smallest eigenvalues in
 # absolute value (`:SM`). 
 using Arpack
-evals, evecs, nconv = eigs(K + oshift * M, M; nev=neigvs, which=:SM);
+evals, evecs, nconv = eigs(K + oshift * (M + Mp), (M + Mp); nev=neigvs, which=:SM);
 # First  we should check that the requested eigenvalues actually converged:
 @show nconv == neigvs
 
