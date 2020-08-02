@@ -1,4 +1,4 @@
-# # Modal analysis of a toy airplane
+# # GARTEUR SM-AG19 Testbed: Modal analysis 
 
 # ## Description
 
@@ -20,19 +20,18 @@
 # 
 
 ##
-# ## Definition of the basic inputs
+# ## Geometry of the testbed airplane.
+
+# It was a rather simple structure which was reasonably dynamically 
+#     representative of an airplane structure. It was composed of several beams simulating a fuselage 
+#     with wings and a tail. Wing tip drums allowed to adjust bending and torsion frequencies similarly to 
+# airplane ones, with some very close modal frequencies. 
+# ![](garteur-geom.png)
 
 # The finite element code realize on the basic functionality implemented in this
 # package.
 using FinEtools
 
-# The material parameters may be defined with the specification of the units.
-# The elastic properties are:
-E = 70000.0 * phun("MPa") 
-nu = 0.31;
-
-# The mass density is
-rho = 2700 * phun("kg/m^3")
 # This is the characteristic length. The dimensions of the aircraft frame are
 # expressed in terms of multiples of this characteristic unit.
 L = 0.1*phun("m");
@@ -162,11 +161,20 @@ fens, fesa = mergenmeshes(meshes, tolerance)
 ##
 # ## Material
 
+
+# The material parameters may be defined with the inclusion of the physical units.
+# The elastic properties were:
+E = 70000.0 * phun("MPa") 
+nu = 0.31;
+
+# The mass density was
+rho = 2700 * phun("kg/m^3")
+
 # Material properties can be now used to create a material: isotropic elasticity model of the `FinEtoolsDeforLinear` package is instantiated.
 using FinEtoolsDeforLinear
 # The material of the structure is aluminum.
 alu = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
-# The material of the structure is viscoelastic layer.
+# The material of the viscoelastic layer.
 layer = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
 # Material for the massless connectors has the mass density set to zero; otherwise it has the same properties as the aluminum material  of the structure.
 massless = MatDeforElastIso(DeforModelRed3D, 0.0, E, nu, 0.0)
@@ -229,7 +237,7 @@ sensor12n = selectnode(fens; box = initbox!(Float64[], vec([+1.8*L -9.8*L .96*L]
 sensor111n = selectnode(fens; box = initbox!(Float64[], vec([-1.8*L 9.8*L 0.96*L])), inflate = tolerance)
 sensor11n = selectnode(fens; box = initbox!(Float64[], vec([-1.8*L -9.8*L .96*L])), inflate = tolerance)
 
-# The Connection between the horizontal and vertical tail parts
+# The joint between the horizontal and vertical tail parts
 sensor202n = selectnode(fens; box = initbox!(Float64[], vec([-8*L 0 3.8*L])), inflate = tolerance)
 
 ##
@@ -240,11 +248,8 @@ sensor202n = selectnode(fens; box = initbox!(Float64[], vec([-8*L 0 3.8*L])), in
 using FinEtoolsFlexBeams.FEMMCorotBeamModule
 CB = FEMMCorotBeamModule
 
-# Thus we can construct the stiffness and mass matrix as follows:
-# Note that the finite element machine is the first argument. This provides
-# access to the integration domain. The next argument is the geometry field,
-# followed by the displacement, rotations, and incremental
-# displacement/rotation fields. 
+# Note that we have an array of finite element sets. We compute the matrices for each set separately and accumulate them into the final overall matrix.
+# Thus we can construct the stiffness and mass matrix as follows.
 using  SparseArrays
 
 K, M = let
@@ -272,7 +277,7 @@ PM = FEMMPointMassModule
 femmcm1 =  PM.FEMMPointMass(IntegDomain(FESetP1(reshape([sensor202n;], 1, 1)), PointRule()), FFltMat(2*L*L/5*L/5*2*rho*I(3)));
 
 # These are the sensors on the wing drums.
-femmcm2 =  PM.FEMMPointMass(IntegDomain(FESetP1(reshape([sensor112n; sensor12n; sensor111n; sensor11n], 4, 1)), PointRule()), FFltMat(0.1*phun("kg")*I(3)));
+femmcm2 =  PM.FEMMPointMass(IntegDomain(FESetP1(reshape([sensor112n; sensor12n;], 2, 1)), PointRule()), FFltMat(0.2*phun("kg")*I(3)));
 
 Mp = PM.mass(femmcm1, geom0, u0, Rfield0, dchi) + PM.mass(femmcm2, geom0, u0, Rfield0, dchi);
 
@@ -342,7 +347,7 @@ using FinEtoolsFlexBeams.VisUtilModule: plot_space_box, plot_solid, render, reac
 scale = 0.3
 
 # This is the mode that will be animated:
-mode = 9
+mode = 13
 
 let
     tbox = plot_space_box(reshape(inflatebox!(boundingbox(fens.xyz), 4*L), 2, 3))
