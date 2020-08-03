@@ -3,32 +3,36 @@
 # ## Description
 
 # This virtual test application is based on the test article  
-#     used by the GARTEUR Structures & Materials Action Group 19  
-#     which organized a Round Robin exercise where 12 European laboratories  
-#     tested a single structure between 1995 and 1997. The benchmark structure   
-#     was a laboratory structure built to simulate the dynamic behaviour  
-#     of an aeroplane. The structure was initially built for a benchmark  
-#     study on experimental modal analysis conducted by the  
-#     Structures and Materials Action Group (SM-AG19) of the Group  
-#     for Aeronautical Research and Technology in EURope (GARTEUR).  
-#         The test-bed was designed and manufactured by ONERA, France.
+# used by the GARTEUR Structures & Materials Action Group 19  
+# which organized a Round Robin exercise where 12 European laboratories  
+# tested a single structure between 1995 and 1997. The benchmark structure   
+# was a laboratory structure built to simulate the dynamic behaviour  
+# of an aeroplane. The structure was initially built for a benchmark  
+# study on experimental modal analysis conducted by the  
+# Structures and Materials Action Group (SM-AG19) of the Group  
+# for Aeronautical Research and Technology in EURope (GARTEUR).  
+# The test-bed was designed and manufactured by ONERA, France.
 
 # ## Goals
 
 # - Show how to construct model from multiple connected beams.
-
+# - Demonstrate the use of massless connectors.
+# - Demonstrate the use of point masses.
+# - Demonstrate the use of grounded springs.  
 # 
 
 ##
 # ## Geometry of the testbed airplane.
 
-# It was a rather simple structure which was reasonably dynamically 
-#     representative of an airplane structure. It was composed of several beams simulating a fuselage 
-#     with wings and a tail. Wing tip drums allowed to adjust bending and torsion frequencies similarly to 
-# airplane ones, with some very close modal frequencies. 
+# It was a rather simple structure which was reasonably dynamically
+# representative of a simple airplane structure. It was composed of several beams
+# simulating a fuselage with wings and a tail. Wing tip drums allowed to adjust
+# bending and torsion frequencies similarly to airplane ones, with some very
+# close modal frequencies. 
+
 # ![](garteur-geom.png)
 
-# The finite element code realize on the basic functionality implemented in this
+# The beam finite element code relies on the basic functionality implemented in this
 # package.
 using FinEtools
 
@@ -36,11 +40,14 @@ using FinEtools
 # expressed in terms of multiples of this characteristic unit.
 L = 0.1*phun("m");
 
-
 ##
 # ## Cross-section
 
-# Cross-sectional properties are incorporated in the cross-section property. 
+# Cross-sectional properties are incorporated in the cross-section property.
+# There are several rectangular cross-sections in the model: the fuselage, the
+# wing, the tail. There are also three massless connectors: connections between
+# the fuselage and the wing, between the wing structure and the viscoelastic
+# damping layer, and between the fuselage and the tail.
 using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionRectangle
 # Body of the frame.
 cs_body = CrossSectionRectangle(s -> 1.5*L, s -> L/2, s -> [1.0, 0.0, 1.0])
@@ -61,11 +68,14 @@ cs_connt = CrossSectionRectangle(s -> L, s -> L/5, s -> [1.0, 0.0, 1.0])
 # Viscoelastic connecting layer.
 cs_vconstr = CrossSectionRectangle(s -> L*(1.1/100), s -> L*(76.2/100), s -> [0.0, 0.0, 1.0])
 
-# 
+# ## Mesh 
+
+# We shall use this utility function to generate the mesh of the individual
+# parts. This will result in a number of separate meshes for the members. These
+# separate meshes will then be glued together (merged) based on the tolerance on
+# the location of the nodes.
 using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member
 tolerance = L/10000;
-
-# The parts of the mesh can be distinguished based on the label.
 meshes = Tuple{FENodeSet, AbstractFESet}[]
 
 # Define the constituent parts of the body of the aircraft.
@@ -152,11 +162,13 @@ push!(meshes, frame_member([0 -9.5*L .91*L ; 0 -9.8*L .96*L], 1, cs_conn; label 
 push!(meshes, frame_member([-2*L -9.5*L .91*L ; -1.8*L -9.8*L .96*L], 1, cs_conn; label = 8))# 12
 push!(meshes, frame_member([2*L -9.5*L .91*L ; 1.8*L -9.8*L .96*L], 1, cs_conn; label = 8))# 11
 
-# Merge all the meshes of individual parts. This will glued together notes which are in the "same" location.
+# Merge all the meshes of individual parts. This will glue together nodes which
+# are in the "same" location. The parts of the mesh can be distinguished based
+# on the label. 
 fens, fesa = mergenmeshes(meshes, tolerance)
 
 
-# The geometry is visualized in the tutorial garteur_geometry_tut.
+# The geometry is visualized in the tutorial [garteur_geometry_tut](garteur_geometry_tut.jl).
 
 ##
 # ## Material
@@ -170,13 +182,16 @@ nu = 0.31;
 # The mass density was
 rho = 2700 * phun("kg/m^3")
 
-# Material properties can be now used to create a material: isotropic elasticity model of the `FinEtoolsDeforLinear` package is instantiated.
+# Material properties can be now used to create a material: isotropic elasticity
+# model of the `FinEtoolsDeforLinear` package is instantiated.
 using FinEtoolsDeforLinear
 # The material of the structure is aluminum.
 alu = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
 # The material of the viscoelastic layer.
 layer = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
-# Material for the massless connectors has the mass density set to zero; otherwise it has the same properties as the aluminum material  of the structure.
+# Material for the massless connectors has the mass density set to zero;
+# otherwise it has the same properties as the aluminum material  of the
+# structure.
 massless = MatDeforElastIso(DeforModelRed3D, 0.0, E, nu, 0.0)
 
 # This simple function returns material based on the label of the beam elements.
@@ -189,6 +204,7 @@ material(labl) = begin
     return alu
 end
 
+# This is the assumed stifffness of the bungee cords (each one separately).
 bungeecoefficient = 4000*phun("N/m");
 
 
