@@ -13,13 +13,24 @@
 # for Aeronautical Research and Technology in EURope (GARTEUR).  
 # The test-bed was designed and manufactured by ONERA, France.
 
+# ![](IMAC97photo.jpg)
+
+# ### References
+
+# [1] Ground Vibration Test Techniques, compiled by A Gravelle, GARTEUR
+# Structures & Materials Action Group 19 Technical report TP-115, 1999.
+# [2] Etienne Balmes, Jan R. Wright, GARTEUR GROUP ON GROUND VIBRATION TESTING |
+# RESULTS FROM THE TEST OF A SINGLE STRUCTURE BY 12 LABORATORIES IN EUROPE,
+# Proceedings of DETC'97, 1997 ASME Design Engineering Technical Conferences,
+# September 14-17, 1997, Sacramento, California.
+
 # ## Goals
 
 # - Show how to construct model from multiple connected beams.
 # - Demonstrate the use of massless connectors.
 # - Demonstrate the use of point masses.
 # - Demonstrate the use of grounded springs.  
-# 
+# - Illustrate verification of the solution of the free vibration problem. 
 
 ##
 # ## Geometry of the testbed airplane.
@@ -344,10 +355,20 @@ fs = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
 ##
 # ## Comparison of computed and analytical results
 
+# Set of modes measured by participant C.
+# 1.-6. "Rigid body" modes
+# 7. Two node bending, 6.37 Hz
+# 8. Global fuselage rotation, 16.10 Hz
+# 9. First antisymmetric wing torsion, 33.13 Hz
+# 10. First symmetric wing torsion, 33.53 Hz
+# 11. Three node bending, 35.65 Hz
+
 # The approximate and analytical frequencies are now reported.
-println("Approximate frequencies: $fs [Hz]")
+sigdig(n) = round(n * 1000) / 1000
 
-
+println("Frequencies 7 and higher")
+println("Approximate: $(sigdig.(fs[7:end])) [Hz]")
+println("Participant C experimental: $([6.37, 16.10, 33.13, 33.53, 35.65]) [Hz]")
 
 ##
 # ## Visualize vibration modes
@@ -362,10 +383,8 @@ using FinEtoolsFlexBeams.VisUtilModule: plot_space_box, plot_solid, render, reac
 # The magnitude of the vibration modes (displacements  and rotations) will be amplified with this scale factor:
 scale = 0.3
 
-# This is the mode that will be animated:
-mode = 13
-
-let
+# The animation is encapsulated in a little function:
+vis(mode) = begin
     tbox = plot_space_box(reshape(inflatebox!(boundingbox(fens.xyz), 4*L), 2, 3))
     tenv0 = tbox
     for fes in fesa
@@ -373,9 +392,9 @@ let
         tenv0 = cat(tenv0, t; dims=1)
     end
     plots = tenv0
-    layout = default_layout_3d(;width=600, height=600, options = Dict(:responsive=>true))
+    layout = default_layout_3d(;width=600, height=600, title = "Mode $(mode), $(sigdig.(fs[mode])) [Hz]")
     layout[:scene][:aspectmode] = "data"
-    pl = render(plots; layout=layout, title="Mode $(mode)")
+    pl = render(plots; layout=layout)
     sleep(0.115)
     for xscale in scale .* sin.(collect(0:1:89) .* (2 * pi / 21))
         scattersysvec!(dchi, xscale .* evecs[:, mode])
@@ -392,5 +411,10 @@ let
         sleep(0.08)
     end
 end
+
+##
+# This is the mode that will be animated:
+mode = 13
+vis(mode)
 
 true
