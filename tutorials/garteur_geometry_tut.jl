@@ -13,6 +13,17 @@
 # for Aeronautical Research and Technology in EURope (GARTEUR).  
 # The test-bed was designed and manufactured by ONERA, France.
 
+# ![](IMAC97photo.jpg)
+
+# ### References
+
+# [1] Ground Vibration Test Techniques, compiled by A Gravelle, GARTEUR
+# Structures & Materials Action Group 19 Technical report TP-115, 1999.
+# [2] Etienne Balmes, Jan R. Wright, GARTEUR GROUP ON GROUND VIBRATION TESTING |
+# RESULTS FROM THE TEST OF A SINGLE STRUCTURE BY 12 LABORATORIES IN EUROPE,
+# Proceedings of DETC'97, 1997 ASME Design Engineering Technical Conferences,
+# September 14-17, 1997, Sacramento, California.
+
 # ## Goals
 
 # - Show how to construct model from multiple connected beams.
