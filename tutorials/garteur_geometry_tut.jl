@@ -72,7 +72,7 @@ cs_tailh = CrossSectionRectangle(s -> L/10, s -> L, s -> [0.0, 0.0, 1.0])
 # Massless connectors of the structural parts.
 cs_conn = CrossSectionRectangle(s -> L/10, s -> L/10, s -> [1.0, 0.0, 1.0])
 # Massless connector between the body and the wings.
-cs_connw = CrossSectionRectangle(s -> L/2, s -> L/2, s -> [1.0, 0.0, 1.0])
+cs_connw = CrossSectionRectangle(s -> L/2, s -> L, s -> [0.0, 1.0, 0.0])
 # Massless connector between the body and the tail.
 cs_connt = CrossSectionRectangle(s -> L, s -> L/5, s -> [1.0, 0.0, 1.0])
 # Viscoelastic connecting layer.
@@ -86,6 +86,8 @@ cs_vconstr = CrossSectionRectangle(s -> L*(1.1/100), s -> L*(76.2/100), s -> [0.
 # the location of the nodes.
 using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member
 tolerance = L/10000;
+# Number of intervals from 0.25*L to 8.5*L (the extent of the constraining plate).
+nc = 8
 meshes = Tuple{FENodeSet, AbstractFESet}[]
 
 # Define the constituent parts of the body of the aircraft.
@@ -96,16 +98,14 @@ push!(meshes, frame_member([-2.0*L 0 0; 0 0 0], 1, cs_body; label = 1))
 push!(meshes, frame_member([0 0 0; 6*L 0 0], 2, cs_body; label = 1))
 
 # Define the aluminum parts of the wings.
-push!(meshes, frame_member([0 0 .805*L;  0 0.25*L .805*L], 1, cs_wing; label = 2))
-push!(meshes, frame_member([0 0 .805*L;  0 -0.25*L .805*L], 1, cs_wing; label = 2))
-for i in 1:15
-    push!(meshes, frame_member([0 (0.25+(i-1)*5.75/15)*L .805*L;  0 (0.25+5.75/15*i)*L .805*L], 1, cs_wing; label = 2))
-    push!(meshes, frame_member([0 -(0.25+(i-1)*5.75/15)*L .805*L;  0 -(0.25+5.75/15*i)*L .805*L], 1, cs_wing; label = 2))
-end
-for i in 1:8
-    push!(meshes, frame_member([0 (6*L+(i-1)*.5*L) .805*L; 0 (6*L + 0.5*i*L) .805*L], 1, cs_wing; label = 2))
-    push!(meshes, frame_member([0 (-6*L-(i-1)*.5*L) .805*L; 0 (-6*L - 0.5*i*L) .805*L], 1, cs_wing; label = 2))
-end
+push!(meshes, frame_member([0 0 0.805*L;  0 0.25*L 0.805*L], 1, cs_wing; label = 2))
+push!(meshes, frame_member([0 0 0.805*L;  0 -0.25*L 0.805*L], 1, cs_wing; label = 2))
+push!(meshes, frame_member([0 0.25*L 0.805*L;  0 8.5*L 0.805*L], nc, cs_wing; label = 2))
+push!(meshes, frame_member([0 -0.25*L 0.805*L;  0 -8.5*L 0.805*L], nc, cs_wing; label = 2))
+push!(meshes, frame_member([0 8.5*L 0.805*L;  0 9.5*L 0.805*L], 1, cs_wing; label = 2))
+push!(meshes, frame_member([0 -8.5*L 0.805*L;  0 -9.5*L 0.805*L], 1, cs_wing; label = 2))
+push!(meshes, frame_member([0 9.5*L 0.805*L;  0 10.0*L 0.805*L], 1, cs_wing; label = 2))
+push!(meshes, frame_member([0 -9.5*L 0.805*L;  0 -10.0*L 0.805*L], 1, cs_wing; label = 2))
 
 # Define the drums at the ends of the wings.
 push!(meshes, frame_member([0 +9.5*L +0.91*L; +2*L +9.5*L +0.91*L], 1, cs_drum; label = 3))
@@ -119,43 +119,32 @@ push!(meshes, frame_member([-8*L 0 3.35*L; -8*L 0 3.75*L], 2, cs_tailv; label = 
 push!(meshes, frame_member([-8*L 0 3.8*L; -8*L 2*L 3.8*L], 2, cs_tailh; label = 5))
 push!(meshes, frame_member([-8*L 0 3.8*L; -8*L -2*L 3.8*L], 2, cs_tailh; label = 5))
 
-# Define the parts of the viscoelastic constraining layer.
-push!(meshes, frame_member([-.119*L 0 .8606*L;  -.119*L 0.25*L .8606*L], 1, cs_vconstr; label = 6))
-push!(meshes, frame_member([-.119*L 0 .8606*L;  -.119*L -0.25*L .8606*L], 1, cs_vconstr; label = 6))
-for i in 1:15
-    push!(meshes, frame_member([-.119*L (0.25+(i-1)*5.75/15)*L .8606*L;  -.119*L (0.25+5.75/15*i)*L .8606*L], 1, cs_vconstr; label = 6))
-    push!(meshes, frame_member([-.119*L -(0.25+(i-1)*5.75/15)*L .8606*L;  -.119*L -(0.25+5.75/15*i)*L .8606*L], 1, cs_vconstr; label = 6))
-end
-for i in 1:5
-    push!(meshes, frame_member([-.119*L (6*L+(i-1)*.5*L) .8606*L; -.119*L (6*L+0.5*i*L) .8606*L], 1, cs_vconstr; label = 6))
-    push!(meshes, frame_member([-.119*L (-6*L-(i-1)*.5*L) .8606*L; -.119*L (-6*L-0.5*i*L) .8606*L], 1, cs_vconstr; label = 6))
-end
+# Define the parts of the aluminum constraining plate for the viscoelastic layer.
+push!(meshes, frame_member([-.119*L 0 0.8665*L;  -.119*L 0.25*L 0.8665*L], 1, cs_vconstr; label = 6))
+push!(meshes, frame_member([-.119*L 0 0.8665*L;  -.119*L -0.25*L 0.8665*L], 1, cs_vconstr; label = 6))
+push!(meshes, frame_member([-.119*L 0.25*L 0.8665*L;  -.119*L 8.5*L 0.8665*L], nc, cs_vconstr; label = 6))
+push!(meshes, frame_member([-.119*L -0.25*L 0.8665*L;  -.119*L -8.5*L 0.8665*L], nc, cs_vconstr; label = 6))
+
 
 # Define the massless connectors between:
 # Wing - Wingdrum
 push!(meshes, frame_member([0 +9.5*L +0.805*L;0 +9.5*L +0.91*L], 1, cs_conn; label = 7))
 push!(meshes, frame_member([0 -9.5*L +0.805*L;0 -9.5*L +0.91*L], 1, cs_conn; label = 7))
 # Body-Wing
-push!(meshes, frame_member([0 0 0; 0 0 .805*L], 1, cs_connw; label = 7))
+push!(meshes, frame_member([0 0 0; 0 0.0*L .805*L], 1, cs_connw; label = 7))
 # Body-Tail
 push!(meshes, frame_member([-8*L 0 0; -8*L 0 .75*L], 1, cs_connt; label = 7))
 # Tail-Taildrum
 push!(meshes, frame_member([-8*L 0 3.75*L; -8*L 0 3.8*L], 1, cs_conn; label = 7))
 
-# Wing-Viscoelastic Constraining layer
+# Wing-Constraining plate for the viscoelastic layer
 # Middle connector created individually
-push!(meshes, frame_member([0 0 .805*L; -.119*L 0 .8606*L], 1, cs_conn; label = 7))
+push!(meshes, frame_member([0 0 .805*L; -.119*L 0 0.8665*L], 1, cs_conn; label = 7))
 
 # Connectors created for both wings
-push!(meshes, frame_member([0 0.25*L .805*L;  -.119*L 0.25*L 0.8606*L], 1, cs_conn; label = 7))
-push!(meshes, frame_member([0 0.25*L .805*L;  -.119*L -0.25*L 0.8606*L], 1, cs_conn; label = 7))
-for i in 1:15
-    push!(meshes, frame_member([0 (0.25+(i-1)*5.75/15)*L 0.805*L;  -.119*L (0.25+(i-1)*5.75/15)*L .8606*L], 1, cs_conn; label = 7))
-    push!(meshes, frame_member([0 -(0.25+(i-1)*5.75/15)*L 0.805*L;  -.119*L -(0.25+(i-1)*5.75/15)*L .8606*L], 1, cs_conn; label = 7))
-end
-for i in 1:5
-    push!(meshes, frame_member([0 (6*L+(i-1)*.5*L) .805*L; -.119*L (6*L+(i-1)*.5*L) .8606*L], 1, cs_conn; label = 7))
-    push!(meshes, frame_member([0 (-6*L-(i-1)*.5*L) .805*L; -.119*L -(6*L+(i-1)*.5*L) .8606*L], 1, cs_conn; label = 7))
+for i in 1:nc+1
+    push!(meshes, frame_member([0 (0.25+(i-1)*8.25/nc)*L .805*L;  -.119*L (0.25+(i-1)*8.25/nc)*L 0.8665*L], 1, cs_conn; label = 7))
+    push!(meshes, frame_member([0 -(0.25+(i-1)*8.25/nc)*L .805*L;  -.119*L -(0.25+(i-1)*8.25/nc)*L 0.8665*L], 1, cs_conn; label = 7))
 end
 
 # Massless Sensor Connectors
@@ -171,6 +160,10 @@ push!(meshes, frame_member([2*L 9.5*L .91*L ; 1.8*L 9.8*L .96*L], 1, cs_conn; la
 push!(meshes, frame_member([0 -9.5*L .91*L ; 0 -9.8*L .96*L], 1, cs_conn; label = 8))# 1
 push!(meshes, frame_member([-2*L -9.5*L .91*L ; -1.8*L -9.8*L .96*L], 1, cs_conn; label = 8))# 12
 push!(meshes, frame_member([2*L -9.5*L .91*L ; 1.8*L -9.8*L .96*L], 1, cs_conn; label = 8))# 11
+
+# Wingdrum complementary masses
+push!(meshes, frame_member([2*L 9.5*L .91*L ; 1.8*L 9.2*L .96*L], 1, cs_conn; label = 8))# added mass
+push!(meshes, frame_member([2*L -9.5*L .91*L ; 1.8*L -9.2*L .96*L], 1, cs_conn; label = 8))# added mass
 
 # Merge all the meshes of individual parts. This will glue together nodes which
 # are in the "same" location. The parts of the mesh can be distinguished based
@@ -206,8 +199,10 @@ tbox = plot_space_box([[-1.2 * L -1.2 * L -1.2 * L]; [+1.2 * L +1.2 * L +1.2 * L
 traces = let traces = tbox
     for fes in fesa
         labl  = fes.label[1]
-        tm = plot_solid(fens, fes; facecolor=colors[labl]);
-        traces = cat(traces, tm; dims = 1)
+        if labl > 0
+            tm = plot_solid(fens, fes; facecolor=colors[labl]);
+            traces = cat(traces, tm; dims = 1)
+        end
     end
     traces
 end
