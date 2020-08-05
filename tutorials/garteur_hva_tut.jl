@@ -287,6 +287,7 @@ receptance12 = fill(0.0im, nf)
 receptance112 = fill(0.0im, nf)
 v = fill(0.0im, 6)
 
+# Now Loop over 
 for   fi in 1:length(frequencies)
     f =  frequencies[fi];
     om = 2*pi*f;
@@ -300,6 +301,8 @@ for   fi in 1:length(frequencies)
     receptance112[fi] = p_d[3]/fmagn;
 end
 
+# The receptances were calculated above. The mobility and accelerance may be
+# obtained in a postprocessing step.
 oms = (2*pi) .* frequencies;
 mobility12 = receptance12 .* (-1im*oms);
 mobility112 = receptance112 .* (-1im*oms);
@@ -310,22 +313,12 @@ results = Dict()
 results[12] = Dict("receptance"=>receptance12, "mobility"=>mobility12, "accelerance"=>accelerance12)
 results[112] = Dict("receptance"=>receptance112, "mobility"=>mobility112, "accelerance"=>accelerance112)
 
-# axes(controls.ax1);
-# cla
-# semilogy(frequencies,abs(H12),'bd-','linewidth',2,'markersize',2)
-# hold on
-# semilogy(frequencies,abs(H112),'rx-','linewidth',2,'markersize',2)
-# xlabel('Frequency [Hz]');
-# ylabel([type ' ' unit])
-# grid on
-# legend({'12','112'});
-
 using PlotlyJS
 
 quantity = "accelerance"; units = "m/s^2/N"
 outputat = 12
 y = abs.(results[outputat][quantity]) / phun(units)
-tc12 = scatter(;x=frequencies, y=y, mode="lines", name = "output@$(outputat)", line_color = "rgb(15, 15, 15)")
+tc12 = scatter(;x=frequencies, y=y, mode="lines", name = "output@$(outputat)", line_color = "rgb(15, 15, 215)")
 outputat = 112
 y = abs.(results[outputat][quantity]) / phun(units)
 tc112 = scatter(;x=frequencies, y=y, mode="lines", name = "output@$(outputat)", line_color = "rgb(215, 15, 15)")
@@ -337,16 +330,19 @@ pl = plot(plots, layout; options = Dict(
         ))
 display(pl)
 
-# axes(controls.ax2);
-# cla
-# plot(frequencies,atan2(imag(H12),real(H12))/pi*180,'bd-','linewidth',2,'markersize',2)
-# hold on
-# plot(frequencies,atan2(imag(H112),real(H112))/pi*180,'rx-','linewidth',2,'markersize',2)
-# set(gca,'ylim',[-180,180])
-# set(gca,'ytick',[-180:90:180])
-# xlabel('Frequency [Hz]');
-# ylabel('Phase [deg]')
-# grid on
-# legend({'12','112'});
+outputat = 12
+y = atan.(imag(results[outputat][quantity]), real(results[outputat][quantity]))/pi*180 
+tc12 = scatter(;x=frequencies, y=y, mode="lines", name = "output@$(outputat)", line_color = "rgb(15, 15, 215)")
+outputat = 112
+y = atan.(imag(results[outputat][quantity]), real(results[outputat][quantity]))/pi*180 
+tc112 = scatter(;x=frequencies, y=y, mode="lines", name = "output@$(outputat)", line_color = "rgb(215, 15, 15)")
+plots = cat(tc12, tc112; dims = 1)
+layout = Layout(;width=650, height=400, xaxis=attr(title="Frequency [Hz]", type = "linear"), yaxis=attr(title="Phase shift [deg]", type = "linear"), title = "Force@$(forceat), $(quantity)", yaxis_range=[-180, 180])
+pl = plot(plots, layout; options = Dict(
+        :showSendToCloud=>true, 
+        :plotlyServerURL=>"https://chart-studio.plotly.com"
+        ))
+display(pl)
+
 
 true
