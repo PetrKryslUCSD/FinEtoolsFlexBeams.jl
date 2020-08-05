@@ -17,9 +17,10 @@ struct CrossSectionCircle{F} <: AbstractCrossSectionType
     # The parameter is the normalized arc length.
     # A, J, I1, I2, I3, x1x2_vector = parameters(s)
     parameters::F
+    label::Int
 end
 
-function CrossSectionCircle(radius, x1x2_vector)
+function CrossSectionCircle(radius, x1x2_vector; label = 0)
     function parameters(s)
         R=radius(s);
         A=pi*R^2;
@@ -29,15 +30,16 @@ function CrossSectionCircle(radius, x1x2_vector)
         I3=pi/4*R^4;
         return A, J, I1, I2, I3, x1x2_vector(s), [R]
     end
-    return CrossSectionCircle("circle", parameters)
+    return CrossSectionCircle("circle", parameters, label)
 end
 
 struct CrossSectionHollowCircle{F} <: AbstractCrossSectionType
     shape::String
     parameters::F
+    label::Int
 end
 
-function CrossSectionHollowCircle(innerradius, outerradius, x1x2_vector)
+function CrossSectionHollowCircle(innerradius, outerradius, x1x2_vector; label = 0)
     function parameters(s)
         Rext=outerradius(s);
         Rint=innerradius(s);
@@ -49,15 +51,16 @@ function CrossSectionHollowCircle(innerradius, outerradius, x1x2_vector)
         J=pi/2*(Rext^4-Rint^4);
         return A, J, I1, I2, I3, x1x2_vector(s), [Rext, Rint]
     end
-    return CrossSectionHollowCircle("hollow circle", parameters)
+    return CrossSectionHollowCircle("hollow circle", parameters, label)
 end
 
 struct CrossSectionRectangle{F} <: AbstractCrossSectionType
     shape::String
     parameters::F
+    label::Int
 end
 
-function CrossSectionRectangle(d2f, d3f, x1x2_vector)
+function CrossSectionRectangle(d2f, d3f, x1x2_vector; label = 0)
     function parameters(s)
         d2=d2f(s);
         d3=d3f(s);
@@ -73,7 +76,7 @@ function CrossSectionRectangle(d2f, d3f, x1x2_vector)
         I1=I2+I3;
         return A, J, I1, I2, I3, x1x2_vector(s), [d2, d3]
     end
-    return CrossSectionRectangle("rectangle", parameters)
+    return CrossSectionRectangle("rectangle", parameters, label)
 end
 
 end # module
