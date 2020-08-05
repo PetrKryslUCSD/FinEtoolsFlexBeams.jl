@@ -79,8 +79,6 @@ material(labl) = begin
     return alu
 end
 
-# This is the assumed stifffness of the bungee cords (each one separately).
-bungeecoefficient = 4000*phun("N/m");
 
 
 ##
@@ -110,19 +108,19 @@ dchi = NodalField(0.0im .* zeros(size(fens.xyz, 1), 6))
 
 # There are no support conditions.
 applyebc!(dchi)
-# The  the number of free
-# (unknown) degrees of freedom is equal to the total number of degrees of freedom in the system.
+# The  the number of free(unknown) degrees of freedom is equal to the total
+# number of degrees of freedom in the system.
 numberdofs!(dchi);
 
 ##
 # ## Identify support points and locations of sensors
 
-# Suspension points
+# Suspension points are at these nodes:
 suspln = selectnode(fens; box = initbox!(Float64[], vec([0.0*L 0.0*L 0.805*L])), inflate = tolerance)
 susprn = selectnode(fens; box = initbox!(Float64[], vec([0.0*L -0.0*L 0.805*L])), inflate = tolerance)
 suspbn = selectnode(fens; box = initbox!(Float64[], vec([-2.0*L 0.0*L 0.0*L])), inflate = tolerance)
 
-
+# Find out at which nodes the sensors are:
 sensors = Dict()
 sensors = let 
     # The sensors at the tip of the left and right wing drum
@@ -154,6 +152,8 @@ CB = FEMMCorotBeamModule
 # we can construct the stiffness and mass matrix as follows.
 using  SparseArrays
 
+# Loop over all the finite element sets and add up their contributions, the
+# stiffness in the mass matrix for each.
 Kf, Kd, M = let
     Kf = spzeros(dchi.nfreedofs, dchi.nfreedofs)
     Kd = spzeros(dchi.nfreedofs, dchi.nfreedofs)
@@ -194,6 +194,8 @@ Mp = PM.mass(femmcm1, geom0, u0, Rfield0, dchi) + PM.mass(femmcm2, geom0, u0, Rf
 ##
 # ## Bungee supports 
 
+# This is the assumed stifffness of the bungee cords (each one separately).
+bungeecoefficient = 4000*phun("N/m");
 
 using LinearAlgebra
 
@@ -252,17 +254,28 @@ omega_2=2*pi*30; # Guess
 rdmass = (2*1.0/(omega_2^2-omega_1^2)).*[omega_2^2 -omega_1^2]*[zeta_1*omega_1; zeta_2*omega_2];
 rdstiffness = (2*1.0/(omega_2^2-omega_1^2)).*[-1 1]*[zeta_1*omega_1; zeta_2*omega_2];
 
+# The airframe damping matrix is a mixture of the mass matrix and the stiffness
+# matrix.
 Cf = rdmass .* M + rdstiffness .* Kf;
 
+
+# These are the system matrices. The stiffness consists of the contribution of
+# the airframe, the connectors between the wing components, and the bungees of
+# the suspension.
 Kt = Kf + Kd + Kb
+# The mass matrix is the contribution of the structure and the attached point
+# masses (compensation masses).
 Mt = M + Mp
+# The damping matrix is composed of the damping of the overall structure, and of
+# the damping layer (the connectors between the wing components).
 Ct = Cf + Cd
 
 ##
 # ## Loading
 
-# Here we assume that the stinger  was attached at the location of the sensor 12.
-# The magnitude of the force is arbitrary.
+# Here we assume that the stinger  was attached at the location of the sensor
+# 12. The force is vertical (in the Z direction) and the magnitude of the force
+# is arbitrary.
 forceat = 12
 fmagn= 1.0;
 loadbdry = FESetP1(reshape(sensors[forceat], 1, 1))
@@ -278,21 +291,29 @@ F = CB.distribloads(lfemm, geom0, dchi, fi, 3);
 ##
 # ## Solve the Harmonic vibration problem
 
+# The frequency sweep will start at `fromf` and continue through the frequency
+# `tof`.  The frequencies will be logarithmically distributed throughout this
+# range.
 fromf = 3.0
 tof = 70.0
 nf = 150
-
 frequencies = logspace(log10(fromf), log10(tof), nf);
+
+# Only a single number per sensor will be collected, the Z direction
+# displacement.
 receptance12 = fill(0.0im, nf)
 receptance112 = fill(0.0im, nf)
-v = fill(0.0im, 6)
 
 # Now Loop over 
 for   fi in 1:length(frequencies)
     f =  frequencies[fi];
     om = 2*pi*f;
+    # Solve the system of complex  equations of balance:
     U = (-om^2*Mt + 1im*om*Ct + Kt) \ F
+    # Distribute the vector of the solution:
     scattersysvec!(dchi, U)
+    # Now sample the solution at the locations of the two sensors, 12 and 112:
+    v = fill(0.0im, 6)
     gathervalues_asvec!(dchi, v, sensors[12])
     p_d = v[1:3];
     receptance12[fi] = p_d[3]/fmagn;
@@ -313,31 +334,44 @@ results = Dict()
 results[12] = Dict("receptance"=>receptance12, "mobility"=>mobility12, "accelerance"=>accelerance12)
 results[112] = Dict("receptance"=>receptance112, "mobility"=>mobility112, "accelerance"=>accelerance112)
 
+##
+# ## Present the results graphically
+
 using PlotlyJS
 
+# Plot the amplitude of the response curves. We output two curves.
+# The first for the driving-point FRF:
 quantity = "accelerance"; units = "m/s^2/N"
 outputat = 12
 y = abs.(results[outputat][quantity]) / phun(units)
 tc12 = scatter(;x=frequencies, y=y, mode="lines", name = "output@$(outputat)", line_color = "rgb(15, 15, 215)")
+# The second for the cross transfer:
 outputat = 112
 y = abs.(results[outputat][quantity]) / phun(units)
 tc112 = scatter(;x=frequencies, y=y, mode="lines", name = "output@$(outputat)", line_color = "rgb(215, 15, 15)")
-plots = cat(tc12, tc112; dims = 1)
+# Set up the layout:
 layout = Layout(;width=650, height=400, xaxis=attr(title="Frequency [Hz]", type = "linear"), yaxis=attr(title="abs(H) [$(units)]", type = "log"), title = "Force@$(forceat), $(quantity)")
+# Plot the graphs:
+plots = cat(tc12, tc112; dims = 1)
 pl = plot(plots, layout; options = Dict(
         :showSendToCloud=>true, 
         :plotlyServerURL=>"https://chart-studio.plotly.com"
         ))
 display(pl)
 
+# Plot the phase shift of the response curves. Again we output two curves, 
+# the first for the driving-point FRF:
 outputat = 12
 y = atan.(imag(results[outputat][quantity]), real(results[outputat][quantity]))/pi*180 
 tc12 = scatter(;x=frequencies, y=y, mode="lines", name = "output@$(outputat)", line_color = "rgb(15, 15, 215)")
+# The second for the cross transfer:
 outputat = 112
 y = atan.(imag(results[outputat][quantity]), real(results[outputat][quantity]))/pi*180 
 tc112 = scatter(;x=frequencies, y=y, mode="lines", name = "output@$(outputat)", line_color = "rgb(215, 15, 15)")
-plots = cat(tc12, tc112; dims = 1)
+# Set up the layout:
 layout = Layout(;width=650, height=400, xaxis=attr(title="Frequency [Hz]", type = "linear"), yaxis=attr(title="Phase shift [deg]", type = "linear"), title = "Force@$(forceat), $(quantity)", yaxis_range=[-180, 180])
+# Plot the graphs:
+plots = cat(tc12, tc112; dims = 1)
 pl = plot(plots, layout; options = Dict(
         :showSendToCloud=>true, 
         :plotlyServerURL=>"https://chart-studio.plotly.com"
