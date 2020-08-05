@@ -25,7 +25,7 @@ end
 
 Compute the stiffness matrix
 """
-function stiffness(self::FEMMPointGroundedSpring, assembler::ASS, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{T}) where {ASS<:AbstractSysmatAssembler, T<:Number}
+function stiffness(self::FEMMPointGroundedSpring, assembler::ASS, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{TI}) where {ASS<:AbstractSysmatAssembler, T<:Number, TI<:Number}
     fes = self.integdomain.fes
     dofnums = zeros(FInt, 1, 6); 
     startassembly!(assembler, 6, 6, count(fes), dchi.nfreedofs, dchi.nfreedofs);
@@ -36,7 +36,7 @@ function stiffness(self::FEMMPointGroundedSpring, assembler::ASS, geom0::NodalFi
     return makematrix!(assembler);
 end
 
-function stiffness(self::FEMMPointGroundedSpring, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{T}) where {T<:Number}
+function stiffness(self::FEMMPointGroundedSpring, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{TI}) where {T<:Number, TI<:Number}
     assembler = SysmatAssemblerSparseSymm();
     return stiffness(self, assembler, geom0, u1, Rfield1, dchi);
 end

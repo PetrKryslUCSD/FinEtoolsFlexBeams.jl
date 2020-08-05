@@ -27,7 +27,7 @@ Compute the consistent mass matrix
 
 This is a general routine for the abstract linear-deformation  FEMM.
 """
-function mass(self::FEMMPointMass, assembler::ASS, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{T}) where {ASS<:AbstractSysmatAssembler, T<:Number}
+function mass(self::FEMMPointMass, assembler::ASS, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{TI}) where {ASS<:AbstractSysmatAssembler, T<:Number, TI<:Number}
     fes = self.integdomain.fes
     dofnums = zeros(FInt, 1, 6); 
     startassembly!(assembler, 3, 3, count(fes), dchi.nfreedofs, dchi.nfreedofs);
@@ -38,7 +38,7 @@ function mass(self::FEMMPointMass, assembler::ASS, geom0::NodalField{FFlt}, u1::
     return makematrix!(assembler);
 end
 
-function mass(self::FEMMPointMass, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{T}) where {T<:Number}
+function mass(self::FEMMPointMass, geom0::NodalField{FFlt}, u1::NodalField{T}, Rfield1::NodalField{T}, dchi::NodalField{TI}) where {T<:Number, TI<:Number}
     assembler = SysmatAssemblerSparseSymm();
     return mass(self, assembler, geom0, u1, Rfield1, dchi);
 end
