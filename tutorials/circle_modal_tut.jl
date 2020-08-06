@@ -251,7 +251,7 @@ x = 1:length(evals); y = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
 tc2 = scatter(;x=x, y=y, mode="markers", name = "lumped, wo", line_color = "rgb(15, 15, 215)", marker = attr(size = 9, symbol = "x-open"))
 evals = results[MASS_TYPE_LUMPED_DIAGONAL_WITH_ROTATION_INERTIA][1]
 x = 1:length(evals); y = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
-tc3 = scatter(;x=x, y=y, mode="markers", name = "lumped, w", line_color = "rgb(165, 165, 15)", marker = attr(size = 9, symbol = "circle"))
+tc3 = scatter(;x=x, y=y, mode="markers", name = "lumped, w", line_color = "rgb(165, 165, 15)", marker = attr(size = 9, symbol = "square"))
 
 # 7, 8 (out of plane)         51.85                 52.29 
 # 9, 10 (in plane)            53.38                 53.97 
@@ -259,19 +259,41 @@ tc3 = scatter(;x=x, y=y, mode="markers", name = "lumped, w", line_color = "rgb(1
 # 13, 14 (in plane)          151.0                 152.4 
 # 15, 16 (out of plane)      287.0                 288.3 
 # 17, 18 (in plane)          289.5                 288.3 
-rfs = [0 0 0 0 0 0 51.85 51.85 53.38 53.38 148.8 148.8 151.0 151.0 287.0 287.0 289.5 289.5]
-x = 1:length(rfs); y = rfs
-tcr = scatter(;x=x, y=y, mode="lines", name = "ref", line_color = "rgb(10, 10, 10)")
+rfs = vec(Float64[0 0 0 0 0 0 51.85 51.85 53.38 53.38 148.8 148.8 151.0 151.0 287.0 287.0 289.5 289.5])
+
+rtc = scatter(;x=collect(1:length(rfs)), y=rfs, mode="lines", name = "ref", line_color = "rgb(15, 15, 15)")
 
 # Set up the layout:
 layout = Layout(;width=650, height=400, xaxis=attr(title="Mode", type = "linear"), yaxis=attr(title="Frequency [hertz]", type = "linear"), title = "Comparison of mass types")
 # Plot the graphs:
-plots = cat(tcr, tc0, tc1, tc2, tc3; dims = 1)
-pl = plot(plots, layout; options = Dict(
+pl = plot([rtc, tc0, tc1, tc2, tc3], layout; options = Dict(
         :showSendToCloud=>true, 
         :plotlyServerURL=>"https://chart-studio.plotly.com"
         ))
 display(pl)
 
 
+##
+# ## "Mixed" mass matrix
+
+# As the graph suggests we can try mixing together mass matrices computed from
+# different assumptions (lumped versus consistent, with or without rotation
+# inertia). No particular justification can be provided for these numbers other
+# than eyeballing the frequencies suggests that 60% can be taken lumped and 40%
+# consistent.
+M = 0.6 .* CB.mass(femm, geom0, u0, Rfield0, dchi; mass_type = MASS_TYPE_LUMPED_DIAGONAL_NO_ROTATION_INERTIA) + 
+    0.4 .* CB.mass(femm, geom0, u0, Rfield0, dchi; mass_type = MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA);
+# With this mixed mass matrix we solve the free vibration problem again.
+evals, evecs, nconv = eigs(K + oshift * M, M; nev=neigvs, which=:SM);
+
+# Plotting the newly obtained data on top of the previously presented data, we
+# can observe sometimes substantial improvement of accuracy of the mixed-matrix
+# formulation relative to the individual mass matrix types.
+x = 1:length(evals); y = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
+mtc = scatter(;x=x, y=y, mode="markers", name = "mixed", line_color = "rgb(215, 15, 215)", marker = attr(size = 9, symbol = "circle"))
+pl = plot([rtc, tc0, tc1, tc2, tc3, mtc], layout; options = Dict(
+        :showSendToCloud=>true, 
+        :plotlyServerURL=>"https://chart-studio.plotly.com"
+        ))
+display(pl)
 
