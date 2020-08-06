@@ -7,7 +7,7 @@
 
 # ## Goals
 
-# - 
+# - Demonstrate the optimization of eigenvalue accuracy by choosing mass type.
 
 # 
 
@@ -159,12 +159,11 @@ fs = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
 # ## Comparison of computed and analytical results
 
 # The approximate and analytical frequencies are now reported.
-println("Approximate frequencies: $fs [Hz]")
-
-
+sigdig(n) = round(n * 10000) / 10000
+println("Approximate frequencies: $(sigdig.(fs)) [Hz]")
 
 ##
-# ## Visualize vibration modes
+# ## Set up the visualization of the vibration modes
 
 # The animation will show one of the vibration modes overlaid on the undeformed geometry. The configuration during the animation needs to reflect rotations. The function `update_rotation_field!` will update the rotation field given a vibration mode.
 using FinEtoolsFlexBeams.RotUtilModule: update_rotation_field!
@@ -176,19 +175,16 @@ using FinEtoolsFlexBeams.VisUtilModule: plot_space_box, plot_solid, render, reac
 # The magnitude of the vibration modes (displacements  and rotations) will be amplified with this scale factor:
 scale = 1.5
 
-# This is the mode that will be animated:
-mode = 7
-
 # In order to handle variables inside loops correctly, we create a local scope with the `let end` block.
-let
+vis(mode) = let
     # The extents of the box will be preserved during animation in order to eliminate changes in the viewing parameters.
-    tbox = plot_space_box([[-1.2 * radius -1.2 * radius -1.2 * radius]; [+1.2 * radius +1.2 * radius +1.2 * radius]])
+    tbox = plot_space_box(reshape(inflatebox!(boundingbox(fens.xyz), 0.3 * radius), 2, 3))
     # This is the geometry of the structure without deformation (undeformed). It is displayed as gray, partially transparent.
     tenv0 = plot_solid(fens, fes; x=geom0.values, u=0.0 .* dchi.values[:, 1:3], R=Rfield0.values, facecolor="rgb(125, 155, 125)", opacity=0.3);
     # Initially the plot consists of the box and the undeformed geometry.
     plots = cat(tbox, tenv0; dims=1)
     # Create the layout for the plot. Set the size of the window.
-    layout = default_layout_3d(;width=600, height=600, options = Dict(:responsive=>true))
+    layout = default_layout_3d(;width=600, height=600)
     # Set the aspect mode to get the correct proportions.
     layout[:scene][:aspectmode] = "data"
     # Render the undeformed structure
@@ -210,10 +206,72 @@ let
         react!(pl, plots, pl.plot.layout)
         sleep(0.115)
     end
-    # Save the plot to a Json file. It can be then re-displayed later.
-    save_to_json(pl, "deformed_plot.json")
 end
 
-# Load the plot from a file.
-using FinEtoolsFlexBeams.VisUtilModule: plot_from_json
-plot_from_json("deformed_plot.json")
+##
+# ## Visualize vibration mode
+
+# Animate the harmonic motion of the mode given as argument:
+# vis(7)
+
+using FinEtoolsFlexBeams.FESetCorotBeamModule: MASS_TYPE_CONSISTENT_NO_ROTATION_INERTIA, 
+MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA, 
+MASS_TYPE_LUMPED_DIAGONAL_NO_ROTATION_INERTIA, 
+MASS_TYPE_LUMPED_DIAGONAL_WITH_ROTATION_INERTIA
+
+results = let
+    results = Dict()
+    for mtype in [
+        MASS_TYPE_CONSISTENT_NO_ROTATION_INERTIA, 
+        MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA, 
+        MASS_TYPE_LUMPED_DIAGONAL_NO_ROTATION_INERTIA, 
+        MASS_TYPE_LUMPED_DIAGONAL_WITH_ROTATION_INERTIA]
+        M = CB.mass(femm, geom0, u0, Rfield0, dchi; mass_type = mtype);
+        evals, evecs, nconv = eigs(K + oshift * M, M; nev=neigvs, which=:SM);
+        results[mtype] = evals, evecs
+    end
+    results
+end
+
+colors = [
+"rgb(125, 15, 15)", 
+"rgb(15, 155, 15)", 
+"rgb(15, 15, 155)", 
+"rgb(125, 115, 115)"
+]
+
+evals = results[MASS_TYPE_CONSISTENT_NO_ROTATION_INERTIA][1]
+x = 1:length(evals); y = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
+tc0 = scatter(;x=x, y=y, mode="markers", name = "cons, wo", line_color = "rgb(215, 15, 15)", marker = attr(size = 9, symbol = "diamond-open"))
+evals = results[MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA][1]
+x = 1:length(evals); y = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
+tc1 = scatter(;x=x, y=y, mode="markers", name = "cons, w", line_color = "rgb(15, 215, 15)", marker = attr(size = 9, symbol = "triangle-down"))
+evals = results[MASS_TYPE_LUMPED_DIAGONAL_NO_ROTATION_INERTIA][1]
+x = 1:length(evals); y = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
+tc2 = scatter(;x=x, y=y, mode="markers", name = "lumped, wo", line_color = "rgb(15, 15, 215)", marker = attr(size = 9, symbol = "x-open"))
+evals = results[MASS_TYPE_LUMPED_DIAGONAL_WITH_ROTATION_INERTIA][1]
+x = 1:length(evals); y = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
+tc3 = scatter(;x=x, y=y, mode="markers", name = "lumped, w", line_color = "rgb(165, 165, 15)", marker = attr(size = 9, symbol = "circle"))
+
+# 7, 8 (out of plane)         51.85                 52.29 
+# 9, 10 (in plane)            53.38                 53.97 
+# 11, 12 (out of plane)      148.8                 149.7 
+# 13, 14 (in plane)          151.0                 152.4 
+# 15, 16 (out of plane)      287.0                 288.3 
+# 17, 18 (in plane)          289.5                 288.3 
+rfs = [0 0 0 0 0 0 51.85 51.85 53.38 53.38 148.8 148.8 151.0 151.0 287.0 287.0 289.5 289.5]
+x = 1:length(rfs); y = rfs
+tcr = scatter(;x=x, y=y, mode="lines", name = "ref", line_color = "rgb(10, 10, 10)")
+
+# Set up the layout:
+layout = Layout(;width=650, height=400, xaxis=attr(title="Mode", type = "linear"), yaxis=attr(title="Frequency [hertz]", type = "linear"), title = "Comparison of mass types")
+# Plot the graphs:
+plots = cat(tcr, tc0, tc1, tc2, tc3; dims = 1)
+pl = plot(plots, layout; options = Dict(
+        :showSendToCloud=>true, 
+        :plotlyServerURL=>"https://chart-studio.plotly.com"
+        ))
+display(pl)
+
+
+
