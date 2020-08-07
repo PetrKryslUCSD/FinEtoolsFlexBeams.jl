@@ -2,11 +2,15 @@
 
 # ## Description
 
-# Vibration analysis of a beam simply supported in one plane, and clamped
-# in another. The results are compared with analytical expressions.
+# Vibration analysis of a beam simply supported in one plane, and clamped in
+# another. The results are compared with analytical expressions. This is a
+# benchmark from the NAFEMS Selected Benchmarks for Natural Frequency Analysis,
+# publication: Test VM09: Circular Ring --  In-plane and Out-of-plane
+# Vibration.
 
 # ## Goals
 
+# - Show convergence relative to reference values. 
 # - Demonstrate the optimization of eigenvalue accuracy by choosing mass type.
 
 # 
@@ -44,6 +48,24 @@ radius = 1.0 * phun("m"); diameter = 0.1 * phun("m");
 # 15, 16 (out of plane)      287.0                 288.3 
 # 17, 18 (in plane)          289.5                 288.3 
 
+# The reference values are analytically determined (Blevins, FORMULAS FOR
+# DYNAMICS, ACOUSTICS AND VIBRATION, Table 4.16). 
+
+# For instance the the first out of plane mode is listed in this table as
+J = cs.parameters(0.0)[2]
+G = E/2/(1+nu)
+i = 2 # the first non-rigid body mode
+i*(i^2-1)/(2*pi*R^2)*sqrt(E*I/m/(i^2+E*I/G/J))
+
+# The first "ovaling" (in-plane) mode is:
+R = radius
+I = cs.parameters(0.0)[4]
+m = rho * cs.parameters(0.0)[1]
+i=2 # the first ovaling mode
+@show i*(i^2-1)/(2*pi*R^2*(i^2+1)^(1/2))*sqrt(E*I/m)
+
+
+
 # The purpose of the numerical model is to calculate approximation to the reference frequencies.
 
 neigvs = 18;
@@ -61,6 +83,7 @@ neigvs = 18;
 # coordinates for the beam.
 using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionCircle
 cs = CrossSectionCircle(s -> diameter/2, s -> [1.0, 0.0, 0.0])
+@show cs.parameters(0.0)
 
 # We will generate
 n = 20
@@ -136,7 +159,7 @@ M = CB.mass(femm, geom0, u0, Rfield0, dchi);
 ##
 # ## Solve the free-vibration problem
 
-oshift = (2*pi*5)^2
+oshift = (2*pi*15)^2
 
 # The Arnoldi algorithm implemented in the well-known `Arpack` package is used
 # to solve the generalized eigenvalue problem with the sparse matrices. As is
@@ -297,4 +320,6 @@ pl = plot([rtc, tc0, tc1, tc2, tc3, mtc], layout; options = Dict(
         :plotlyServerURL=>"https://chart-studio.plotly.com"
         ))
 display(pl)
+
+
 
