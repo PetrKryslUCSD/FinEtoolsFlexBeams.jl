@@ -7,9 +7,12 @@
 
 # ## Goals
 
-# - 
-
-# 
+# - Introduce definition of cross-section.
+# - Show generation of finite element mesh of beams.
+# - Describe geometry, displacement, and rotation fields.
+# - Describe application of support conditions.
+# - Calculate the discrete model quantities and solve the free vibration problem.
+# - Demonstrate visualization of the free vibrations.
 
 ##
 # ## Definition of the basic inputs
@@ -24,8 +27,7 @@ E = 30002.0 * phun("ksi")
 nu = 0.0;
 
 # The mass density is expressed in customary units as
-g = 32.17*12 * phun("in/sec^2")
-rho = 4.65 * phun("oz/in ^3") / g
+rho = 0.28 * phun("lbm/in^3")
 # Here are the cross-sectional dimensions and the length of the beam between supports.
 b = 1.8 * phun("in"); h = 1.8 * phun("in"); L = 100 * phun("in");
 
@@ -225,7 +227,8 @@ scale = 1.5
 # This is the mode that will be animated:
 mode = 1
 
-# In order to handle variables inside loops correctly, we create a local scope with the `let end` block.
+# In order to handle variables inside loops correctly, we create a local scope
+# with the `let end` block.
 let
     # The extents of the box will be preserved during animation in order to eliminate changes in the viewing parameters.
     tbox = plot_space_box([[-0.2 * L -L / 2 -0.2 * L]; [+0.2 * L L / 2 +0.2 * L]])
