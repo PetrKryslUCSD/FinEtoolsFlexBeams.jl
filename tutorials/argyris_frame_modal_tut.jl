@@ -84,16 +84,47 @@ update_rotation_field!(Rfield1, dchi)
 # which in turn lead to the geometric stiffness.
 Kg = CB.geostiffness(femm, geom0, u1, Rfield1, dchi);
 
+using Arpack
+neigvs = 4
+
+lfp = linearspace(0.0, 68000.0, 400)
+fsp = []
+for load_factor in lfp
+    evals, evecs, nconv = eigs(K + load_factor .* Kg, M; nev=neigvs, which=:SM);
+    f = evals[1] > 0 ? sqrt(evals[1]) / (2 * pi) : 0;
+    push!(fsp, f)
+end
+
+lfm = linearspace(0.0, -109000.0, 400)
+fsm = []
+for load_factor in lfm
+    evals, evecs, nconv = eigs(K + load_factor .* Kg, M; nev=neigvs, which=:SM);
+    f = evals[1] > 0 ? sqrt(evals[1]) / (2 * pi) : 0;
+    push!(fsm, f)
+end
+
+using PlotlyJS
+
+tcp = scatter(;x=lfp, y=fsp, mode="markers", name = "Fundamental frequency", line_color = "rgb(15, 15, 15)")
+tcm = scatter(;x=lfm, y=fsm, mode="markers", name = "Fundamental frequency", line_color = "rgb(15, 15, 15)")
+plots = cat(tcp, tcm; dims = 1)
+layout = Layout(;width=500, height=500, xaxis=attr(title="Loading factor P", zeroline=true), yaxis=attr(title="Frequency(P) [Hz]", zeroline=true))
+pl = plot(plots, layout)
+display(pl)
+
+##
+# ## Visualize some fundamental mode shapes
+
 using FinEtoolsFlexBeams.VisUtilModule: plot_space_box, plot_solid, render, react!, default_layout_3d, save_to_json
 scale = 0.005
 
-vis(eval, evec) = let
+vis(loading_factor, evec) = let
     tbox = plot_space_box(reshape(inflatebox!(boundingbox(fens.xyz), 0.3 * L), 2, 3))
     tenv0 = plot_solid(fens, fes; x=geom0.values, u=0.0 .* dchi.values[:, 1:3], R=Rfield0.values, facecolor="rgb(125, 155, 125)", opacity=0.3);
     plots = cat(tbox, tenv0; dims=1)
     layout = default_layout_3d(;width=600, height=600)
     layout[:scene][:aspectmode] = "data"
-    pl = render(plots; layout=layout)
+    pl = render(plots; layout=layout, title = "Loading factor $(loading_factor)")
     for xscale in scale .* sin.(collect(0:1:89) .* (2 * pi / 21))
         scattersysvec!(dchi, xscale .* evec)
         u1 = deepcopy(u0)
@@ -107,38 +138,16 @@ vis(eval, evec) = let
     end
 end
 
-using Arpack
-neigvs = 4
+loading_factor = 60000
+evals, evecs, nconv = eigs(K + loading_factor .* Kg, M; nev=neigvs, which=:SM);
+vis(loading_factor, evecs[:, 1])
 
-lfp = linearspace(0.0, 68000.0, 4)
-fsp = []
-for load_factor in lfp
-    evals, evecs, nconv = eigs(K + load_factor .* Kg, M; nev=neigvs, which=:SM);
-    @show evals
-    f = evals[1] > 0 ? sqrt(evals[1]) / (2 * pi) : 0;
-    push!(fsp, f)
-end
+loading_factor = -50000
+evals, evecs, nconv = eigs(K + loading_factor .* Kg, M; nev=neigvs, which=:SM);
+vis(loading_factor, evecs[:, 1])
 
-lfm = linearspace(0.0, -106000.0, 4)
-fsm = []
-for load_factor in lfm
-    evals, evecs, nconv = eigs(K + load_factor .* Kg, M; nev=neigvs, which=:SM);
-    @show evals
-    for j in 1:length(evals)
-        f = sqrt(evals[j]) / 2 / pi
-        vis(f, evecs[:, j])
-    end
-    f = evals[1] > 0 ? sqrt(evals[1]) / (2 * pi) : 0;
-    push!(fsm, f)
-end
-
-using PlotlyJS
-
-tcp = scatter(;x=lfp, y=fsp, mode="markers", name = "Fundamental frequency", line_color = "rgb(15, 15, 15)")
-tcm = scatter(;x=lfm, y=fsm, mode="markers", name = "Fundamental frequency", line_color = "rgb(15, 15, 15)")
-plots = cat(tcp, tcm; dims = 1)
-layout = Layout(;width=500, height=500, xaxis=attr(title="P/P_{Euler}", zeroline=true), yaxis=attr(title="Frequency(P)/Frequency(0) [Hz]", zeroline=true))
-pl = plot(plots, layout)
-display(pl)
+loading_factor = -100000
+evals, evecs, nconv = eigs(K + loading_factor .* Kg, M; nev=neigvs, which=:SM);
+vis(loading_factor, evecs[:, 1])
 
 true
