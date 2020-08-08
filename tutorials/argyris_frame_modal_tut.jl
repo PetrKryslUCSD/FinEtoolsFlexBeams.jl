@@ -1,8 +1,8 @@
-# # Modal analysis of Argyris frame
+# # Modal analysis of Argyris frame: effect of prestress
 
 # ## Description
 
-# Vibration analysis of a simply supported column loaded with axial force. 
+# Vibration analysis of a L-shaped frame under a loading. 
 # The fundamental vibration frequency depends on the prestress force.
 
 # ## Goals
@@ -21,305 +21,124 @@ using FinEtoolsFlexBeams.FEMMCorotBeamModule: FEMMCorotBeam
 using FinEtoolsFlexBeams.FEMMCorotBeamModule
 CB = FEMMCorotBeamModule
 
-function sim(load_factor = 1.0)
-    # Parameters:
-    E = 71240.0 * phun("MPa")
-    nu = 0.31; # Poisson ratio
-    rho = 5000 * phun("kg/m^3");
-    # cross-sectional dimensions and length of each leg in millimeters
-    b = 0.6 * phun("mm"); h = 30.0 * phun("mm"); L = 240.0 * phun("mm"); 
-    # Magnitude of the total applied force, Newton
-    magn = 1e-5 * phun("N");
+# Parameters:
+E = 71240.0 * phun("MPa")
+nu = 0.31; # Poisson ratio
+rho = 5000 * phun("kg/m^3");
+# cross-sectional dimensions and length of each leg in millimeters
+b = 0.6 * phun("mm"); h = 30.0 * phun("mm"); L = 240.0 * phun("mm"); 
+# Magnitude of the total applied force, Newton
+magn = 1e-5 * phun("N");
 
-    # Cross-sectional properties
-    cs = CrossSectionRectangle(s -> b, s -> h, s -> [0.0, 1.0, 0.0])
+# Cross-sectional properties
+cs = CrossSectionRectangle(s -> b, s -> h, s -> [0.0, 1.0, 0.0])
 
-    # Select the number of elements per leg.
-    n = 8;
-    members = Tuple{FENodeSet, AbstractFESet}[]
-    push!(members, frame_member([0 0 L; L 0 L], n, cs))
-    push!(members, frame_member([L 0 L; L 0 0], n, cs))
-    fens, fes = merge_members(members; tolerance = L / 10000)
+# Select the number of elements per leg.
+n = 8;
+members = Tuple{FENodeSet, AbstractFESet}[]
+push!(members, frame_member([0 0 L; L 0 L], n, cs))
+push!(members, frame_member([L 0 L; L 0 0], n, cs))
+fens, fes = merge_members(members; tolerance = L / 10000)
 
-    # Material properties
-    material = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
+# Material properties
+material = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
 
-    # Construct the requisite fields, geometry and displacement
-    # Initialize configuration variables
-    geom0 = NodalField(fens.xyz)
-    u0 = NodalField(zeros(size(fens.xyz,1), 3))
-    Rfield0 = initial_Rfield(fens)
-    dchi = NodalField(zeros(size(fens.xyz,1), 6))
+# Construct the requisite fields, geometry and displacement
+# Initialize configuration variables
+geom0 = NodalField(fens.xyz)
+u0 = NodalField(zeros(size(fens.xyz,1), 3))
+Rfield0 = initial_Rfield(fens)
+dchi = NodalField(zeros(size(fens.xyz,1), 6))
 
-    # Apply EBC's
-    l1 = selectnode(fens; box = [0 0 0 0 L L], tolerance = L / 10000)
-    for i in [1, 2, 3, 4, 5, 6]
-        setebc!(dchi, l1, true, i)
-    end
-    applyebc!(dchi)
-    numberdofs!(dchi);
-
-    # Assemble the global discrete system
-    femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material)
-    K = CB.stiffness(femm, geom0, u0, Rfield0, dchi);
-    M = CB.mass(femm, geom0, u0, Rfield0, dchi);
-
-    tipn = selectnode(fens; box=[L L 0 0  0 0], tolerance=L/n/1000)[1]
-    loadbdry = FESetP1(reshape([tipn], 1, 1))
-    lfemm = FEMMBase(IntegDomain(loadbdry, PointRule()))
-    fi = ForceIntensity(FFlt[-magn, 0, 0, 0, 0, 0]);
-
-    F = CB.distribloads(lfemm, geom0, dchi, fi, 3);
-
-    # Solve for the displacement under @show the static load
-    scattersysvec!(dchi, K\F);
-
-    # Update deflections so that the initial stress can be computed. First the displacements:
-    u1 = deepcopy(u0)
-    u1.values .= dchi.values[:, 1:3]
-    # Then the rotations:
-    Rfield1 = deepcopy(Rfield0)
-    update_rotation_field!(Rfield1, dchi)
-
-    # The static deflection is now used to compute the internal forces
-    # which in turn lead to the geometric stiffness.
-    Kg = CB.geostiffness(femm, geom0, u1, Rfield1, dchi);
-
-    # Solve the eigenvalue problem
-    evals, evecs, nconv = eigs(K + load_factor.*Kg, M; nev=neigvs, which=:SM);
-    # The fundamental frequency:
-    f = sqrt(evals[1]) / (2 * pi);
-    println("Fundamental frequency: $f [Hz]")
-
-    return f
-end # sim
-
-for load_factor in linearspace(0.0, 65000.0, 10)
-    sim(load_factor)
+# Apply EBC's
+l1 = selectnode(fens; box = [0 0 0 0 L L], tolerance = L / 10000)
+for i in [1, 2, 3, 4, 5, 6]
+    setebc!(dchi, l1, true, i)
 end
-for load_factor in linearspace(0.0, -107000.0, 10)
-    sim(load_factor)
+applyebc!(dchi)
+numberdofs!(dchi);
+
+# Assemble the global discrete system
+femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material)
+K = CB.stiffness(femm, geom0, u0, Rfield0, dchi);
+M = CB.mass(femm, geom0, u0, Rfield0, dchi);
+
+tipn = selectnode(fens; box=[L L 0 0  0 0], tolerance=L/n/1000)[1]
+loadbdry = FESetP1(reshape([tipn], 1, 1))
+lfemm = FEMMBase(IntegDomain(loadbdry, PointRule()))
+fi = ForceIntensity(FFlt[-magn, 0, 0, 0, 0, 0]);
+
+F = CB.distribloads(lfemm, geom0, dchi, fi, 3);
+
+# Solve for the displacement under @show the static load
+scattersysvec!(dchi, K\F);
+
+# Update deflections so that the initial stress can be computed. First the displacements:
+u1 = deepcopy(u0)
+u1.values .= dchi.values[:, 1:3]
+# Then the rotations:
+Rfield1 = deepcopy(Rfield0)
+update_rotation_field!(Rfield1, dchi)
+
+# The static deflection is now used to compute the internal forces
+# which in turn lead to the geometric stiffness.
+Kg = CB.geostiffness(femm, geom0, u1, Rfield1, dchi);
+
+using FinEtoolsFlexBeams.VisUtilModule: plot_space_box, plot_solid, render, react!, default_layout_3d, save_to_json
+scale = 0.005
+
+vis(eval, evec) = let
+    tbox = plot_space_box(reshape(inflatebox!(boundingbox(fens.xyz), 0.3 * L), 2, 3))
+    tenv0 = plot_solid(fens, fes; x=geom0.values, u=0.0 .* dchi.values[:, 1:3], R=Rfield0.values, facecolor="rgb(125, 155, 125)", opacity=0.3);
+    plots = cat(tbox, tenv0; dims=1)
+    layout = default_layout_3d(;width=600, height=600)
+    layout[:scene][:aspectmode] = "data"
+    pl = render(plots; layout=layout)
+    for xscale in scale .* sin.(collect(0:1:89) .* (2 * pi / 21))
+        scattersysvec!(dchi, xscale .* evec)
+        u1 = deepcopy(u0)
+        u1.values .= dchi.values[:, 1:3]
+        Rfield1 = deepcopy(Rfield0)
+        update_rotation_field!(Rfield1, dchi)
+        tenv1 = plot_solid(fens, fes; x=geom0.values, u=dchi.values[:, 1:3], R=Rfield1.values, facecolor="rgb(50, 55, 125)");
+        plots = cat(tbox, tenv0, tenv1; dims=1)
+        react!(pl, plots, pl.plot.layout)
+        sleep(0.115)
+    end
+end
+
+using Arpack
+neigvs = 4
+
+lfp = linearspace(0.0, 68000.0, 4)
+fsp = []
+for load_factor in lfp
+    evals, evecs, nconv = eigs(K + load_factor .* Kg, M; nev=neigvs, which=:SM);
+    @show evals
+    f = evals[1] > 0 ? sqrt(evals[1]) / (2 * pi) : 0;
+    push!(fsp, f)
+end
+
+lfm = linearspace(0.0, -106000.0, 4)
+fsm = []
+for load_factor in lfm
+    evals, evecs, nconv = eigs(K + load_factor .* Kg, M; nev=neigvs, which=:SM);
+    @show evals
+    for j in 1:length(evals)
+        f = sqrt(evals[j]) / 2 / pi
+        vis(f, evecs[:, j])
+    end
+    f = evals[1] > 0 ? sqrt(evals[1]) / (2 * pi) : 0;
+    push!(fsm, f)
 end
 
 using PlotlyJS
 
-tc = scatter(;x=Ps./PEul, y=freqs./analyt_freq, mode="markers", name = "Fundamental frequency", line_color = "rgb(15, 15, 15)")
-plots = cat(tc; dims = 1)
+tcp = scatter(;x=lfp, y=fsp, mode="markers", name = "Fundamental frequency", line_color = "rgb(15, 15, 15)")
+tcm = scatter(;x=lfm, y=fsm, mode="markers", name = "Fundamental frequency", line_color = "rgb(15, 15, 15)")
+plots = cat(tcp, tcm; dims = 1)
 layout = Layout(;width=500, height=500, xaxis=attr(title="P/P_{Euler}", zeroline=true), yaxis=attr(title="Frequency(P)/Frequency(0) [Hz]", zeroline=true))
 pl = plot(plots, layout)
 display(pl)
 
-##
-# ## Definition of the basic inputs
-
-
-
-# # The material parameters may be defined with the specification of the units.
-# # The elastic properties are:
-# E = 30002.0 * phun("ksi") 
-# nu = 0.0;
-
-# # The mass density is expressed in customary units as
-# g = 32.17*12 * phun("in/sec^2")
-# rho = 4.65 * phun("oz/in ^3") / g
-# # Here are the cross-sectional dimensions and the length of the beam between supports.
-# b = 1.8 * phun("in"); h = 1.8 * phun("in"); L = 300 * phun("in");
-
-# ##
-# # ## Cross-section
-
-# # Cross-sectional properties are incorporated in the cross-section property. The
-# # three arguments supplied are functions. All are returning "constants". In
-# # particular the first two functions each return the dimension of the
-# # cross-section as a constant(the beam has a uniform cross-section); the third
-# # function defines the orientation of the cross-section in the global Cartesian
-# # coordinates. `[1.0, 0.0, 0.0]` is the vector that together with the tangent
-# # to the midline curve of the beam spans the $x_1x_2$ plane of the local
-# # coordinates for the beam.
-# using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionRectangle
-# cs = CrossSectionRectangle(s -> b, s -> h, s -> [1.0, 0.0, 0.0])
-
-# # Here we retrieve the cross-sectional properties at the arc length 0.0.
-# @show A, J, I1, I2, I3 = cs.parameters(0.0)
-
-# ##
-# # ## Analytical frequencies 
-
-# # The analytical frequencies were taken from table 8-1 of Formulas for
-# # natural frequency and mode shape, Robert D. Blevins, Krieger publishing
-# # company, Malabar Florida, reprint edition 2001.
-# # 
-# # The beam has cylindrical supports at either end. 
-# # 
-# # Simply supported column without a pre-stressing force has a fundamental frequency of
-# analyt_freq = (1*pi)^2/(2*pi*L^2)*sqrt(E*I2/rho/A);
-
-
-# # The critical Euler buckling load (simple-support): (pi^2*E*I2/L^2).
-# @show PEul = (pi^2*E*I2/L^2);
-
-# # Ps=linspace(-1, 1, 100);
-
-# # The purpose of the numerical model is to calculate approximation to the fundamental
-# # analytical natural frequency.
-# neigvs = 1;
-
-# # Now we generate the mesh of the beam. The locations of its two endpoints are:
-# xyz = [[0 -L/2 0]; [0 L/2 0]]
-# # We will generate
-# n = 20
-# # beam elements along the member.
-# using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member
-# fens, fes = frame_member(xyz, n, cs);
-
-
-# ##
-# # ## Material
-
-# # Material properties can be now used to create a material: isotropic elasticity model of the `FinEtoolsDeforLinear` package is instantiated.
-# using FinEtoolsDeforLinear
-# material = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
-
-# ##
-# # ## Fields
-
-# # Now we start constructing the discrete finite element model.
-# # We begin by constructing the requisite fields, geometry and displacement.
-# # These are the so-called "configuration variables", all initialized to 0.
-# # This is that geometry field.
-# geom0 = NodalField(fens.xyz)
-# # This is the displacement field, three unknown displacements per node.
-# u0 = NodalField(zeros(size(fens.xyz, 1), 3))
-# # This is the rotation field, three unknown rotations per node are represented
-# # with a rotation matrix, in total nine numbers. The utility function
-# # `initial_Rfield`
-# using FinEtoolsFlexBeams.RotUtilModule: initial_Rfield
-# Rfield0 = initial_Rfield(fens)
-
-# # Finally, this is the displacement and rotation field for incremental changes,
-# # incremental displacements and incremental rotations. In total, 6 unknowns per
-# # node.
-# dchi = NodalField(zeros(size(fens.xyz, 1), 6))
-
-# ##
-# # ## Support conditions
-
-# # Now we apply the essential boundary conditions (EBCs) to enforce the action of
-# # the supports at the ends of the beam. 
-
-# # First we select the node at the location  `[0 -L/2 0]`. This is the immovable node.
-# immovable = selectnode(fens; box=[0 0 -L/2 -L/2 0 0], tolerance=L/n/1000)[1]
-
-# # The boundary condition at this point dictates zero displacements (degrees of
-# # freedom 1, 2, and 3) and zero rotations about the axis of the beam (degree of freedom 5). 
-# for i in [1,2,3,5]
-#     setebc!(dchi, [immovable], true, i)
-# end
-
-# # Similarly, the node next to the other end of the beam is selected. This note is axially movable, but all other degrees of freedom
-# movable = selectnode(fens; box=[0 0 L/2  L/2 0 0], tolerance=L/n/1000)[1]
-
-# # This time the transverse displacements and the axial rotation are suppressed.
-# for i in [1,3,5]
-#     setebc!(dchi, [movable], true, i)
-# end
-
-# # These boundary conditions now need to be "applied". This simply means that the prescribed values of the degrees of freedom are copied into the active degrees of freedom.
-# applyebc!(dchi)
-# # The essential boundary conditions will also reduce the number of free
-# # (unknown) degrees of freedom.
-# numberdofs!(dchi);
-# # Here we inspect the degrees of freedom in the incremental
-# # displacement/rotation field:
-# @show dchi.dofnums
-# # Note that the degrees of freedom are actually carried by the incremental
-# # field, not by the displacement or the rotation fields. 
-
-
-# ##
-# # ## Assemble the global discrete system
-
-# using FinEtoolsFlexBeams.FEMMCorotBeamModule: FEMMCorotBeam
-# femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material);
-
-# # For disambiguation we will refer to the stiffness and mass functions by qualifying them with the corotational-beam module, `FEMMCorotBeamModule`.
-# using FinEtoolsFlexBeams.FEMMCorotBeamModule
-# CB = FEMMCorotBeamModule
-# # Thus we can construct the stiffness matrix as follows:
-# # Note that the finite element machine is the first argument. This provides
-# # access to the integration domain. The next argument is the geometry field,
-# # followed by the displacement, rotations, and incremental
-# # displacement/rotation fields. 
-# K = CB.stiffness(femm, geom0, u0, Rfield0, dchi);
-
-# # Now we construct the means of applying the concentrated force of prestress at the movable node.
-# # The node is the "boundary" of the domain of the column.
-# loadbdry = FESetP1(reshape([movable], 1, 1))
-# # The concentrated force can be considered a distributed loading at a single point. 
-# # This distributed loading can be integrated with a quadrature rule suitable for 
-# # a single point domains.
-# lfemm = FEMMBase(IntegDomain(loadbdry, PointRule()))
-
-# # We assume that the magnitude of the force is unity. The buckling factor corresponding to failure is then the value of the Euler force.
-# fi = ForceIntensity(FFlt[0, 1.0, 0, 0, 0, 0]);
-
-# # The distributed loading is now integrated over the "volume" of the integration domain.
-# F = CB.distribloads(lfemm, geom0, dchi, fi, 3);
-
-# # Solve for the displacement under @show the static load
-# scattersysvec!(dchi, K\F);
-
-# # Update deflections so that the initial stress can be computed. First the displacements:
-# u1 = deepcopy(u0)
-# u1.values .= dchi.values[:, 1:3]
-# # Then the rotations:
-# Rfield1 = deepcopy(Rfield0)
-# using FinEtoolsFlexBeams.RotUtilModule:  update_rotation_field!
-# update_rotation_field!(Rfield1, dchi)
-
-
-# # The static deflection is now used to compute the internal forces
-# # which in turn lead to the geometric stiffness.
-# Kg = CB.geostiffness(femm, geom0, u1, Rfield1, dchi);
-
-# # Now we can evaluate the mass matrix,
-# M = CB.mass(femm, geom0, u0, Rfield0, dchi);
-# # and we have the complete discrete model for the solution of the free vibration problem.
-
-
-
-# ##
-# # ## Solve the free-vibration problem
-
-# # The Arnoldi algorithm implemented in the well-known `Arpack` package is used
-# # to solve the generalized eigenvalue problem with the sparse matrices. As is
-# # common in structural dynamics, we request the smallest eigenvalues in
-# # absolute value (`:SM`). 
-# using Arpack
-
-
-# # The prestress-modified natural frequencies are computed in the loop for 
-# # a number of prestress force values.
-# Ps = collect(linearspace(-1.0, 1.0, 20)).*PEul
-# freqs = let freqs =[];
-#     for P in Ps
-#         # Note that we take the complete stiffness matrix: elastic plus prestress (initial stress).
-#         evals, evecs, nconv = eigs(K + P.*Kg, M; nev=neigvs, which=:SM);
-#         # The fundamental frequency:
-#         f = sqrt(evals[1]) / (2 * pi);
-#         push!(freqs, f);
-#     end
-#     freqs
-# end
-
-# @show Ps./PEul, freqs
-
-# using PlotlyJS
-
-# tc = scatter(;x=Ps./PEul, y=freqs./analyt_freq, mode="markers", name = "Fundamental frequency", line_color = "rgb(15, 15, 15)")
-# plots = cat(tc; dims = 1)
-# layout = Layout(;width=500, height=500, xaxis=attr(title="P/P_{Euler}", zeroline=true), yaxis=attr(title="Frequency(P)/Frequency(0) [Hz]", zeroline=true))
-# pl = plot(plots, layout)
-# display(pl)
-
-# true
+true
