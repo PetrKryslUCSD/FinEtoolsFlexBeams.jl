@@ -142,5 +142,30 @@ richextrapol([59.7122,  53.7307, 52.0987], [4.0, 2.0, 1.0])
 richextrapol([63.142, 55.8224, 53.879], [4.0, 2.0, 1.0])  
 richextrapol([170.771, 153.3047, 148.5574], [4.0, 2.0, 1.0])  
 
-# 51.85, 53.38, 148.8 
-# 51.486, 53.176, 146.785
+using PlotlyJS
+using FinEtools.AlgoBaseModule: richextrapol
+
+# Modes 7 and 8
+sols = [59.7122,  53.7307, 52.0987]
+resextrap = richextrapol(sols, [4.0, 2.0, 1.0])  
+errs = (sols .- resextrap[1])./resextrap[1]
+t78 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", name = "Mode 7,8", line_color = "rgb(155, 15, 15)")
+
+# Modes 9 and 10
+sols = [63.142, 55.8224, 53.879]
+resextrap = richextrapol(sols, [4.0, 2.0, 1.0])  
+errs = (sols .- resextrap[1])./resextrap[1]
+t910 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", name = "Mode 9,10", line_color = "rgb(15, 155, 15)")
+
+# Modes 11 and 12
+sols = [170.771, 153.3047, 148.5574]
+resextrap = richextrapol(sols, [4.0, 2.0, 1.0])  
+errs = (sols .- resextrap[1])./resextrap[1]
+t1112 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", name = "Mode 11, 12", line_color = "rgb(15, 15, 155)")
+
+layout = Layout(;width=400, height=300, xaxis=attr(title="Element size", type = "log"), yaxis=attr(title="Normalized error [ND]", type = "log"), title = "3D: Convergence of modes 7, ..., 12", xaxis_range=[-2, -1], yaxis_range=[-3, -0])
+pl = plot([t78, t910, t1112], layout; options = Dict(
+        :showSendToCloud=>true, 
+        :plotlyServerURL=>"https://chart-studio.plotly.com"
+        ))
+display(pl)

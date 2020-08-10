@@ -85,9 +85,10 @@ i=2 # the first ovaling mode
 
 
 # We will generate
-n = 20 # 52.2048, 52.2048, 53.7606, 53.7606, 148.8338
+# n = 20 # 52.2048, 52.2048, 53.7606, 53.7606, 148.8338
 # n = 200 # 51.6087, 51.6087, 53.1098, 53.1098, 147.1189
-n = 2000 # 51.6028, 51.6028, 53.1033, 147.1022
+# n = 2000 # 51.6028, 51.6028, 53.1033, 147.1022
+n = 80
 # beam elements along the member.
 using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member
 tolerance = radius/n/1000;
@@ -194,4 +195,33 @@ evals = results[MASS_TYPE_LUMPED_DIAGONAL_WITH_ROTATION_INERTIA][1]
 f = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
 print("$(sigdig.(f))\n")
 
+# 51.6425, 53.1497, 53.1497, 147.2318
+# 51.6144, 53.1191, 53.1191, 147.1526
+# 51.6074, 53.1115, 53.1115, 147.1328
+using PlotlyJS
+using FinEtools.AlgoBaseModule: richextrapol
 
+# Modes 7 and 8
+sols = [51.6425, 51.6144, 51.6074]
+resextrap = richextrapol(sols, [4.0, 2.0, 1.0])  
+errs = (sols .- resextrap[1])./resextrap[1]
+t78 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", name = "", line_color = "rgb(155, 15, 15)")
+
+# Modes 9 and 10
+sols = [53.1497, 53.1191, 53.1115]
+resextrap = richextrapol(sols, [4.0, 2.0, 1.0])  
+errs = (sols .- resextrap[1])./resextrap[1]
+t910 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", name = "", line_color = "rgb(15, 155, 15)")
+
+# Modes 11 and 12
+sols = [147.2318, 147.1526, 147.1328]
+resextrap = richextrapol(sols, [4.0, 2.0, 1.0])  
+errs = (sols .- resextrap[1])./resextrap[1]
+t1112 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", name = "", line_color = "rgb(15, 15, 155)")
+
+layout = Layout(;width=650, height=400, xaxis=attr(title="Element size", type = "log"), yaxis=attr(title="Normalized error [ND]", type = "log"), title = "TB: Convergence of modes 7, ..., 12", xaxis_range=[-2, -1], yaxis_range=[-5, -2])
+pl = plot([t78, t910, t1112], layout; options = Dict(
+        :showSendToCloud=>true, 
+        :plotlyServerURL=>"https://chart-studio.plotly.com"
+        ))
+display(pl)
