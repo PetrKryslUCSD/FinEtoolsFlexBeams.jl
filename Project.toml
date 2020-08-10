@@ -18,6 +18,7 @@ ORCA = "47be7bcc-f1a6-5447-8b36-7eeeff7534fd"
 PlotlyJS = "f0f68f2c-4968-5e81-91da-67840de0976a"
 Profile = "9abbd945-dff8-562f-b5e8-e1ebf5ef1b79"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+SymRCM = "286e6d88-80af-4590-acc9-0001b223b9bd"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Traceur = "37b6cedf-1f77-55f8-9503-c64b63398394"
 
