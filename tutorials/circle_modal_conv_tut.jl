@@ -63,7 +63,8 @@ radius = 1.0 * phun("m"); diameter = 0.1 * phun("m");
 # to the midline curve of the beam spans the $x_1x_2$ plane of the local
 # coordinates for the beam.
 using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionCircle
-cs = CrossSectionCircle(s -> diameter/2, s -> [1.0, 0.0, 0.0])
+cs = CrossSectionCircle(s -> diameter/2, s -> [1.0, 0.0, 0.0], 6/7) # Timoshenko
+# cs = CrossSectionCircle(s -> diameter/2, s -> [1.0, 0.0, 0.0]) # Bernoulli
 @show cs.parameters(0.0)
 
 # The parameters of the structure:
@@ -84,7 +85,9 @@ i=2 # the first ovaling mode
 
 
 # We will generate
-n = 200
+n = 20 # 52.2048, 52.2048, 53.7606, 53.7606, 148.8338
+# n = 200 # 51.6087, 51.6087, 53.1098, 53.1098, 147.1189
+n = 2000 # 51.6028, 51.6028, 53.1033, 147.1022
 # beam elements along the member.
 using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member
 tolerance = radius/n/1000;
