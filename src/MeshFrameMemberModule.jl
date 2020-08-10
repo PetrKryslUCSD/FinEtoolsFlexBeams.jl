@@ -55,19 +55,23 @@ function frame_member(xyz, nL, crosssection; label = 0)
     _I2 = fill(0.0, N)
     _I3 = fill(0.0, N)
     _J = fill(0.0, N)
+    _A2s = fill(0.0, N)
+    _A3s = fill(0.0, N)
     _x1x2_vector = [[0.0, 0.0, 1.0] for i in 1:N]
     _dimensions = [[0.0] for i in 1:N]
     for i in 1:N
-        A, J, I1, I2, I3, x1x2_vector, dimensions = crosssection.parameters(smid[i] / stot)
-        _A[i] = A
-        _I1[i] = I1
-        _I2[i] = I2
-        _I3[i] = I3
-        _J[i] = J
-        _x1x2_vector[i] = deepcopy(x1x2_vector)
-        _dimensions[i] = deepcopy(dimensions)
+        par = crosssection.parameters(smid[i] / stot)
+        _A[i] = par.A
+        _I1[i] = par.I1
+        _I2[i] = par.I2
+        _I3[i] = par.I3
+        _J[i] = par.J
+        _A2s[i] = par.A2s
+        _A3s[i] = par.A3s
+        _x1x2_vector[i] = deepcopy(par.x1x2_vector)
+        _dimensions[i] = deepcopy(par.dimensions)
     end
-    fes = FESetL2CorotBeam(connasarray(fes), crosssection, _A, _I1, _I2, _I3, _J, _x1x2_vector, _dimensions)
+    fes = FESetL2CorotBeam(connasarray(fes), crosssection, _A, _I1, _I2, _I3, _J, _A2s, _A3s, _x1x2_vector, _dimensions)
     setlabel!(fes, label)
     return fens, fes
 end

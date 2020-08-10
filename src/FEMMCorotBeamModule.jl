@@ -203,7 +203,7 @@ function stiffness(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt},
     aN, dN, DN = self._aN, self._dN, self._DN
     E = self.material.E
     G = E / 2 / (1 + self.material.nu)::Float64
-    A, I2, I3, J, x1x2_vector = fes.A, fes.I2, fes.I3, fes.J, fes.x1x2_vector
+    A, I2, I3, J, A2s, A3s, x1x2_vector = fes.A, fes.I2, fes.I3, fes.J, fes.A2s, fes.A3s, fes.x1x2_vector
     startassembly!(assembler, size(elmat, 1), size(elmat, 2), count(fes), dchi.nfreedofs, dchi.nfreedofs);
     for i = 1:count(fes) # Loop over elements
         gathervalues_asmat!(geom0, ecoords0, fes.conn[i]);
@@ -214,7 +214,7 @@ function stiffness(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFlt},
         fill!(elmat,  0.0); # Initialize element matrix
         L1, Ft, dN = local_frame_and_def!(Ft, dN, F0, FtI, FtJ, ecoords0, x1x2_vector[i], ecoords1, R1I, R1J);
         _transfmat!(Te, Ft)
-        local_stiffness!(elmat, E, G, A[i], I2[i], I3[i], J[i], L1, aN, DN);
+        local_stiffness!(elmat, E, G, A[i], I2[i], I3[i], J[i], A2s[i], A3s[i], L1, aN, DN);
         mul!(elmatTe, elmat, Transpose(Te))
         mul!(elmat, Te, elmatTe)
         gatherdofnums!(dchi, dofnums, fes.conn[i]); # degrees of freedom
@@ -243,7 +243,7 @@ function geostiffness(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFl
     aN, dN, DN, PN = self._aN, self._dN, self._DN, self._PN
     E = self.material.E
     G = E / 2 / (1 + self.material.nu)
-    A, I2, I3, J, x1x2_vector = fes.A, fes.I2, fes.I3, fes.J, fes.x1x2_vector
+    A, I2, I3, J, A2s, A3s, x1x2_vector = fes.A, fes.I2, fes.I3, fes.J, fes.A2s, fes.A3s, fes.x1x2_vector
     startassembly!(assembler, size(elmat, 1), size(elmat, 2), count(fes), dchi.nfreedofs, dchi.nfreedofs);
     for i = 1:count(fes) # Loop over elements
         gathervalues_asmat!(geom0, ecoords0, fes.conn[i]);
@@ -254,7 +254,7 @@ function geostiffness(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{FFl
         fill!(elmat,  0.0); # Initialize element matrix
         L1, Ft, dN = local_frame_and_def!(Ft, dN, F0, FtI, FtJ, ecoords0, x1x2_vector[i], ecoords1, R1I, R1J);
         _transfmat!(Te, Ft)
-        natural_forces!(PN, E, G, A[i], I2[i], I3[i], J[i], L1, dN, DN)
+        natural_forces!(PN, E, G, A[i], I2[i], I3[i], J[i], A2s[i], A3s[i], L1, dN, DN)
         local_geometric_stiffness!(elmat, A[i], I2[i], I3[i], PN, L1)
         mul!(elmatTe, elmat, Transpose(Te))
         mul!(elmat, Te, elmatTe)
@@ -284,7 +284,7 @@ function restoringforce(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{F
     elvec = self._elvec
     E = self.material.E
     G = E / 2 / (1 + self.material.nu)
-    A, I2, I3, J, x1x2_vector = fes.A, fes.I2, fes.I3, fes.J, fes.x1x2_vector
+    A, I2, I3, J, A2s, A3s, x1x2_vector = fes.A, fes.I2, fes.I3, fes.J, fes.A2s, fes.A3s, fes.x1x2_vector
     startassembly!(assembler, dchi.nfreedofs);
     for i = 1:count(fes) # Loop over elements
         gathervalues_asmat!(geom0, ecoords0, fes.conn[i]);
@@ -295,7 +295,7 @@ function restoringforce(self::FEMMCorotBeam, assembler::ASS, geom0::NodalField{F
         fill!(elmat,  0.0); # Initialize element matrix
         L1, Ft, dN = local_frame_and_def!(Ft, dN, F0, FtI, FtJ, ecoords0, x1x2_vector[i], ecoords1, R1I, R1J);
         _transfmat!(Te, Ft)
-        natural_forces!(PN, E, G, A[i], I2[i], I3[i], J[i], L1, dN, DN)
+        natural_forces!(PN, E, G, A[i], I2[i], I3[i], J[i], A2s[i], A3s[i], L1, dN, DN)
         local_forces!(LF, PN, L1, aN)
         mul!(elvec, Te, -LF)
         gatherdofnums!(dchi, dofnums, fes.conn[i]); # degrees of freedom

@@ -88,26 +88,31 @@ using Arpack
 neigvs = 4
 
 lfp = linearspace(0.0, 68000.0, 400)
-fsp = []
-for load_factor in lfp
-    evals, evecs, nconv = eigs(K + load_factor .* Kg, M; nev=neigvs, which=:SM);
-    f = evals[1] > 0 ? sqrt(evals[1]) / (2 * pi) : 0;
-    push!(fsp, f)
+fsp = let
+    fsp = []
+    for load_factor in lfp
+        evals, evecs, nconv = eigs(K + load_factor .* Kg, M; nev=neigvs, which=:SM);
+        f = evals[1] > 0 ? sqrt(evals[1]) / (2 * pi) : 0;
+        push!(fsp, f)
+    end
+    fsp
 end
 
-lfm = linearspace(0.0, -109000.0, 400)
-fsm = []
-for load_factor in lfm
-    evals, evecs, nconv = eigs(K + load_factor .* Kg, M; nev=neigvs, which=:SM);
-    f = evals[1] > 0 ? sqrt(evals[1]) / (2 * pi) : 0;
-    push!(fsm, f)
+lfm = linearspace(-109000.0, 0.0, 400)
+fsm = let
+    fsm = []
+    for load_factor in lfm
+        evals, evecs, nconv = eigs(K + load_factor .* Kg, M; nev=neigvs, which=:SM);
+        f = evals[1] > 0 ? sqrt(evals[1]) / (2 * pi) : 0;
+        push!(fsm, f)
+    end
+    fsm
 end
 
 using PlotlyJS
 
-tcp = scatter(;x=lfp, y=fsp, mode="markers", name = "Fundamental frequency", line_color = "rgb(15, 15, 15)")
-tcm = scatter(;x=lfm, y=fsm, mode="markers", name = "Fundamental frequency", line_color = "rgb(15, 15, 15)")
-plots = cat(tcp, tcm; dims = 1)
+tcp = scatter(;x=cat(lfp, lfm; dims=1), y=cat(fsp, fsm; dims=1), mode="markers", name = "Fundamental frequency", line_color = "rgb(15, 15, 15)")
+plots = cat(tcp; dims = 1)
 layout = Layout(;width=500, height=500, xaxis=attr(title="Loading factor P", zeroline=true), yaxis=attr(title="Frequency(P) [Hz]", zeroline=true))
 pl = plot(plots, layout)
 display(pl)

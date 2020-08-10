@@ -15,30 +15,34 @@ mutable struct FESetL2CorotBeam{CT} <: AbstractFESet1Manifold{2}
     I2::FFltVec
     I3::FFltVec
     J::FFltVec
+    A2s::FFltVec
+    A3s::FFltVec
     x1x2_vector::Vector{FFltVec}
     dimensions::Vector{FFltVec}
 end
 
 function FESetL2CorotBeam(conn::FIntMat, crosssection::CT) where {CT}
-    A, J, I1, I2, I3, x1x2_vector, dimensions = crosssection.parameters(0.0)
+    par = crosssection.parameters(0.0)
     N = size(conn, 1)
-    _A = fill(A, N)
-    _I1 = fill(I1, N)
-    _I2 = fill(I2, N)
-    _I3 = fill(I3, N)
-    _J = fill(J, N)
-    _x1x2_vector = [x1x2_vector for i in 1:N]
-    _dimensions = [dimensions for i in 1:N]
-    self = FESetL2CorotBeam(NTuple{2, FInt}[], FInt[], crosssection, _A, _I1, _I2, _I3, _J, _x1x2_vector, _dimensions)
+    _A = fill(par.A, N)
+    _I1 = fill(par.I1, N)
+    _I2 = fill(par.I2, N)
+    _I3 = fill(par.I3, N)
+    _J = fill(par.J, N)
+    _A2s = fill(par.A2s, N) 
+    _A3s = fill(par.A3s, N)
+    _x1x2_vector = [par.x1x2_vector for i in 1:N]
+    _dimensions = [par.dimensions for i in 1:N]
+    self = FESetL2CorotBeam(NTuple{2, FInt}[], FInt[], crosssection, _A, _I1, _I2, _I3, _J, _A2s, _A3s, _x1x2_vector, _dimensions)
     self = fromarray!(self, conn)
     setlabel!(self, 0)
     return self
 end
 
-function FESetL2CorotBeam(conn::FIntMat, crosssection::CT, _A, _I1, _I2, _I3, _J, _x1x2_vector, _dimensions) where {CT}
+function FESetL2CorotBeam(conn::FIntMat, crosssection::CT, _A, _I1, _I2, _I3, _J, _A2s, _A3s, _x1x2_vector, _dimensions) where {CT}
     dummy = FESetL2(conn)
     setlabel!(dummy, 0)
-    return FESetL2CorotBeam(dummy.conn, dummy.label, crosssection, _A, _I1, _I2, _I3, _J, _x1x2_vector, _dimensions)
+    return FESetL2CorotBeam(dummy.conn, dummy.label, crosssection, _A, _I1, _I2, _I3, _J, _A2s, _A3s, _x1x2_vector, _dimensions)
 end
 
 """
@@ -64,6 +68,8 @@ function cat(self::T,  other::T) where {T<:FESetL2CorotBeam}
     result.I2 = vcat(self.I2, other.I2);
     result.I3 = vcat(self.I3, other.I3);
     result.J = vcat(self.J, other.J);
+    result.A2s = vcat(self.A2s, other.A2s);
+    result.A3s = vcat(self.A3s, other.A3s);
     result.x1x2_vector = vcat(self.x1x2_vector, other.x1x2_vector);
     result.dimensions = vcat(self.dimensions, other.dimensions);
     return result
@@ -83,6 +89,8 @@ function subset(self::T, L::FIntVec) where {T<:FESetL2CorotBeam}
     result.I2 = self.I2[L]
     result.I3 = self.I3[L]
     result.J = self.J[L] 
+    result.A2s = self.A2s[L] 
+    result.A3s = self.A3s[L] 
     result.x1x2_vector = self.x1x2_vector[L]
     result.dimensions = self.dimensions[L]
     return  result
@@ -563,7 +571,7 @@ end
 
 
 """
-    local_stiffness!(SM, E, G, A, I2, I3, J, L, aN, DN)
+    local_stiffness!(SM, E, G, A, I2, I3, J, A2s, A3s, L, aN, DN)
 
 Compute the local elastic stiffness matrix. 
 
@@ -578,15 +586,15 @@ coordinate axis,
 # Outputs
 `SM` = local stiffness matrix, 12 x 12
 """
-function local_stiffness!(SM, E, G, A, I2, I3, J, L, aN, DN)
+function local_stiffness!(SM, E, G, A, I2, I3, J, A2s, A3s, L, aN, DN)
     local_cartesian_to_natural!(aN, L);
-    natural_stiffness!(DN, E, G, A, I2, I3, J, L);
+    natural_stiffness!(DN, E, G, A, I2, I3, J, A2s, A3s, L);
     SM .= aN'*DN*aN;
     return SM
 end
 
 """
-    natural_forces!(PN, E, G, A, I2, I3, J, L, dN, DN)
+    natural_forces!(PN, E, G, A, I2, I3, J, A2s, A3s, L, dN, DN)
 
 Compute the natural forces from the natural deformations.
 
@@ -608,32 +616,34 @@ coordinate axis,
      `PN[5]`= anti-symmetric bending bending moment in the plane x1-x3; 
      `PN[6]`= axial torque. 
 """
-function natural_forces!(PN, E, G, A, I2, I3, J, L, dN, DN)
-    natural_stiffness!(DN, E, G, A, I2, I3, J, L);
+function natural_forces!(PN, E, G, A, I2, I3, J, A2s, A3s, L, dN, DN)
+    natural_stiffness!(DN, E, G, A, I2, I3, J, A2s, A3s, L);
     #     Natural forces
     mul!(PN, DN, dN);
     # Note that the non-constitutive stiffness due to pre-existing internal forces is currently omitted
 end
 
 """
-    natural_stiffness!(DN, E, G, A, I2, I3, J, L)
+    natural_stiffness_Bernoulli!(DN, E, G, A, I2, I3, J, A2s, A3s, L)
 
 Compute the natural stiffness matrix.
 
-function DN= natural_stiffness(self, E, G, A, I2, I3, J, L) 
+function DN = natural_stiffness(self, E, G, A, I2, I3, J, L) 
 
 # Arguments
-`E`, `G`= Young's and shear modulus, 
-`A`= cross-sectional area, 
-`I2`, `I3`=central moment of inertia of the cross-section about the x2 and x3 
-coordinate axis, 
-`J`=St Venant torsion constant, 
-`L`= current length of the element, 
+- `E`, `G`= Young's and shear modulus, 
+- `A`= cross-sectional area, 
+- `I2`, `I3`= central moment of inertia of the cross-section about the x2 and x3
+  coordinate axis, 
+- `J`= St Venant torsion constant, 
+- `A2s` = effective area for shear in the direction of x2 (ignored)
+- `A3s` = effective area for shear in the direction of x3 (ignored)
+- `L`= current length of the element, 
 
 # Outputs
-`DN` = 6 x 6 natural stiffness matrix
+- `DN` = 6 x 6 natural stiffness matrix
 """
-function natural_stiffness!(DN, E, G, A, I2, I3, J, L)
+function natural_stiffness_Bernoulli!(DN, E, G, A, I2, I3, J, A2s, A3s, L)
     fill!(DN, 0.0)
     DN[1, 1] = E*A/L
     DN[2, 2] = E*I3/L
@@ -644,7 +654,46 @@ function natural_stiffness!(DN, E, G, A, I2, I3, J, L)
     return DN
 end
 
+"""
+    natural_stiffness_Timoshenko!(DN, E, G, A, I2, I3, J, A2s, A3s, L)
 
+Compute the natural stiffness matrix.
+
+function DN = natural_stiffness(self, E, G, A, I2, I3, J, L) 
+
+# Arguments
+- `E`, `G`= Young's and shear modulus, 
+- `A`= cross-sectional area, 
+- `I2`, `I3`= central moment of inertia of the cross-section about the x2 and x3
+  coordinate axis, 
+- `J`= St Venant torsion constant, 
+- `A2s` = effective area for shear in the direction of x2
+- `A3s` = effective area for shear in the direction of x3
+- `L`= current length of the element, 
+
+# Outputs
+- `DN` = 6 x 6 natural stiffness matrix
+"""
+function natural_stiffness_Timoshenko!(DN, E, G, A, I2, I3, J, A2s, A3s, L)
+    fill!(DN, 0.0)
+    DN[1, 1] = E*A/L
+    DN[2, 2] = E*I3/L
+    Phi3 = 12 * E * I3 / (G * A2s * L^2)
+    DN[3, 3] = 3*E*I3/L/(1+Phi3)
+    DN[4, 4] = E*I2/L
+    Phi2 = 12 * E * I2 / (G * A3s * L^2)
+    DN[5, 5] = 3*E*I2/L/(1+Phi3)
+    DN[6, 6] = G*J/L
+    return DN
+end
+
+function natural_stiffness!(DN, E, G, A, I2, I3, J, A2s, A3s, L)
+    if A2s == Inf || A3s == Inf
+        return natural_stiffness_Bernoulli!(DN, E, G, A, I2, I3, J, A2s, A3s, L)
+    else
+        return natural_stiffness_Timoshenko!(DN, E, G, A, I2, I3, J, A2s, A3s, L)
+    end
+end
 
 """
     local_forces!(FL, PN, L, aN)
