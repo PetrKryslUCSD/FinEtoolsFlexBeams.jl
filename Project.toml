@@ -1,12 +1,13 @@
 name = "FinEtoolsFlexBeams"
 uuid = "1d6e2fc3-29aa-4bd6-bf55-212bcb8e2840"
 authors = ["Petr Krysl <pkrysl@ucsd.edu>"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 Arpack = "7d9fca2a-8960-54d3-9f78-7d1dccf2cb97"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 Dierckx = "39dd38d3-220a-591b-8e3c-4c3a8c710a94"
+DocumenterTools = "35a29f4d-8980-5a13-9543-d66fff28ecb8"
 FinEtools = "91bb5406-6c9a-523d-811d-0644c4229550"
 FinEtoolsDeforLinear = "e9187c00-8bdd-11e9-1e70-7ba8303116a2"
 IJulia = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
