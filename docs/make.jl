@@ -1,4 +1,4 @@
-using Documenter, FinEtools, FinEtoolsLinearDefor, FinEtoolsFlexBeams
+using Documenter, FinEtools, FinEtoolsDeforLinear, FinEtoolsFlexBeams
 
 makedocs(
 	modules = [FinEtoolsFlexBeams],
