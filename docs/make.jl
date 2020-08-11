@@ -1,4 +1,4 @@
-using Documenter, FinEtools, FinEtoolsFlexBeams
+using Documenter, FinEtools, FinEtoolsLinearDefor, FinEtoolsFlexBeams
 
 makedocs(
 	modules = [FinEtoolsFlexBeams],
@@ -8,11 +8,12 @@ makedocs(
 	sitename = "FinEtoolsFlexBeams.jl",
 	pages = Any[
 	"Home" => "index.md",
-	"Guide" => "guide/guide.md",
+	"Tutorials" => "tutorials/tutorials.md",
 	"Types and Functions" => Any[
 		"man/types.md",
 		"man/functions.md"]
 		]
+	"Guide" => "guide/guide.md",
 	)
 
 deploydocs(
