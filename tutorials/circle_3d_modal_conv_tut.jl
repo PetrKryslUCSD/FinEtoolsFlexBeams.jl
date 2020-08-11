@@ -63,6 +63,9 @@ radius = 1.0 * phun("m"); diameter = 0.1 * phun("m");
 # first three  natural frequencies.
 neigvs = 18;
 
+# The mass shift needs to be applied since the structure is free-floating.
+oshift = (2*pi*15)^2
+
 # We will generate this many elements per radius of the cross-section, and along
 # the length of the circular ring.
 results = let
@@ -109,8 +112,6 @@ results = let
         K  = stiffness(femm, geom, u)
         M = mass(femm, geom, u)
 
-        # The mass shift needs to be applied since the structure is free-floating.
-        oshift = (2*pi*15)^2
         # Solve the free vibration problem. 
         evals, evecs, nconv = eigs(K+oshift*M, M; nev=neigvs, which=:SM)
         # Correct for the mass shift.
@@ -124,10 +125,6 @@ results = let
 end
 
 @show results
-
-# 2, 80, 59.7122, 63.142, 170.771
-# 4, 160 53.7307, 55.8224, 153.3047
-# 8, 320, 52.0987, 53.879
 
 ##
 # ## Richardson extrapolation

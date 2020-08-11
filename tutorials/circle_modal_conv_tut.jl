@@ -2,25 +2,59 @@
 
 # ## Description
 
-# Vibration analysis of a beam simply supported in one plane, and clamped in
-# another. The results are compared with analytical expressions. This is a
+# Vibration analysis of a free-floating steel ring. This is a
 # benchmark from the NAFEMS Selected Benchmarks for Natural Frequency Analysis,
 # publication: Test VM09: Circular Ring --  In-plane and Out-of-plane
 # Vibration.
 
+# The results can be compared with analytical expressions, but the main purpose
+# is to compute data for extrapolation to the limit to predict the true natural
+# frequencies. 
+
+# ## Reference frequencies 
+
+# There will be 6 rigid body modes (zero natural frequencies).
+
+# The numerical results are due to the publication: 
+# NAFEMS Finite Element Methods & Standards, Abbassian, F., Dawswell, D. J., and
+# Knowles, N. C. Selected Benchmarks for Natural Frequency Analysis, Test No.
+# 6. Glasgow: NAFEMS, Nov., 1987. 
+
+# The reference values were analytically determined (Blevins, FORMULAS FOR
+# DYNAMICS, ACOUSTICS AND VIBRATION, Table 4.16). Note that shear flexibility
+# was neglected when computing the reference values.
+
+# Mode                Reference Value (Hz)  NAFEMS Target Value (Hz)
+# 7, 8 (out of plane)         51.85                 52.29 
+# 9, 10 (in plane)            53.38                 53.97 
+# 11, 12 (out of plane)      148.8                 149.7 
+# 13, 14 (in plane)          151.0                 152.4 
+# 15, 16 (out of plane)      287.0                 288.3 
+# 17, 18 (in plane)          289.5                 288.3 
+
 # ## Goals
 
 # - Show convergence relative to reference values. 
-# - Demonstrate the optimization of eigenvalue accuracy by choosing mass type.
-
+# - Compute data for extrapolation to the limit to predict the true natural
+#   frequencies. 
 # 
 
 ##
 # ## Definition of the basic inputs
 
-# The finite element code realize on the basic functionality implemented in this
-# package.
+# Include the needed packages and modules.
+using Arpack
 using FinEtools
+using FinEtoolsDeforLinear
+using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member
+using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionCircle
+using FinEtoolsFlexBeams.FEMMCorotBeamModule
+CB = FEMMCorotBeamModule
+using FinEtoolsFlexBeams.FEMMCorotBeamModule: FEMMCorotBeam
+using FinEtoolsFlexBeams.FESetCorotBeamModule: MASS_TYPE_CONSISTENT_NO_ROTATION_INERTIA, 
+    MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA, 
+    MASS_TYPE_LUMPED_DIAGONAL_NO_ROTATION_INERTIA, 
+    MASS_TYPE_LUMPED_DIAGONAL_WITH_ROTATION_INERTIA
 
 # The material parameters may be defined with the specification of the units.
 # The elastic properties are:
@@ -32,42 +66,29 @@ rho = 8000 * phun("kg/m^3")
 # Here are the cross-sectional dimensions and the length of the beam between supports.
 radius = 1.0 * phun("m"); diameter = 0.1 * phun("m"); 
 
-##
-# ## Reference frequencies 
+# We shall calculate these eigenvalues, but we are mostly interested in the
+# first three  natural frequencies.
+neigvs = 18;
 
-# There will be 6 rigid body modes (zero natural frequencies).
+# The mass shift needs to be applied since the structure is free-floating.
+oshift = (2*pi*15)^2
 
-# NAFEMS Finite Element Methods & Standards, Abbassian, F., Dawswell, D. J., and Knowles, N. C.
-# Selected Benchmarks for Natural Frequency Analysis, Test No. 6. Glasgow: NAFEMS, Nov., 1987. 
-
-# Mode                Reference Value (Hz)  NAFEMS Target Value (Hz)
-# 7, 8 (out of plane)         51.85                 52.29 
-# 9, 10 (in plane)            53.38                 53.97 
-# 11, 12 (out of plane)      148.8                 149.7 
-# 13, 14 (in plane)          151.0                 152.4 
-# 15, 16 (out of plane)      287.0                 288.3 
-# 17, 18 (in plane)          289.5                 288.3 
-
-# The reference values are analytically determined (Blevins, FORMULAS FOR
-# DYNAMICS, ACOUSTICS AND VIBRATION, Table 4.16). 
-
-##
-# ## Cross-section
-
-# Cross-sectional properties are incorporated in the cross-section property. The
-# three arguments supplied are functions. All are returning "constants". In
-# particular the first two functions each return the dimension of the
-# cross-section as a constant(the beam has a uniform cross-section); the third
-# function defines the orientation of the cross-section in the global Cartesian
-# coordinates. `[1.0, 0.0, 0.0]` is the vector that together with the tangent
-# to the midline curve of the beam spans the $x_1x_2$ plane of the local
-# coordinates for the beam.
-using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionCircle
-cs = CrossSectionCircle(s -> diameter/2, s -> [1.0, 0.0, 0.0], 6/7) # Timoshenko
-# cs = CrossSectionCircle(s -> diameter/2, s -> [1.0, 0.0, 0.0]) # Bernoulli
+# Here we get to choose the model: Bernoulli or Timoshenko
+shear_correction_factor = 6/7 # Timoshenko
+# shear_correction_factor = Inf # Bernoulli
+cs = CrossSectionCircle(s -> diameter/2, s -> [1.0, 0.0, 0.0], shear_correction_factor) 
 @show cs.parameters(0.0)
 
-# The parameters of the structure:
+# Here we can choose the mass- matrix type:
+
+mtype = MASS_TYPE_CONSISTENT_NO_ROTATION_INERTIA
+mtype = MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA
+mtype = MASS_TYPE_LUMPED_DIAGONAL_NO_ROTATION_INERTIA
+mtype = MASS_TYPE_LUMPED_DIAGONAL_WITH_ROTATION_INERTIA
+
+# Here are the formulas for the first two natural frequencies, obtained
+# analytically with the shear flexibility  neglected. The parameters of the
+# structure:
 R = radius
 I = cs.parameters(0.0)[4]
 m = rho * cs.parameters(0.0)[1]
@@ -82,144 +103,91 @@ i = 2 # the first non-rigid body mode
 i=2 # the first ovaling mode
 @show i*(i^2-1)/(2*pi*R^2*(i^2+1)^(1/2))*sqrt(E*I/m)
 
-
-
-# We will generate
-# n = 20 # 52.2048, 52.2048, 53.7606, 53.7606, 148.8338
-# n = 200 # 51.6087, 51.6087, 53.1098, 53.1098, 147.1189
-# n = 2000 # 51.6028, 51.6028, 53.1033, 147.1022
-n = 80
-# beam elements along the member.
-using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member
-tolerance = radius/n/1000;
-fens, fes = frame_member([0 0 0; 2*pi 0 0], n, cs)
-for i in 1:count(fens)
-    a = fens.xyz[i, 1]
-    fens.xyz[i, :] .= (radius+radius*cos(a), radius*sin(a), 0)
-end
-fens, fes = mergenodes(fens, fes, tolerance, [1, n+1])
-
-##
-# ## Material
-
-using FinEtoolsDeforLinear
 material = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
 
-##
-# ## Fields
-
-geom0 = NodalField(fens.xyz)
-u0 = NodalField(zeros(size(fens.xyz, 1), 3))
-using FinEtoolsFlexBeams.RotUtilModule: initial_Rfield
-Rfield0 = initial_Rfield(fens)
-
-# Finally, this is the displacement and rotation field for incremental changes,
-# incremental displacements and incremental rotations. In total, 6 unknowns per
-# node.
-dchi = NodalField(zeros(size(fens.xyz, 1), 6))
-
-# There are no support conditions.
-applyebc!(dchi)
-# The  the number of free
-# (unknown) degrees of freedom is equal to the total number of degrees of freedom in the system.
-numberdofs!(dchi);
-
-
-##
-# ## Assemble the global discrete system
-
-using FinEtoolsFlexBeams.FEMMCorotBeamModule: FEMMCorotBeam
-femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material);
-
-# For disambiguation we will refer to the stiffness and mass functions by qualifying them with the corotational-beam module, `FEMMCorotBeamModule`.
-using FinEtoolsFlexBeams.FEMMCorotBeamModule
-CB = FEMMCorotBeamModule
-K = CB.stiffness(femm, geom0, u0, Rfield0, dchi);
-@show size(K)
-
-##
-# ## Solve the free-vibration problem
-
-# The purpose of the numerical model is to calculate approximation to the reference frequencies.
-
-neigvs = 18;
-
-# The mass shift needs to be applied since the structure is free-floating.
-oshift = (2*pi*15)^2
-
-# The Arnoldi algorithm implemented in the well-known `Arpack` package is used
-# to solve the generalized eigenvalue problem with the sparse matrices. As is
-# common in structural dynamics, we request the smallest eigenvalues in
-# absolute value (`:SM`). 
-using Arpack
-
-using FinEtoolsFlexBeams.FESetCorotBeamModule: MASS_TYPE_CONSISTENT_NO_ROTATION_INERTIA, 
-MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA, 
-MASS_TYPE_LUMPED_DIAGONAL_NO_ROTATION_INERTIA, 
-MASS_TYPE_LUMPED_DIAGONAL_WITH_ROTATION_INERTIA
-
+# We will generate this many elements  along the length of the circular ring.
 results = let
-    results = Dict()
-    for mtype in [
-        MASS_TYPE_CONSISTENT_NO_ROTATION_INERTIA, 
-        MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA, 
-        MASS_TYPE_LUMPED_DIAGONAL_NO_ROTATION_INERTIA, 
-        MASS_TYPE_LUMPED_DIAGONAL_WITH_ROTATION_INERTIA]
+    results = []
+    for i in 1:3
+        n = 10*2^i
+        # beam elements along the member.
+        tolerance = radius/n/1000;
+        # Generate the mesh of a straight member.
+        fens, fes = frame_member([0 0 0; 2*pi 0 0], n, cs)
+        # Twist the straight member into a ring.
+        for i in 1:count(fens)
+            a = fens.xyz[i, 1]
+            fens.xyz[i, :] .= (radius+radius*cos(a), radius*sin(a), 0)
+        end
+        # Merge the nodes of the bases, which involves renumbering the connectivity.
+        fens, fes = mergenodes(fens, fes, tolerance, [1, n+1])
+        # Generate the discrete model.
+        geom0 = NodalField(fens.xyz)
+        u0 = NodalField(zeros(size(fens.xyz, 1), 3))
+        using FinEtoolsFlexBeams.RotUtilModule: initial_Rfield
+        Rfield0 = initial_Rfield(fens)
+        dchi = NodalField(zeros(size(fens.xyz, 1), 6))
+        applyebc!(dchi)
+        numberdofs!(dchi);
+        femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material);
+        K = CB.stiffness(femm, geom0, u0, Rfield0, dchi);
         M = CB.mass(femm, geom0, u0, Rfield0, dchi; mass_type = mtype);
+        # Solve the free vibration problem. 
         evals, evecs, nconv = eigs(K + oshift * M, M; nev=neigvs, which=:SM, ncv = 3*neigvs, maxiter = 2000);
-        @assert nconv == neigvs
-        results[mtype] = evals, evecs
+        # Correct for the mass shift.
+        evals = evals .- oshift;
+        sigdig(n) = round(n * 10000) / 10000
+        fs = real(sqrt.(complex(evals)))/(2*pi)
+        println("Eigenvalues: $(sigdig.(fs)) [Hz]")
+        push!(results, (fs[6+1], fs[6+3], fs[6+5]))
     end
-    results
+    results # return these values from the block
 end
 
-sigdig(n) = round(n * 10000) / 10000
+@show results
 
-print("\nMASS_TYPE_CONSISTENT_NO_ROTATION_INERTIA\n")
-evals = results[MASS_TYPE_CONSISTENT_NO_ROTATION_INERTIA][1]
-f = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
-print("$(sigdig.(f))\n")
+##
+# ## Richardson extrapolation
 
-print("\nMASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA\n")
-evals = results[MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA][1]
-f = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
-print("$(sigdig.(f))\n")
+# Here we will use Richardson extrapolation from the three sets of data. This
+# will allow us to predict the convergence rate and the true solution for each
+# of the three frequencies (or rather the pairs of frequencies, 7 and 8, 9 and
+# 10, and 11 and 12).
 
-print("\nMASS_TYPE_LUMPED_DIAGONAL_NO_ROTATION_INERTIA\n")
-evals = results[MASS_TYPE_LUMPED_DIAGONAL_NO_ROTATION_INERTIA][1]
-f = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
-print("$(sigdig.(f))\n")
+# We will immediately set up the convergence plots. We will extrapolate and then
+# compute from that the normalized error to be plotted with respect to the
+# refinement factors (which in this case are 4, 2, and 1). We use the
+# refinement factor as a convenience: we will calculate the element size by
+# dividing the circumference of the ring with a number of elements generated
+# circumferentially.
 
-print("\nMASS_TYPE_LUMPED_DIAGONAL_WITH_ROTATION_INERTIA\n")
-evals = results[MASS_TYPE_LUMPED_DIAGONAL_WITH_ROTATION_INERTIA][1]
-f = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
-print("$(sigdig.(f))\n")
-
-# 51.6425, 53.1497, 53.1497, 147.2318
-# 51.6144, 53.1191, 53.1191, 147.1526
-# 51.6074, 53.1115, 53.1115, 147.1328
 using PlotlyJS
 using FinEtools.AlgoBaseModule: richextrapol
 
 # Modes 7 and 8
-sols = [51.6425, 51.6144, 51.6074]
+sols = [r[1] for r in results]
 resextrap = richextrapol(sols, [4.0, 2.0, 1.0])  
-errs = (sols .- resextrap[1])./resextrap[1]
-t78 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", name = "", line_color = "rgb(155, 15, 15)")
+print("Predicted frequency 7 and 8: $(resextrap[1])\n")
+errs = abs.(sols .- resextrap[1])./resextrap[1]
+t78 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", name = "Mode 7,8", line_color = "rgb(155, 15, 15)")
 
 # Modes 9 and 10
-sols = [53.1497, 53.1191, 53.1115]
+sols = [r[2] for r in results]
 resextrap = richextrapol(sols, [4.0, 2.0, 1.0])  
-errs = (sols .- resextrap[1])./resextrap[1]
-t910 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", name = "", line_color = "rgb(15, 155, 15)")
+print("Predicted frequency 9 and 10: $(resextrap[1])\n")
+errs = abs.(sols .- resextrap[1])./resextrap[1]
+t910 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", name = "Mode 9,10", line_color = "rgb(15, 155, 15)")
 
 # Modes 11 and 12
-sols = [147.2318, 147.1526, 147.1328]
+sols = [r[3] for r in results]
 resextrap = richextrapol(sols, [4.0, 2.0, 1.0])  
-errs = (sols .- resextrap[1])./resextrap[1]
-t1112 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", name = "", line_color = "rgb(15, 15, 155)")
+print("Predicted frequency 11 and 12: $(resextrap[1])\n")
+errs = abs.(sols .- resextrap[1])./resextrap[1]
+t1112 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", name = "Mode 11, 12", line_color = "rgb(15, 15, 155)")
 
-layout = Layout(;width=650, height=400, xaxis=attr(title="Element size", type = "log"), yaxis=attr(title="Normalized error [ND]", type = "log"), title = "TB: Convergence of modes 7, ..., 12", xaxis_range=[-2, -1], yaxis_range=[-5, -2])
+# Presents the convergence graph on a log-log scale.  The slope of the error
+# curves are the convergence rate.
+layout = Layout(;width=400, height=300, xaxis=attr(title="Element size", type = "log"), yaxis=attr(title="Normalized error [ND]", type = "log"), title = "3D: Convergence of modes 7, ..., 12", xaxis_range=[-2, -1], yaxis_range=[-4, -1])
 pl = plot([t78, t910, t1112], layout; options = Dict(
         :showSendToCloud=>true, 
         :plotlyServerURL=>"https://chart-studio.plotly.com"
