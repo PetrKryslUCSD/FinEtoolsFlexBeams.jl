@@ -12,7 +12,7 @@ makedocs(
 	"Types and Functions" => Any[
 		"man/types.md",
 		"man/functions.md"]
-		]
+		],
 	"Guide" => "guide/guide.md",
 	)
 
