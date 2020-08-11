@@ -7,13 +7,11 @@ makedocs(
 	authors = "Petr Krysl",
 	sitename = "FinEtoolsFlexBeams.jl",
 	pages = Any[
-	"Home" => "index.md",
-	"Tutorials" => "tutorials/tutorials.md",
-	"Types and Functions" => Any[
-		"man/types.md",
-		"man/functions.md"]
+			"Home" => "index.md",
+			"Tutorials" => "tutorials/tutorials.md",
+			"How to guide" => "guide/guide.md",
+			"Reference" => "man/reference.md"	
 		],
-	"Guide" => "guide/guide.md",
 	)
 
 deploydocs(
