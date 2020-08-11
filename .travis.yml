@@ -3,28 +3,27 @@
 language: julia
 
 os:
+  - linux
+  - osx
   - windows
 
 julia:
-  - nightly
+  - 1.5
 
 notifications:
   email: false
 
 after_success:
-  - julia --project=coverage/ -e 'using Pkg; Pkg.instantiate()'
-  - julia --project=coverage/ coverage/coverage.jl
+  - julia -e 'using Pkg; cd(Pkg.dir("FinEtoolsBeamsVis")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder()); Codecov.submit(process_folder())'
 
 jobs:
   include:
     - stage: "Documentation"
-      julia: 1.4
+      julia: 1.5
       os: linux
       script:
-        - julia --project=docs/ -e 'using Pkg; Pkg.instantiate(); Pkg.add("Documenter"); Pkg.add("FinEtools"); Pkg.add(PackageSpec(url="https://github.com/PetrKryslUCSD/FinEtoolsDeforLinear.jl.git"));  Pkg.add(PackageSpec(url="https://github.com/PetrKryslUCSD/FinEtoolsBeamsVis.jl.git")); Pkg.develop(PackageSpec(path=pwd()));'
+        - julia --project=docs/ -e 'using Pkg; Pkg.add("Documenter"); Pkg.add("FinEtools"); Pkg.add(PackageSpec(url="https://github.com/PetrKryslUCSD/FinEtoolsDeforLinear.jl.git")); Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
         - julia --project=docs/ docs/make.jl
       name: "HTML"
       after_success: skip
-/make.jl
-      name: "HTML"
-      after_success: skip
+
