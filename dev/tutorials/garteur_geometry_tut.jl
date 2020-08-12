@@ -17,9 +17,9 @@
 
 # ### References
 
-# - <a name="GARTEUR">[GARTEUR]</a> Ground Vibration Test Techniques, compiled by A Gravelle, GARTEUR
+# - [GARTEUR](@id GARTEUR) Ground Vibration Test Techniques, compiled by A Gravelle, GARTEUR
 #   Structures & Materials Action Group 19 Technical report TP-115, 1999.
-# - <a name="BW">[BW]</a> Etienne Balmes, Jan R. Wright, GARTEUR GROUP ON GROUND VIBRATION
+# - [BW](@id BW) Etienne Balmes, Jan R. Wright, GARTEUR GROUP ON GROUND VIBRATION
 #   TESTING | RESULTS FROM THE TEST OF A SINGLE STRUCTURE BY 12 LABORATORIES IN
 #   EUROPE, Proceedings of DETC'97, 1997 ASME Design Engineering Technical
 #   Conferences, September 14-17, 1997, Sacramento, California.
@@ -35,7 +35,7 @@
 # ## Geometry of the testbed airplane.
 
 # The aluminum testbed was a rather simple structure which was reasonably dynamically
-# representative of a simple airplane structure [[GARTEUR]](#GARTEUR). It was composed of several beams
+# representative of a simple airplane structure [GARTEUR](@ref). It was composed of several beams
 # simulating a fuselage with wings and a tail. Wing tip drums allowed to adjust
 # bending and torsion frequencies similarly to airplane ones, with some very
 # close modal frequencies. 
