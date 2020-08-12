@@ -154,15 +154,15 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[FinEtools]]
 deps = ["Arpack", "DelimitedFiles", "LinearAlgebra", "LoopVectorization", "Printf", "Random", "SparseArrays", "Statistics", "StatsBase", "Test", "Unicode"]
-git-tree-sha1 = "d4a65394f4fc698c3efe09e89238db7fc50a7b09"
+git-tree-sha1 = "331ce009490808a0ba67c0ecc6ad7da69ecf037d"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/FinEtools.jl.git"
 uuid = "91bb5406-6c9a-523d-811d-0644c4229550"
-version = "4.6.0"
+version = "4.6.1"
 
 [[FinEtoolsDeforLinear]]
 deps = ["Arpack", "BenchmarkTools", "FinEtools", "LinearAlgebra", "Literate", "PGFPlotsX", "SparseArrays", "Statistics", "StatsBase", "Test"]
-git-tree-sha1 = "639d542d120ac5cb63368960f395a4ac26da1b48"
+git-tree-sha1 = "46df6ec299cac00f31e4d8084e54a7e51eeef3e9"
 repo-rev = "master"
 repo-url = "https://github.com/PetrKryslUCSD/FinEtoolsDeforLinear.jl.git"
 uuid = "e9187c00-8bdd-11e9-1e70-7ba8303116a2"
@@ -465,9 +465,9 @@ version = "0.32.2"
 
 [[SymRCM]]
 deps = ["LinearAlgebra", "SparseArrays", "Test"]
-git-tree-sha1 = "fea06aa69af94dceb5f63a86f68d444cbeed33ab"
+git-tree-sha1 = "5912198c462a2f79fac73915e4bc8f6272a81530"
 uuid = "286e6d88-80af-4590-acc9-0001b223b9bd"
-version = "0.1.0"
+version = "0.2.0"
 
 [[TableTraits]]
 deps = ["IteratorInterfaceExtensions"]
