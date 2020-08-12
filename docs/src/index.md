@@ -2,7 +2,7 @@
 
 ## Tutorials
 
-Tutorials in the form of scripts.
+The [tutorials](tutorials/tutorials.md) are provided in the form of Julia scripts and Markdown files. 
 
 ## Manual
 

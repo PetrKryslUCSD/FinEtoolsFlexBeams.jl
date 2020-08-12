@@ -8,12 +8,31 @@
 # publication: Test VM09: Circular Ring --  In-plane and Out-of-plane
 # Vibration.
 
+# ## Reference frequencies 
+
+# There will be 6 rigid body modes (zero natural frequencies).
+
+# The numerical results are due to the publication: 
+# NAFEMS Finite Element Methods & Standards, Abbassian, F., Dawswell, D. J., and
+# Knowles, N. C. Selected Benchmarks for Natural Frequency Analysis, Test No.
+# 6. Glasgow: NAFEMS, Nov., 1987. 
+
+# The reference values were analytically determined (Blevins, FORMULAS FOR
+# DYNAMICS, ACOUSTICS AND VIBRATION, Table 4.16). Note that shear flexibility
+# was neglected when computing the reference values.
+
+# Mode                Reference Value (Hz)  NAFEMS Target Value (Hz)
+# 7, 8 (out of plane)         51.85                 52.29 
+# 9, 10 (in plane)            53.38                 53.97 
+# 11, 12 (out of plane)      148.8                 149.7 
+# 13, 14 (in plane)          151.0                 152.4 
+# 15, 16 (out of plane)      287.0                 288.3 
+# 17, 18 (in plane)          289.5                 288.3 
+
 # ## Goals
 
 # - Show convergence relative to reference values. 
 # - Demonstrate the optimization of eigenvalue accuracy by choosing mass type.
-
-# 
 
 ##
 # ## Definition of the basic inputs
@@ -29,46 +48,9 @@ nu = 0.3;
 
 # The mass density is
 rho = 8000 * phun("kg/m^3")
-# Here are the cross-sectional dimensions and the length of the beam between supports.
+# Here are the cross-sectional dimensions and the length of the beam between
+# supports.
 radius = 1.0 * phun("m"); diameter = 0.1 * phun("m"); 
-
-##
-# ## Reference frequencies 
-
-# There will be 6 rigid body modes (zero natural frequencies).
-
-# NAFEMS Finite Element Methods & Standards, Abbassian, F., Dawswell, D. J., and Knowles, N. C.
-# Selected Benchmarks for Natural Frequency Analysis, Test No. 6. Glasgow: NAFEMS, Nov., 1987. 
-
-# Mode                Reference Value (Hz)  NAFEMS Target Value (Hz)
-# 7, 8 (out of plane)         51.85                 52.29 
-# 9, 10 (in plane)            53.38                 53.97 
-# 11, 12 (out of plane)      148.8                 149.7 
-# 13, 14 (in plane)          151.0                 152.4 
-# 15, 16 (out of plane)      287.0                 288.3 
-# 17, 18 (in plane)          289.5                 288.3 
-
-# The reference values are analytically determined (Blevins, FORMULAS FOR
-# DYNAMICS, ACOUSTICS AND VIBRATION, Table 4.16). 
-
-# For instance the the first out of plane mode is listed in this table as
-J = cs.parameters(0.0)[2]
-G = E/2/(1+nu)
-i = 2 # the first non-rigid body mode
-i*(i^2-1)/(2*pi*R^2)*sqrt(E*I/m/(i^2+E*I/G/J))
-
-# The first "ovaling" (in-plane) mode is:
-R = radius
-I = cs.parameters(0.0)[4]
-m = rho * cs.parameters(0.0)[1]
-i=2 # the first ovaling mode
-@show i*(i^2-1)/(2*pi*R^2*(i^2+1)^(1/2))*sqrt(E*I/m)
-
-
-
-# The purpose of the numerical model is to calculate approximation to the reference frequencies.
-
-neigvs = 18;
 
 ##
 # ## Cross-section
@@ -84,6 +66,26 @@ neigvs = 18;
 using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionCircle
 cs = CrossSectionCircle(s -> diameter/2, s -> [1.0, 0.0, 0.0])
 @show cs.parameters(0.0)
+
+# For instance the the first out of plane mode is listed in the reference cited
+# above as
+R = radius
+I = cs.parameters(0.0)[4]
+m = rho * cs.parameters(0.0)[1]
+J = cs.parameters(0.0)[2]
+G = E/2/(1+nu)
+i = 2 # the first non-rigid body mode
+@show i*(i^2-1)/(2*pi*R^2)*sqrt(E*I/m/(i^2+E*I/G/J))
+
+# The first "ovaling" (in-plane) mode is:
+i = 2 # the first ovaling mode
+@show i*(i^2-1)/(2*pi*R^2*(i^2+1)^(1/2))*sqrt(E*I/m)
+
+
+
+# The purpose of the numerical model is to calculate approximation to the reference frequencies.
+
+neigvs = 18;
 
 # We will generate
 n = 20
