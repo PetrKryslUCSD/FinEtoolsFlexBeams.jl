@@ -1,3 +1,7 @@
+```@meta
+EditURL = "<unknown>/garteur_hva_tut.jl"
+```
+
 # GARTEUR SM-AG19 Testbed: Harmonic Vibration Analysis
 
 ## Description
@@ -33,7 +37,7 @@ September 14-17, 1997, Sacramento, California.
 - Demonstrate the use of grounded springs.
 - Illustrate verification of the solution of the free vibration problem.
 
-```julia
+```@example garteur_hva_tut
 #
 ```
 
@@ -50,14 +54,14 @@ close modal frequencies.
 The script included below defines the geometry of the structure, the
 cross-sectional properties, the connectivity, and the location of the nodes.
 
-```julia
+```@example garteur_hva_tut
 include("garteur_geometry_tut.jl")
 ```
 
 The geometry is visualized in the tutorial
 [garteur_geometry_vis_tut](garteur_geometry_vis_tut.jl).
 
-```julia
+```@example garteur_hva_tut
 #
 ```
 
@@ -66,21 +70,22 @@ The geometry is visualized in the tutorial
 Material properties can be now used to create a material: isotropic elasticity
 model of the `FinEtoolsDeforLinear` package is instantiated.
 
-```julia
+```@example garteur_hva_tut
 using FinEtoolsDeforLinear
 ```
 
 The material of the structure is aluminum.
 The elastic modulus:
 
-```julia
+```@example garteur_hva_tut
 E = 70000.0 * phun("MPa")
 nu = 0.31;
+nothing #hide
 ```
 
 The mass density:
 
-```julia
+```@example garteur_hva_tut
 rho = 2700 * phun("kg/m^3")
 alu = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
 ```
@@ -89,13 +94,13 @@ Material for the massless connectors has the mass density set to zero;
 otherwise it has the same properties as the aluminum material  of the
 structure.
 
-```julia
+```@example garteur_hva_tut
 massless = MatDeforElastIso(DeforModelRed3D, 0.0, alu.E, alu.nu, 0.0)
 ```
 
 This simple function returns material based on the label of the beam elements.
 
-```julia
+```@example garteur_hva_tut
 material(labl) = begin
     if labl >= 7
         return massless
@@ -115,13 +120,13 @@ We begin by constructing the requisite fields, geometry and displacement.
 These are the so-called "configuration variables", all initialized to 0.
 This is that geometry field.
 
-```julia
+```@example garteur_hva_tut
 geom0 = NodalField(fens.xyz)
 ```
 
 This is the displacement field, three unknown displacements per node.
 
-```julia
+```@example garteur_hva_tut
 u0 = NodalField(zeros(size(fens.xyz, 1), 3))
 ```
 
@@ -129,7 +134,7 @@ This is the rotation field, three unknown rotations per node are represented
 with a rotation matrix, in total nine numbers. The utility function
 `initial_Rfield`
 
-```julia
+```@example garteur_hva_tut
 using FinEtoolsFlexBeams.RotUtilModule: initial_Rfield
 Rfield0 = initial_Rfield(fens)
 ```
@@ -137,7 +142,7 @@ Rfield0 = initial_Rfield(fens)
 Here we verify the number of nodes and the number of degrees of freedom in the
 rotation field per node.
 
-```julia
+```@example garteur_hva_tut
 @show nents(Rfield0)
 @show ndofs(Rfield0)
 ```
@@ -146,20 +151,20 @@ Finally, this is the displacement and rotation field for incremental changes,
 incremental displacements and incremental rotations. In total, 6 unknowns per
 node. Note that the the incremental displacements are in general complex.
 
-```julia
+```@example garteur_hva_tut
 dchi = NodalField(0.0im .* zeros(size(fens.xyz, 1), 6))
 ```
 
 There are no support conditions.
 
-```julia
+```@example garteur_hva_tut
 applyebc!(dchi)
 ```
 
 The  the number of free(unknown) degrees of freedom is equal to the total
 number of degrees of freedom in the system.
 
-```julia
+```@example garteur_hva_tut
 numberdofs!(dchi);
 
 #
@@ -169,7 +174,7 @@ numberdofs!(dchi);
 
 Suspension points are at these nodes:
 
-```julia
+```@example garteur_hva_tut
 suspln = selectnode(fens; box = initbox!(Float64[], vec([0.0*L 0.0*L 0.805*L])), inflate = tolerance)
 susprn = selectnode(fens; box = initbox!(Float64[], vec([0.0*L -0.0*L 0.805*L])), inflate = tolerance)
 suspbn = selectnode(fens; box = initbox!(Float64[], vec([-2.0*L 0.0*L 0.0*L])), inflate = tolerance)
@@ -177,14 +182,14 @@ suspbn = selectnode(fens; box = initbox!(Float64[], vec([-2.0*L 0.0*L 0.0*L])), 
 
 Find out at which nodes the sensors are:
 
-```julia
+```@example garteur_hva_tut
 sensors = Dict()
 sensors = let
 ```
 
 The sensors at the tip of the left and right wing drum
 
-```julia
+```@example garteur_hva_tut
     sensor112n = selectnode(fens; box = initbox!(Float64[], vec([+1.8*L 9.8*L 0.96*L])), inflate = tolerance)
     sensors[112] = sensor112n
     sensor12n = selectnode(fens; box = initbox!(Float64[], vec([+1.8*L -9.8*L .96*L])), inflate = tolerance)
@@ -197,7 +202,7 @@ The sensors at the tip of the left and right wing drum
 
 The joint between the horizontal and vertical tail parts
 
-```julia
+```@example garteur_hva_tut
     sensor202n = selectnode(fens; box = initbox!(Float64[], vec([-8*L 0 3.8*L])), inflate = tolerance)
     sensors[202] = sensor202n
     sensors
@@ -211,7 +216,7 @@ end
 For disambiguation we will refer to the stiffness and mass functions by
 qualifying them with the corotational-beam module, `FEMMCorotBeamModule`.
 
-```julia
+```@example garteur_hva_tut
 using FinEtoolsFlexBeams.FEMMCorotBeamModule
 CB = FEMMCorotBeamModule
 ```
@@ -220,14 +225,14 @@ Note that we have an array of finite element sets. We compute the matrices for
 each set separately and accumulate them into the final overall matrix. Thus
 we can construct the stiffness and mass matrix as follows.
 
-```julia
+```@example garteur_hva_tut
 using  SparseArrays
 ```
 
 Loop over all the finite element sets and add up their contributions, the
 stiffness in the mass matrix for each.
 
-```julia
+```@example garteur_hva_tut
 Kf, Kd, M = let
     Kf = spzeros(dchi.nfreedofs, dchi.nfreedofs)
     Kd = spzeros(dchi.nfreedofs, dchi.nfreedofs)
@@ -250,7 +255,7 @@ end
 
 ## Additional concentrated masses.
 
-```julia
+```@example garteur_hva_tut
 using LinearAlgebra
 
 using FinEtoolsFlexBeams.FEMMPointMassModule
@@ -259,14 +264,15 @@ PM = FEMMPointMassModule
 
 There is a sensor on the tail.
 
-```julia
+```@example garteur_hva_tut
 femmcm1 =  PM.FEMMPointMass(IntegDomain(FESetP1(reshape([sensor202n;], 1, 1)), PointRule()), FFltMat(2*L*L/5*L/5*2*rho*I(3)));
+nothing #hide
 ```
 
 These are the forward/interior locations on the wing drums where the
 compensation masses are attached.
 
-```julia
+```@example garteur_hva_tut
 mass1n = selectnode(fens; box = initbox!(Float64[], vec([1.8*L 9.2*L .96*L])), inflate = tolerance)
 mass2n = selectnode(fens; box = initbox!(Float64[], vec([1.8*L -9.2*L .96*L])), inflate = tolerance)
 femmcm2 =  PM.FEMMPointMass(IntegDomain(FESetP1(reshape([mass1n; mass2n;], 2, 1)), PointRule()), FFltMat(0.2*phun("kg")*I(3)));
@@ -280,7 +286,7 @@ Mp = PM.mass(femmcm1, geom0, u0, Rfield0, dchi) + PM.mass(femmcm2, geom0, u0, Rf
 
 This is the assumed stifffness of the bungee cords (each one separately).
 
-```julia
+```@example garteur_hva_tut
 bungeecoefficient = 4000*phun("N/m");
 
 using LinearAlgebra
@@ -291,7 +297,7 @@ BS = FEMMPointGroundedSpringModule
 
 There are three suspension points at the top of the fuselage. We assume that these bungee supports exert only reaction in the vertical direction.
 
-```julia
+```@example garteur_hva_tut
 femmbs =  BS.FEMMPointGroundedSpring(IntegDomain(FESetP1(reshape([suspln; susprn; suspbn;], 3, 1)), PointRule()),
 FFltMat([bungeecoefficient*[0;0;1]*[0;0;1]' 0*I(3); 0*I(3) 0*I(3)]));
 
@@ -321,7 +327,7 @@ particularly well suited for the testbed operating range of 5-50 Hz and at 20
 degrees C where the loss factor is near its peak of 0.4 [3]. These are
 representative quantities taken at 20 Hz.
 
-```julia
+```@example garteur_hva_tut
 eta = 0.5
 omega_5_50 = 2*pi*20
 ```
@@ -330,7 +336,7 @@ The connectors between the wing beam and the constraining plate are taken as
 representative of the stiffness of the constraining layer. The viscoelastic
 damping is then taken as proportional to this stiffness.
 
-```julia
+```@example garteur_hva_tut
 Cd = (eta / omega_5_50) .* Kd
 ```
 
@@ -340,47 +346,50 @@ We assume the loss factor of the fuselage, wing, and tail to be 0.01. This can
 be used to derive the damping model for these parts of the aircraft structure
 in the form of Rayleigh damping.
 
-```julia
+```@example garteur_hva_tut
 zeta= 0.01/2; # damping ratio
 zeta_1= zeta; # damping ratio for mode 1
 zeta_2= zeta; # damping ratio for mode 2
+nothing #hide
 ```
 
 Stiffness and mass proportional damping parameters.
 
-```julia
+```@example garteur_hva_tut
 omega_1=2*pi*6; # Guess
 omega_2=2*pi*30; # Guess
 rdmass = (2*1.0/(omega_2^2-omega_1^2)).*[omega_2^2 -omega_1^2]*[zeta_1*omega_1; zeta_2*omega_2];
 rdstiffness = (2*1.0/(omega_2^2-omega_1^2)).*[-1 1]*[zeta_1*omega_1; zeta_2*omega_2];
+nothing #hide
 ```
 
 The airframe damping matrix is a mixture of the mass matrix and the stiffness
 matrix.
 
-```julia
+```@example garteur_hva_tut
 Cf = rdmass .* M + rdstiffness .* Kf;
+nothing #hide
 ```
 
 These are the system matrices. The stiffness consists of the contribution of
 the airframe, the connectors between the wing components, and the bungees of
 the suspension.
 
-```julia
+```@example garteur_hva_tut
 Kt = Kf + Kd + Kb
 ```
 
 The mass matrix is the contribution of the structure and the attached point
 masses (compensation masses).
 
-```julia
+```@example garteur_hva_tut
 Mt = M + Mp
 ```
 
 The damping matrix is composed of the damping of the overall structure, and of
 the damping layer (the connectors between the wing components).
 
-```julia
+```@example garteur_hva_tut
 Ct = Cf + Cd
 
 #
@@ -392,7 +401,7 @@ Here we assume that the stinger  was attached at the location of the sensor
 12. The force is vertical (in the Z direction) and the magnitude of the force
 is arbitrary.
 
-```julia
+```@example garteur_hva_tut
 forceat = 12
 fmagn= 1.0;
 loadbdry = FESetP1(reshape(sensors[forceat], 1, 1))
@@ -402,14 +411,15 @@ lfemm = FEMMBase(IntegDomain(loadbdry, PointRule()))
 The force is applied in the vertical direction, and we assume it is positive
 upwards.
 
-```julia
+```@example garteur_hva_tut
 fi = ForceIntensity(FFlt[0, 0.0, -fmagn, 0, 0, 0]);
+nothing #hide
 ```
 
 The force loading is now integrated over the "volume" of the integration
 domain.
 
-```julia
+```@example garteur_hva_tut
 F = CB.distribloads(lfemm, geom0, dchi, fi, 3);
 
 #
@@ -421,44 +431,46 @@ The frequency sweep will start at `fromf` and continue through the frequency
 `tof`.  The frequencies will be logarithmically distributed throughout this
 range.
 
-```julia
+```@example garteur_hva_tut
 fromf = 3.0
 tof = 70.0
 nf = 150
 frequencies = logspace(log10(fromf), log10(tof), nf);
+nothing #hide
 ```
 
 Only a single number per sensor will be collected, the Z direction
 displacement.
 
-```julia
+```@example garteur_hva_tut
 receptance12 = fill(0.0im, nf)
 receptance112 = fill(0.0im, nf)
 ```
 
 Now Loop over
 
-```julia
+```@example garteur_hva_tut
 for   fi in 1:length(frequencies)
     f =  frequencies[fi];
     om = 2*pi*f;
+nothing #hide
 ```
 
 Solve the system of complex  equations of balance:
 
-```julia
+```@example garteur_hva_tut
     U = (-om^2*Mt + 1im*om*Ct + Kt) \ F
 ```
 
 Distribute the vector of the solution:
 
-```julia
+```@example garteur_hva_tut
     scattersysvec!(dchi, U)
 ```
 
 Now sample the solution at the locations of the two sensors, 12 and 112:
 
-```julia
+```@example garteur_hva_tut
     v = fill(0.0im, 6)
     gathervalues_asvec!(dchi, v, sensors[12])
     p_d = v[1:3];
@@ -472,7 +484,7 @@ end
 The receptances were calculated above. The mobility and accelerance may be
 obtained in a postprocessing step.
 
-```julia
+```@example garteur_hva_tut
 oms = (2*pi) .* frequencies;
 mobility12 = receptance12 .* (-1im*oms);
 mobility112 = receptance112 .* (-1im*oms);
@@ -488,14 +500,14 @@ results[112] = Dict("receptance"=>receptance112, "mobility"=>mobility112, "accel
 
 ## Present the results graphically
 
-```julia
+```@example garteur_hva_tut
 using PlotlyJS
 ```
 
 Plot the amplitude of the response curves. We output two curves.
 The first for the driving-point FRF:
 
-```julia
+```@example garteur_hva_tut
 quantity = "accelerance"; units = "m/s^2/N"
 outputat = 12
 y = abs.(results[outputat][quantity]) / phun(units)
@@ -504,7 +516,7 @@ tc12 = scatter(;x=frequencies, y=y, mode="lines", name = "output@$(outputat)", l
 
 The second for the cross transfer:
 
-```julia
+```@example garteur_hva_tut
 outputat = 112
 y = abs.(results[outputat][quantity]) / phun(units)
 tc112 = scatter(;x=frequencies, y=y, mode="lines", name = "output@$(outputat)", line_color = "rgb(215, 15, 15)")
@@ -512,13 +524,13 @@ tc112 = scatter(;x=frequencies, y=y, mode="lines", name = "output@$(outputat)", 
 
 Set up the layout:
 
-```julia
+```@example garteur_hva_tut
 layout = Layout(;width=650, height=400, xaxis=attr(title="Frequency [Hz]", type = "linear"), yaxis=attr(title="abs(H) [$(units)]", type = "log"), title = "Force@$(forceat), $(quantity)")
 ```
 
 Plot the graphs:
 
-```julia
+```@example garteur_hva_tut
 plots = cat(tc12, tc112; dims = 1)
 pl = plot(plots, layout; options = Dict(
         :showSendToCloud=>true,
@@ -530,7 +542,7 @@ display(pl)
 Plot the phase shift of the response curves. Again we output two curves,
 the first for the driving-point FRF:
 
-```julia
+```@example garteur_hva_tut
 outputat = 12
 y = atan.(imag(results[outputat][quantity]), real(results[outputat][quantity]))/pi*180
 tc12 = scatter(;x=frequencies, y=y, mode="lines", name = "output@$(outputat)", line_color = "rgb(15, 15, 215)")
@@ -538,7 +550,7 @@ tc12 = scatter(;x=frequencies, y=y, mode="lines", name = "output@$(outputat)", l
 
 The second for the cross transfer:
 
-```julia
+```@example garteur_hva_tut
 outputat = 112
 y = atan.(imag(results[outputat][quantity]), real(results[outputat][quantity]))/pi*180
 tc112 = scatter(;x=frequencies, y=y, mode="lines", name = "output@$(outputat)", line_color = "rgb(215, 15, 15)")
@@ -546,13 +558,13 @@ tc112 = scatter(;x=frequencies, y=y, mode="lines", name = "output@$(outputat)", 
 
 Set up the layout:
 
-```julia
+```@example garteur_hva_tut
 layout = Layout(;width=650, height=400, xaxis=attr(title="Frequency [Hz]", type = "linear"), yaxis=attr(title="Phase shift [deg]", type = "linear"), title = "Force@$(forceat), $(quantity)", yaxis_range=[-180, 180])
 ```
 
 Plot the graphs:
 
-```julia
+```@example garteur_hva_tut
 plots = cat(tc12, tc112; dims = 1)
 pl = plot(plots, layout; options = Dict(
         :showSendToCloud=>true,

@@ -1,3 +1,7 @@
+```@meta
+EditURL = "<unknown>/circle_3d_modal_conv_tut.jl"
+```
+
 # Modal analysis of a free-floating steel circle: three-dimensional solid model
 
 ## Description
@@ -38,7 +42,7 @@ Mode                Reference Value (Hz)  NAFEMS Target Value (Hz)
 - Compute data for extrapolation to the limit to predict the true natural
   frequencies.
 
-```julia
+```@example circle_3d_modal_conv_tut
 #
 ```
 
@@ -47,7 +51,7 @@ Mode                Reference Value (Hz)  NAFEMS Target Value (Hz)
 The finite element code realize on the basic functionality implemented in this
 package.
 
-```julia
+```@example circle_3d_modal_conv_tut
 using FinEtools
 using SymRCM
 using Arpack
@@ -56,41 +60,44 @@ using Arpack
 The material parameters may be defined with the specification of the units.
 The elastic properties are:
 
-```julia
+```@example circle_3d_modal_conv_tut
 E = 200.0 * phun("GPa")
 nu = 0.3;
+nothing #hide
 ```
 
 The mass density is
 
-```julia
+```@example circle_3d_modal_conv_tut
 rho = 8000 * phun("kg/m^3")
 ```
 
 The geometry consists of the radius of the circle, and the diameter of the
 circular cross-section.
 
-```julia
+```@example circle_3d_modal_conv_tut
 radius = 1.0 * phun("m"); diameter = 0.1 * phun("m");
+nothing #hide
 ```
 
 We shall calculate these eigenvalues, but we are mostly interested in the
 first three  natural frequencies.
 
-```julia
+```@example circle_3d_modal_conv_tut
 neigvs = 18;
+nothing #hide
 ```
 
 The mass shift needs to be applied since the structure is free-floating.
 
-```julia
+```@example circle_3d_modal_conv_tut
 oshift = (2*pi*15)^2
 ```
 
 We will generate this many elements per radius of the cross-section, and along
 the length of the circular ring.
 
-```julia
+```@example circle_3d_modal_conv_tut
 results = let
     results = []
     for i in 1:3
@@ -100,20 +107,20 @@ results = let
 
 Generate the mesh in a straight cylinder.
 
-```julia
+```@example circle_3d_modal_conv_tut
         fens, fes = H8cylindern(diameter/2, 2*pi, nperradius, nL)
 ```
 
 Select the nodes in the bases of the cylinder for future merging of the nodes.
 
-```julia
+```@example circle_3d_modal_conv_tut
         z0l = selectnode(fens, plane = [0, 0, 1, 0], inflate = tolerance)
         z2l = selectnode(fens, plane = [0, 0, 1, 2*pi], inflate = tolerance)
 ```
 
 Twist the straight cylinder into a ring.
 
-```julia
+```@example circle_3d_modal_conv_tut
         for i in 1:count(fens)
             a = fens.xyz[i, 3]
             x = fens.xyz[i, 1]
@@ -124,7 +131,7 @@ Twist the straight cylinder into a ring.
 
 Merge the nodes of the bases, which involves renumbering the connectivity.
 
-```julia
+```@example circle_3d_modal_conv_tut
         fens, fes = mergenodes(fens, fes, tolerance, vcat(z0l, z2l))
 ```
 
@@ -133,13 +140,13 @@ File = "ring.vtk"
 vtkexportmesh(File, fens, fes)
 @async run(`"paraview.exe" $File`)
 
-```julia
+```@example circle_3d_modal_conv_tut
         using FinEtoolsDeforLinear
 ```
 
 Generate the material and the FEM machine.
 
-```julia
+```@example circle_3d_modal_conv_tut
         MR = DeforModelRed3D
         material = MatDeforElastIso(MR, rho, E, nu, 0.0)
         femm = FEMMDeforLinearESNICEH8(MR, IntegDomain(fes, NodalTensorProductRule(3)), material)
@@ -147,14 +154,14 @@ Generate the material and the FEM machine.
 
 Set up the nodal fields for the geometry in the displacements.
 
-```julia
+```@example circle_3d_modal_conv_tut
         geom = NodalField(fens.xyz)
         u = NodalField(zeros(size(fens.xyz,1),3)) # displacement field
 ```
 
 Renumber the nodes to produce quicker linear equation solves.
 
-```julia
+```@example circle_3d_modal_conv_tut
         p = let
             C = connectionmatrix(femm, count(fens))
             p = symrcm(C)
@@ -164,7 +171,7 @@ Renumber the nodes to produce quicker linear equation solves.
 
 Now set up the discrete model.
 
-```julia
+```@example circle_3d_modal_conv_tut
         associategeometry!(femm,  geom)
         K  = stiffness(femm, geom, u)
         M = mass(femm, geom, u)
@@ -172,13 +179,13 @@ Now set up the discrete model.
 
 Solve the free vibration problem.
 
-```julia
+```@example circle_3d_modal_conv_tut
         evals, evecs, nconv = eigs(K+oshift*M, M; nev=neigvs, which=:SM)
 ```
 
 Correct for the mass shift.
 
-```julia
+```@example circle_3d_modal_conv_tut
         evals = evals .- oshift;
         sigdig(n) = round(n * 10000) / 10000
         fs = real(sqrt.(complex(evals)))/(2*pi)
@@ -207,14 +214,14 @@ refinement factor as a convenience: we will calculate the element size by
 dividing the circumference of the ring with a number of elements generated
 circumferentially.
 
-```julia
+```@example circle_3d_modal_conv_tut
 using PlotlyJS
 using FinEtools.AlgoBaseModule: richextrapol
 ```
 
 Modes 7 and 8
 
-```julia
+```@example circle_3d_modal_conv_tut
 sols = [r[1] for r in results]
 resextrap = richextrapol(sols, [4.0, 2.0, 1.0])
 print("Predicted frequency 7 and 8: $(resextrap[1])\n")
@@ -224,7 +231,7 @@ t78 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", name
 
 Modes 9 and 10
 
-```julia
+```@example circle_3d_modal_conv_tut
 sols = [r[2] for r in results]
 resextrap = richextrapol(sols, [4.0, 2.0, 1.0])
 print("Predicted frequency 9 and 10: $(resextrap[1])\n")
@@ -234,7 +241,7 @@ t910 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", nam
 
 Modes 11 and 12
 
-```julia
+```@example circle_3d_modal_conv_tut
 sols = [r[3] for r in results]
 resextrap = richextrapol(sols, [4.0, 2.0, 1.0])
 print("Predicted frequency 11 and 12: $(resextrap[1])\n")
@@ -245,7 +252,7 @@ t1112 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", na
 Presents the convergence graph on a log-log scale.  The slope of the error
 curves are the convergence rate.
 
-```julia
+```@example circle_3d_modal_conv_tut
 layout = Layout(;width=400, height=300, xaxis=attr(title="Element size", type = "log"), yaxis=attr(title="Normalized error [ND]", type = "log"), title = "3D: Convergence of modes 7, ..., 12", xaxis_range=[-2, -1], yaxis_range=[-3, -0])
 pl = plot([t78, t910, t1112], layout; options = Dict(
         :showSendToCloud=>true,

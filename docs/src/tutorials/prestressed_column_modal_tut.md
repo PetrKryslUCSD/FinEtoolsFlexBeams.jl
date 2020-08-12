@@ -1,3 +1,7 @@
+```@meta
+EditURL = "<unknown>/prestressed_column_modal_tut.jl"
+```
+
 # Prestressed simply-supported column modal analysis
 
 ## Description
@@ -9,7 +13,7 @@ The fundamental vibration frequency depends on the prestress force.
 
 -
 
-```julia
+```@example prestressed_column_modal_tut
 #
 ```
 
@@ -18,28 +22,29 @@ The fundamental vibration frequency depends on the prestress force.
 The finite element code realize on the basic functionality implemented in this
 package.
 
-```julia
+```@example prestressed_column_modal_tut
 using FinEtools
 ```
 
 The material parameters may be defined with the specification of the units.
 The elastic properties are:
 
-```julia
+```@example prestressed_column_modal_tut
 E = 30002.0 * phun("ksi")
 nu = 0.0;
+nothing #hide
 ```
 
 The mass density is expressed in customary units as
 
-```julia
+```@example prestressed_column_modal_tut
 g = 32.17*12 * phun("in/sec^2")
 rho = 4.65 * phun("oz/in ^3") / g
 ```
 
 Here are the cross-sectional dimensions and the length of the beam between supports.
 
-```julia
+```@example prestressed_column_modal_tut
 b = 1.8 * phun("in"); h = 1.8 * phun("in"); L = 300 * phun("in");
 
 #
@@ -56,14 +61,14 @@ coordinates. `[1.0, 0.0, 0.0]` is the vector that together with the tangent
 to the midline curve of the beam spans the $x_1x_2$ plane of the local
 coordinates for the beam.
 
-```julia
+```@example prestressed_column_modal_tut
 using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionRectangle
 cs = CrossSectionRectangle(s -> b, s -> h, s -> [1.0, 0.0, 0.0])
 ```
 
 Here we retrieve the cross-sectional properties at the arc length 0.0.
 
-```julia
+```@example prestressed_column_modal_tut
 @show A, J, I1, I2, I3 = cs.parameters(0.0)
 
 #
@@ -79,14 +84,16 @@ The beam has cylindrical supports at either end.
 
 Simply supported column without a pre-stressing force has a fundamental frequency of
 
-```julia
+```@example prestressed_column_modal_tut
 analyt_freq = (1*pi)^2/(2*pi*L^2)*sqrt(E*I2/rho/A);
+nothing #hide
 ```
 
 The critical Euler buckling load (simple-support): (pi^2*E*I2/L^2).
 
-```julia
+```@example prestressed_column_modal_tut
 @show PEul = (pi^2*E*I2/L^2);
+nothing #hide
 ```
 
 Ps=linspace(-1, 1, 100);
@@ -94,25 +101,26 @@ Ps=linspace(-1, 1, 100);
 The purpose of the numerical model is to calculate approximation to the fundamental
 analytical natural frequency.
 
-```julia
+```@example prestressed_column_modal_tut
 neigvs = 1;
+nothing #hide
 ```
 
 Now we generate the mesh of the beam. The locations of its two endpoints are:
 
-```julia
+```@example prestressed_column_modal_tut
 xyz = [[0 -L/2 0]; [0 L/2 0]]
 ```
 
 We will generate
 
-```julia
+```@example prestressed_column_modal_tut
 n = 20
 ```
 
 beam elements along the member.
 
-```julia
+```@example prestressed_column_modal_tut
 using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member
 fens, fes = frame_member(xyz, n, cs);
 
@@ -124,7 +132,7 @@ fens, fes = frame_member(xyz, n, cs);
 
 Material properties can be now used to create a material: isotropic elasticity model of the `FinEtoolsDeforLinear` package is instantiated.
 
-```julia
+```@example prestressed_column_modal_tut
 using FinEtoolsDeforLinear
 material = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
 
@@ -138,13 +146,13 @@ We begin by constructing the requisite fields, geometry and displacement.
 These are the so-called "configuration variables", all initialized to 0.
 This is that geometry field.
 
-```julia
+```@example prestressed_column_modal_tut
 geom0 = NodalField(fens.xyz)
 ```
 
 This is the displacement field, three unknown displacements per node.
 
-```julia
+```@example prestressed_column_modal_tut
 u0 = NodalField(zeros(size(fens.xyz, 1), 3))
 ```
 
@@ -152,7 +160,7 @@ This is the rotation field, three unknown rotations per node are represented
 with a rotation matrix, in total nine numbers. The utility function
 `initial_Rfield`
 
-```julia
+```@example prestressed_column_modal_tut
 using FinEtoolsFlexBeams.RotUtilModule: initial_Rfield
 Rfield0 = initial_Rfield(fens)
 ```
@@ -161,7 +169,7 @@ Finally, this is the displacement and rotation field for incremental changes,
 incremental displacements and incremental rotations. In total, 6 unknowns per
 node.
 
-```julia
+```@example prestressed_column_modal_tut
 dchi = NodalField(zeros(size(fens.xyz, 1), 6))
 
 #
@@ -174,14 +182,14 @@ the supports at the ends of the beam.
 
 First we select the node at the location  `[0 -L/2 0]`. This is the immovable node.
 
-```julia
+```@example prestressed_column_modal_tut
 immovable = selectnode(fens; box=[0 0 -L/2 -L/2 0 0], tolerance=L/n/1000)[1]
 ```
 
 The boundary condition at this point dictates zero displacements (degrees of
 freedom 1, 2, and 3) and zero rotations about the axis of the beam (degree of freedom 5).
 
-```julia
+```@example prestressed_column_modal_tut
 for i in [1,2,3,5]
     setebc!(dchi, [immovable], true, i)
 end
@@ -189,13 +197,13 @@ end
 
 Similarly, the node next to the other end of the beam is selected. This note is axially movable, but all other degrees of freedom
 
-```julia
+```@example prestressed_column_modal_tut
 movable = selectnode(fens; box=[0 0 L/2  L/2 0 0], tolerance=L/n/1000)[1]
 ```
 
 This time the transverse displacements and the axial rotation are suppressed.
 
-```julia
+```@example prestressed_column_modal_tut
 for i in [1,3,5]
     setebc!(dchi, [movable], true, i)
 end
@@ -203,41 +211,43 @@ end
 
 These boundary conditions now need to be "applied". This simply means that the prescribed values of the degrees of freedom are copied into the active degrees of freedom.
 
-```julia
+```@example prestressed_column_modal_tut
 applyebc!(dchi)
 ```
 
 The essential boundary conditions will also reduce the number of free
 (unknown) degrees of freedom.
 
-```julia
+```@example prestressed_column_modal_tut
 numberdofs!(dchi);
+nothing #hide
 ```
 
 Here we inspect the degrees of freedom in the incremental
 displacement/rotation field:
 
-```julia
+```@example prestressed_column_modal_tut
 @show dchi.dofnums
 ```
 
 Note that the degrees of freedom are actually carried by the incremental
 field, not by the displacement or the rotation fields.
 
-```julia
+```@example prestressed_column_modal_tut
 #
 ```
 
 ## Assemble the global discrete system
 
-```julia
+```@example prestressed_column_modal_tut
 using FinEtoolsFlexBeams.FEMMCorotBeamModule: FEMMCorotBeam
 femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material);
+nothing #hide
 ```
 
 For disambiguation we will refer to the stiffness and mass functions by qualifying them with the corotational-beam module, `FEMMCorotBeamModule`.
 
-```julia
+```@example prestressed_column_modal_tut
 using FinEtoolsFlexBeams.FEMMCorotBeamModule
 CB = FEMMCorotBeamModule
 ```
@@ -248,14 +258,15 @@ access to the integration domain. The next argument is the geometry field,
 followed by the displacement, rotations, and incremental
 displacement/rotation fields.
 
-```julia
+```@example prestressed_column_modal_tut
 K = CB.stiffness(femm, geom0, u0, Rfield0, dchi);
+nothing #hide
 ```
 
 Now we construct the means of applying the concentrated force of prestress at the movable node.
 The node is the "boundary" of the domain of the column.
 
-```julia
+```@example prestressed_column_modal_tut
 loadbdry = FESetP1(reshape([movable], 1, 1))
 ```
 
@@ -263,38 +274,41 @@ The concentrated force can be considered a distributed loading at a single point
 This distributed loading can be integrated with a quadrature rule suitable for
 a single point domains.
 
-```julia
+```@example prestressed_column_modal_tut
 lfemm = FEMMBase(IntegDomain(loadbdry, PointRule()))
 ```
 
 We assume that the magnitude of the force is unity. The buckling factor corresponding to failure is then the value of the Euler force.
 
-```julia
+```@example prestressed_column_modal_tut
 fi = ForceIntensity(FFlt[0, 1.0, 0, 0, 0, 0]);
+nothing #hide
 ```
 
 The distributed loading is now integrated over the "volume" of the integration domain.
 
-```julia
+```@example prestressed_column_modal_tut
 F = CB.distribloads(lfemm, geom0, dchi, fi, 3);
+nothing #hide
 ```
 
 Solve for the displacement under @show the static load
 
-```julia
+```@example prestressed_column_modal_tut
 scattersysvec!(dchi, K\F);
+nothing #hide
 ```
 
 Update deflections so that the initial stress can be computed. First the displacements:
 
-```julia
+```@example prestressed_column_modal_tut
 u1 = deepcopy(u0)
 u1.values .= dchi.values[:, 1:3]
 ```
 
 Then the rotations:
 
-```julia
+```@example prestressed_column_modal_tut
 Rfield1 = deepcopy(Rfield0)
 using FinEtoolsFlexBeams.RotUtilModule:  update_rotation_field!
 update_rotation_field!(Rfield1, dchi)
@@ -303,19 +317,21 @@ update_rotation_field!(Rfield1, dchi)
 The static deflection is now used to compute the internal forces
 which in turn lead to the geometric stiffness.
 
-```julia
+```@example prestressed_column_modal_tut
 Kg = CB.geostiffness(femm, geom0, u1, Rfield1, dchi);
+nothing #hide
 ```
 
 Now we can evaluate the mass matrix,
 
-```julia
+```@example prestressed_column_modal_tut
 M = CB.mass(femm, geom0, u0, Rfield0, dchi);
+nothing #hide
 ```
 
 and we have the complete discrete model for the solution of the free vibration problem.
 
-```julia
+```@example prestressed_column_modal_tut
 #
 ```
 
@@ -326,14 +342,14 @@ to solve the generalized eigenvalue problem with the sparse matrices. As is
 common in structural dynamics, we request the smallest eigenvalues in
 absolute value (`:SM`).
 
-```julia
+```@example prestressed_column_modal_tut
 using Arpack
 ```
 
 The prestress-modified natural frequencies are computed in the loop for
 a number of prestress force values.
 
-```julia
+```@example prestressed_column_modal_tut
 Ps = collect(linearspace(-1.0, 1.0, 20)).*PEul
 freqs = let freqs =[];
     for P in Ps
@@ -341,13 +357,14 @@ freqs = let freqs =[];
 
 Note that we take the complete stiffness matrix: elastic plus prestress (initial stress).
 
-```julia
+```@example prestressed_column_modal_tut
         evals, evecs, nconv = eigs(K + P.*Kg, M; nev=neigvs, which=:SM);
+nothing #hide
 ```
 
 The fundamental frequency:
 
-```julia
+```@example prestressed_column_modal_tut
         f = sqrt(evals[1]) / (2 * pi);
         push!(freqs, f);
     end

@@ -1,3 +1,7 @@
+```@meta
+EditURL = "<unknown>/fast_top_tut.jl"
+```
+
 #  Fast Lagrangian top.
 
 ## Description
@@ -11,7 +15,7 @@ Int. J. Numer. Meth. Eng. 62, 2154–2177 (2005).
 
 -
 
-```julia
+```@example fast_top_tut
 using LinearAlgebra
 using PlotlyJS
 
@@ -23,7 +27,7 @@ using PlotlyJS
 The finite element code realize on the basic functionality implemented in this
 package.
 
-```julia
+```@example fast_top_tut
 using FinEtools
 ```
 
@@ -49,7 +53,7 @@ using JSON
 The material parameters may be defined with the specification of the units.
 The elastic properties and the mass density are:
 
-```julia
+```@example fast_top_tut
 E = 71240.0 * phun("MPa")
 nu = 0.31
 rho = 2.7e3 * phun("kg/m^3")
@@ -57,7 +61,7 @@ rho = 2.7e3 * phun("kg/m^3")
 
 The top is a block of square cross-section with dimensions
 
-```julia
+```@example fast_top_tut
 Width = 60 * phun("mm"); Height = 60 * phun("mm");
 Length = 4*Width
 
@@ -74,11 +78,12 @@ maxit = 12
 dt = min(2*pi/norm(Omega0)/10, 0.005);
 tend = 0.8 * phun("sec");
 ng = 1/2; nb = 1/4*(1/2+ng)^2;
+nothing #hide
 ```
 
 Choose the mass formulation:
 
-```julia
+```@example fast_top_tut
 mass_type=1;
 
 
@@ -96,14 +101,14 @@ coordinates. `[1.0, 0.0, 0.0]` is the vector that together with the tangent
 to the midline curve of the beam spans the $x_1x_2$ plane of the local
 coordinates for the beam.
 
-```julia
+```@example fast_top_tut
 using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionRectangle
 cs = CrossSectionRectangle(s -> Width, s -> Width, s -> [1.0, 0.0, 0.0])
 ```
 
 Select the number of elements per leg.
 
-```julia
+```@example fast_top_tut
 spin_vector = R0*[0, 0, Omega0];
 X=[0 0 0;    reshape(R0*[0,0,Length], 1, 3)];
 n=8;
@@ -115,11 +120,12 @@ push!(members, frame_member(X, n, cs))
 
 using FinEtoolsFlexBeams.MeshFrameMemberModule: merge_members
 fens, fes = merge_members(members; tolerance = tolerance);
+nothing #hide
 ```
 
 Material properties
 
-```julia
+```@example fast_top_tut
 using FinEtoolsDeforLinear
 material = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
 
@@ -135,13 +141,13 @@ We begin by constructing the requisite fields, geometry and displacement.
 These are the so-called "configuration variables", all initialized to 0.
 This is that geometry field.
 
-```julia
+```@example fast_top_tut
 geom0 = NodalField(fens.xyz)
 ```
 
 This is the displacement field, three unknown displacements per node.
 
-```julia
+```@example fast_top_tut
 u0 = NodalField(zeros(size(fens.xyz, 1), 3))
 ```
 
@@ -149,7 +155,7 @@ This is the rotation field, three unknown rotations per node are represented
 with a rotation matrix, in total nine numbers. The utility function
 `initial_Rfield`
 
-```julia
+```@example fast_top_tut
 using FinEtoolsFlexBeams.RotUtilModule: initial_Rfield
 Rfield0 = initial_Rfield(fens)
 ```
@@ -158,7 +164,7 @@ Finally, this is the displacement and rotation field for incremental changes,
 incremental displacements and incremental rotations. In total, 6 unknowns per
 node.
 
-```julia
+```@example fast_top_tut
 dchi = NodalField(zeros(size(fens.xyz,1), 6))
 
 #
@@ -168,7 +174,7 @@ dchi = NodalField(zeros(size(fens.xyz,1), 6))
 
 The "bottom" of the top is pinned.
 
-```julia
+```@example fast_top_tut
 box = fill(0.0, 6)
 initbox!(box, X[1,:])
 supportn = selectnode(fens; box = box, inflate = tolerance)
@@ -179,11 +185,12 @@ for i in [1, 2, 3]
 end
 applyebc!(dchi)
 numberdofs!(dchi);
+nothing #hide
 ```
 
 Initial conditions
 
-```julia
+```@example fast_top_tut
 v0 = deepcopy(dchi) # need the numbering of the degrees of freedom
 for i in 1:size(v0.values, 1)
     v0.values[i, 4:6] = spin_vector
@@ -192,7 +199,7 @@ end
 
 For disambiguation we will refer to the stiffness and mass functions by qualifying them with the corotational-beam module, `FEMMCorotBeamModule`.
 
-```julia
+```@example fast_top_tut
 using FinEtoolsFlexBeams.FEMMCorotBeamModule
 CB = FEMMCorotBeamModule
 femm = CB.FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material)
@@ -207,7 +214,7 @@ function integrate(tend, CB, geom0, u0, Rfield0, dchi, v0, report)
 
 Additional fields
 
-```julia
+```@example fast_top_tut
     stepdchi = deepcopy(dchi)
     u1 = deepcopy(u0)
     v1 = deepcopy(dchi)
@@ -229,11 +236,12 @@ Additional fields
     while (t <= tend)
         t = t + dt;
         println("Time $(t)"); # pause
+nothing #hide
 ```
 
 Initialization
 
-```julia
+```@example fast_top_tut
         applyebc!(dchi) # Apply boundary conditions
         u1.values[:] = u0.values[:]; # guess
         Rfield1.values[:] = Rfield0.values[:]; # guess
@@ -288,7 +296,7 @@ end
 
 The visualization utilities take advantage of the PlotlyJS library.
 
-```julia
+```@example fast_top_tut
 using PlotlyJS
 using FinEtoolsFlexBeams.VisUtilModule: plot_space_box, plot_midline, plot_solid, render, react!, default_layout_3d, save_to_json
 
@@ -318,7 +326,7 @@ end
 
 integrate(tend, CB, geom0, u0, Rfield0, dchi, v0, updategraph)
 
-```julia
+```@example fast_top_tut
 tipx = Float64[]
 tipy = Float64[]
 tipz = Float64[]
