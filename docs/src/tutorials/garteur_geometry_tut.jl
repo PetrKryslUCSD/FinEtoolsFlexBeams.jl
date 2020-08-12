@@ -180,5 +180,17 @@ push!(meshes, frame_member([2*L -9.5*L .91*L ; 1.8*L -9.2*L .96*L], 1, cs_connta
 # on the label. 
 fens, fesa = mergenmeshes(meshes, tolerance)
 
+# The result is the set of the finite element nodes, and an array of the finite element sets.
+# The sets of the finite elements can be distinguished based on the label.
+
+# The number of nodes in the mesh:
+@show count(fens)
+
+# The number of the finite element sets:
+@show length(fesa)
+
+# The labels of the finite element sets
+@show [s.label[1] for s in fesa]'
+
 # End of the tutorial
 true

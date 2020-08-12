@@ -292,6 +292,27 @@ on the label.
 fens, fesa = mergenmeshes(meshes, tolerance)
 ```
 
+The result is the set of the finite element nodes, and an array of the finite element sets.
+The sets of the finite elements can be distinguished based on the label.
+
+The number of nodes in the mesh:
+
+```julia
+@show count(fens)
+```
+
+The number of the finite element sets:
+
+```julia
+@show length(fesa)
+```
+
+The labels of the finite element sets
+
+```julia
+@show [s.label[1] for s in fesa]'
+```
+
 End of the tutorial
 
 ```julia
