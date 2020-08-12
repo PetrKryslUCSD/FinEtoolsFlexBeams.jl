@@ -1,3 +1,7 @@
+```@meta
+EditURL = "<unknown>/garteur_modal_tut.jl"
+```
+
 # GARTEUR SM-AG19 Testbed: Modal analysis
 
 ## Description
@@ -17,13 +21,13 @@ The test-bed was designed and manufactured by ONERA, France.
 
 ### References
 
-[1] Ground Vibration Test Techniques, compiled by A Gravelle, GARTEUR
-Structures & Materials Action Group 19 Technical report TP-115, 1999.
-[2] Etienne Balmes, Jan R. Wright, GARTEUR group on ground vibration testing |
-Results from the test of a single structure by 12 laboratories in Europe,
-Proceedings of DETC'97, 1997 ASME Design Engineering Technical Conferences,
-September 14-17, 1997, Sacramento, California.
-[3] 3M(TM) Viscoelastic Damping Polymer 112 Series,  Technical Data, May 2017.
+- [GARTEUR] Ground Vibration Test Techniques, compiled by A Gravelle, GARTEUR
+  Structures & Materials Action Group 19 Technical report TP-115, 1999.
+- [BW] Etienne Balmes, Jan R. Wright, GARTEUR GROUP ON GROUND VIBRATION
+  TESTING | RESULTS FROM THE TEST OF A SINGLE STRUCTURE BY 12 LABORATORIES IN
+  EUROPE, Proceedings of DETC'97, 1997 ASME Design Engineering Technical
+  Conferences, September 14-17, 1997, Sacramento, California.
+- [3M] 3M(TM) Viscoelastic Damping Polymer 112 Series,  Technical Data, May 2017.
 
 ## Goals
 
@@ -33,31 +37,31 @@ September 14-17, 1997, Sacramento, California.
 - Demonstrate the use of grounded springs.
 - Illustrate verification of the solution of the free vibration problem.
 
-```julia
+```@example garteur_modal_tut
 #
 ```
 
 ## Geometry of the testbed airplane.
 
-It was a rather simple structure which was reasonably dynamically
-representative of a simple airplane structure. It was composed of several beams
-simulating a fuselage with wings and a tail. Wing tip drums allowed to adjust
-bending and torsion frequencies similarly to airplane ones, with some very
-close modal frequencies.
+The aluminum testbed was a rather simple structure which was reasonably
+dynamically representative of a simple airplane structure [GARTEUR](@ref
+References). It was composed of several beams simulating a fuselage with wings
+and a tail. Wing tip drums allowed to adjust bending and torsion frequencies
+similarly to airplane ones, with some very close modal frequencies.
 
 ![](garteur-geom.png)
 
 The script included below defines the geometry of the structure, the
 cross-sectional properties, the connectivity, and the location of the nodes.
 
-```julia
+```@example garteur_modal_tut
 include("garteur_geometry_tut.jl")
 ```
 
 The geometry is visualized in the tutorial
-[garteur_geometry_vis_tut](garteur_geometry_vis_tut.jl).
+[`garteur_geometry_vis_tut.md`](garteur_geometry_vis_tut.jl).
 
-```julia
+```@example garteur_modal_tut
 #
 ```
 
@@ -66,37 +70,30 @@ The geometry is visualized in the tutorial
 Material properties can be now used to create a material: isotropic elasticity
 model of the `FinEtoolsDeforLinear` package is instantiated.
 
-```julia
+```@example garteur_modal_tut
 using FinEtoolsDeforLinear
 ```
 
 The material of the structure is aluminum.
 The elastic modulus:
 
-```julia
+```@example garteur_modal_tut
 E = 70000.0 * phun("MPa")
 nu = 0.31;
+nothing #hide
 ```
 
 The mass density:
 
-```julia
+```@example garteur_modal_tut
 rho = 2700 * phun("kg/m^3")
 alu = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
 ```
 
-The material of the viscoelastic layer. The properties are due to the
-technical specification [3]. Since the properties are frequency dependent, we
-take as a representative value the numbers obtained for 20 Hz.
-# Poisson ratio:
-nu = 0.49;
-# Storage modulus:
-Gp = 0.6 * phun("MPa")
-E = 2 * (1 + nu) * Gp
-# The mass density:
-rho = 900 * phun("kg/m^3")
+The material of the constraining layer on top of the viscoelastic tape. It was
+aluminum.
 
-```julia
+```@example garteur_modal_tut
 layer = MatDeforElastIso(DeforModelRed3D, rho, alu.E, alu.nu, 0.0)
 ```
 
@@ -104,13 +101,13 @@ Material for the massless connectors has the mass density set to zero;
 otherwise it has the same properties as the aluminum material  of the
 structure.
 
-```julia
+```@example garteur_modal_tut
 massless = MatDeforElastIso(DeforModelRed3D, 0.0, alu.E, alu.nu, 0.0)
 ```
 
 This simple function returns material based on the label of the beam elements.
 
-```julia
+```@example garteur_modal_tut
 material(labl) = begin
     if labl == 6
         return layer
@@ -123,7 +120,7 @@ end
 
 This is the assumed stifffness of the bungee cords (each one separately).
 
-```julia
+```@example garteur_modal_tut
 bungeecoefficient = 4000*phun("N/m");
 
 
@@ -137,13 +134,13 @@ We begin by constructing the requisite fields, geometry and displacement.
 These are the so-called "configuration variables", all initialized to 0.
 This is that geometry field.
 
-```julia
+```@example garteur_modal_tut
 geom0 = NodalField(fens.xyz)
 ```
 
 This is the displacement field, three unknown displacements per node.
 
-```julia
+```@example garteur_modal_tut
 u0 = NodalField(zeros(size(fens.xyz, 1), 3))
 ```
 
@@ -151,7 +148,7 @@ This is the rotation field, three unknown rotations per node are represented
 with a rotation matrix, in total nine numbers. The utility function
 `initial_Rfield`
 
-```julia
+```@example garteur_modal_tut
 using FinEtoolsFlexBeams.RotUtilModule: initial_Rfield
 Rfield0 = initial_Rfield(fens)
 ```
@@ -160,20 +157,20 @@ Finally, this is the displacement and rotation field for incremental changes,
 incremental displacements and incremental rotations. In total, 6 unknowns per
 node.
 
-```julia
+```@example garteur_modal_tut
 dchi = NodalField(zeros(size(fens.xyz, 1), 6))
 ```
 
 There are no support conditions.
 
-```julia
+```@example garteur_modal_tut
 applyebc!(dchi)
 ```
 
 The  the number of free(unknown) degrees of freedom is equal to the total
 number of degrees of freedom in the system.
 
-```julia
+```@example garteur_modal_tut
 numberdofs!(dchi);
 
 #
@@ -183,7 +180,7 @@ numberdofs!(dchi);
 
 Suspension points
 
-```julia
+```@example garteur_modal_tut
 suspln = selectnode(fens; box = initbox!(Float64[], vec([0.0*L 0.0*L 0.805*L])), inflate = tolerance)
 susprn = selectnode(fens; box = initbox!(Float64[], vec([0.0*L -0.0*L 0.805*L])), inflate = tolerance)
 suspbn = selectnode(fens; box = initbox!(Float64[], vec([-2.0*L 0.0*L 0.0*L])), inflate = tolerance)
@@ -191,7 +188,7 @@ suspbn = selectnode(fens; box = initbox!(Float64[], vec([-2.0*L 0.0*L 0.0*L])), 
 
 The sensors at the tip of the left and right wing drum
 
-```julia
+```@example garteur_modal_tut
 sensor112n = selectnode(fens; box = initbox!(Float64[], vec([+1.8*L 9.8*L 0.96*L])), inflate = tolerance)
 sensor12n = selectnode(fens; box = initbox!(Float64[], vec([+1.8*L -9.8*L .96*L])), inflate = tolerance)
 sensor111n = selectnode(fens; box = initbox!(Float64[], vec([-1.8*L 9.8*L 0.96*L])), inflate = tolerance)
@@ -200,7 +197,7 @@ sensor11n = selectnode(fens; box = initbox!(Float64[], vec([-1.8*L -9.8*L .96*L]
 
 The joint between the horizontal and vertical tail parts
 
-```julia
+```@example garteur_modal_tut
 sensor202n = selectnode(fens; box = initbox!(Float64[], vec([-8*L 0 3.8*L])), inflate = tolerance)
 
 #
@@ -211,7 +208,7 @@ sensor202n = selectnode(fens; box = initbox!(Float64[], vec([-8*L 0 3.8*L])), in
 For disambiguation we will refer to the stiffness and mass functions by
 qualifying them with the corotational-beam module, `FEMMCorotBeamModule`.
 
-```julia
+```@example garteur_modal_tut
 using FinEtoolsFlexBeams.FEMMCorotBeamModule
 CB = FEMMCorotBeamModule
 ```
@@ -220,7 +217,7 @@ Note that we have an array of finite element sets. We compute the matrices for
 each set separately and accumulate them into the final overall matrix. Thus
 we can construct the stiffness and mass matrix as follows.
 
-```julia
+```@example garteur_modal_tut
 using  SparseArrays
 
 K, M = let
@@ -240,7 +237,7 @@ end
 
 ## Additional concentrated masses.
 
-```julia
+```@example garteur_modal_tut
 using LinearAlgebra
 
 using FinEtoolsFlexBeams.FEMMPointMassModule
@@ -249,13 +246,14 @@ PM = FEMMPointMassModule
 
 There is at the sensor on the tail.
 
-```julia
+```@example garteur_modal_tut
 femmcm1 =  PM.FEMMPointMass(IntegDomain(FESetP1(reshape([sensor202n;], 1, 1)), PointRule()), FFltMat(2*L*L/5*L/5*2*rho*I(3)));
+nothing #hide
 ```
 
 These are the forward/interior locations on the wing drums.
 
-```julia
+```@example garteur_modal_tut
 mass1n = selectnode(fens; box = initbox!(Float64[], vec([1.8*L 9.2*L .96*L])), inflate = tolerance)
 mass2n = selectnode(fens; box = initbox!(Float64[], vec([1.8*L -9.2*L .96*L])), inflate = tolerance)
 femmcm2 =  PM.FEMMPointMass(IntegDomain(FESetP1(reshape([mass1n; mass2n;], 2, 1)), PointRule()), FFltMat(0.2*phun("kg")*I(3)));
@@ -267,7 +265,7 @@ Mp = PM.mass(femmcm1, geom0, u0, Rfield0, dchi) + PM.mass(femmcm2, geom0, u0, Rf
 
 ## Bungee supports
 
-```julia
+```@example garteur_modal_tut
 using LinearAlgebra
 
 using FinEtoolsFlexBeams.FEMMPointGroundedSpringModule
@@ -277,7 +275,7 @@ BS = FEMMPointGroundedSpringModule
 There are three suspension points at the top of the fuselage. We assume that
 these bungee supports exert only reaction in the vertical direction.
 
-```julia
+```@example garteur_modal_tut
 femmbs =  BS.FEMMPointGroundedSpring(IntegDomain(FESetP1(reshape([suspln; susprn; suspbn;], 3, 1)), PointRule()),
 FFltMat([bungeecoefficient*[0;0;1]*[0;0;1]' 0*I(3); 0*I(3) 0*I(3)]));
 
@@ -290,7 +288,7 @@ Mt = M + Mp
 We can compare the size of the stiffness matrix with the number of degrees of
 freedom that are unknown (20).
 
-```julia
+```@example garteur_modal_tut
 @show size(Kt)
 
 #
@@ -298,9 +296,19 @@ freedom that are unknown (20).
 
 ## Solve the free-vibration problem
 
-```julia
+Find this many natural frequencies:
+
+```@example garteur_modal_tut
 neigvs = 20
+```
+
+Since the structure is free-floating, mass shifting must be employed to obtain
+the solution with the singular stiffness matrix. We are simply guessing a
+frequency between zero and the first fundamental frequency.
+
+```@example garteur_modal_tut
 oshift = (2*pi*0.5)^2;
+nothing #hide
 ```
 
 The Arnoldi algorithm implemented in the well-known `Arpack` package is used
@@ -308,14 +316,15 @@ to solve the generalized eigenvalue problem with the sparse matrices. As is
 common in structural dynamics, we request the smallest eigenvalues in
 absolute value (`:SM`).
 
-```julia
+```@example garteur_modal_tut
 using Arpack
 evals, evecs, nconv = eigs(Kt + oshift * Mt, Mt; nev=neigvs, which=:SM);
+nothing #hide
 ```
 
 First  we should check that the requested eigenvalues actually converged:
 
-```julia
+```@example garteur_modal_tut
 @show nconv == neigvs
 ```
 
@@ -323,7 +332,7 @@ The eigenvalues (i. e. the squares of the angular frequencies) are returned in
 the vector `evals`. The mode shapes constitute the columns of the matrix
 `evecs`.
 
-```julia
+```@example garteur_modal_tut
 @show size(evecs)
 ```
 
@@ -331,7 +340,7 @@ The natural frequencies are obtained from the squares of the angular
 frequencies. We note the use of `sqrt.` which broadcast the square root over
 the array `evals`.
 
-```julia
+```@example garteur_modal_tut
 fs = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
 
 #
@@ -340,16 +349,18 @@ fs = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
 ## Comparison of computed and analytical results
 
 Set of modes measured by participant C.
-1.-6. "Rigid body" modes
-7. Two node bending, 6.37 Hz
-8. Global fuselage rotation, 16.10 Hz
-9. First antisymmetric wing torsion, 33.13 Hz
-10. First symmetric wing torsion, 33.53 Hz
-11. Three node bending, 35.65 Hz
+| Mode | Description | Frequency |
+| ----- | ----- | ----- |
+| 1.-6. |  "Rigid body" modes | 0 |
+| 7. Two node bending | 6.37 Hz |
+| 8. |  Global fuselage rotation | 16.10 Hz |
+| 9. |  First antisymmetric wing torsion | 33.13 Hz |
+| 10. |  First symmetric wing torsion | 33.53 Hz |
+| 11. |  Three node bending | 35.65 Hz |
 
 The approximate and analytical frequencies are now reported.
 
-```julia
+```@example garteur_modal_tut
 sigdig(n) = round(n * 1000) / 1000
 
 println("Frequencies 7 and higher")
@@ -366,13 +377,13 @@ geometry. The configuration during the animation needs to reflect rotations.
 The function `update_rotation_field!` will update the rotation field given a
 vibration mode.
 
-```julia
+```@example garteur_modal_tut
 using FinEtoolsFlexBeams.RotUtilModule: update_rotation_field!
 ```
 
 The visualization utilities take advantage of the PlotlyJS library.
 
-```julia
+```@example garteur_modal_tut
 using PlotlyJS
 using FinEtoolsFlexBeams.VisUtilModule: plot_space_box, plot_solid, render, react!, default_layout_3d, save_to_json
 ```
@@ -380,13 +391,13 @@ using FinEtoolsFlexBeams.VisUtilModule: plot_space_box, plot_solid, render, reac
 The magnitude of the vibration modes (displacements  and rotations) will be
 amplified with this scale factor:
 
-```julia
+```@example garteur_modal_tut
 scale = 0.3
 ```
 
 The animation is encapsulated in a little function:
 
-```julia
+```@example garteur_modal_tut
 vis(mode) = begin
     tbox = plot_space_box(reshape(inflatebox!(boundingbox(fens.xyz), 4*L), 2, 3))
     tenv0 = tbox
@@ -420,7 +431,7 @@ end
 
 This is the mode that will be animated:
 
-```julia
+```@example garteur_modal_tut
 vis(7)
 
 true

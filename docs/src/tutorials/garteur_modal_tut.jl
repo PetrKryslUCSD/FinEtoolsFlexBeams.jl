@@ -17,13 +17,13 @@
 
 # ### References
 
-# [1] Ground Vibration Test Techniques, compiled by A Gravelle, GARTEUR
-# Structures & Materials Action Group 19 Technical report TP-115, 1999.
-# [2] Etienne Balmes, Jan R. Wright, GARTEUR group on ground vibration testing |
-# Results from the test of a single structure by 12 laboratories in Europe,
-# Proceedings of DETC'97, 1997 ASME Design Engineering Technical Conferences,
-# September 14-17, 1997, Sacramento, California.
-# [3] 3M(TM) Viscoelastic Damping Polymer 112 Series,  Technical Data, May 2017.
+# - [GARTEUR] Ground Vibration Test Techniques, compiled by A Gravelle, GARTEUR
+#   Structures & Materials Action Group 19 Technical report TP-115, 1999.
+# - [BW] Etienne Balmes, Jan R. Wright, GARTEUR GROUP ON GROUND VIBRATION
+#   TESTING | RESULTS FROM THE TEST OF A SINGLE STRUCTURE BY 12 LABORATORIES IN
+#   EUROPE, Proceedings of DETC'97, 1997 ASME Design Engineering Technical
+#   Conferences, September 14-17, 1997, Sacramento, California.
+# - [3M] 3M(TM) Viscoelastic Damping Polymer 112 Series,  Technical Data, May 2017.
 
 # ## Goals
 
@@ -36,11 +36,11 @@
 ##
 # ## Geometry of the testbed airplane.
 
-# It was a rather simple structure which was reasonably dynamically
-# representative of a simple airplane structure. It was composed of several beams
-# simulating a fuselage with wings and a tail. Wing tip drums allowed to adjust
-# bending and torsion frequencies similarly to airplane ones, with some very
-# close modal frequencies. 
+# The aluminum testbed was a rather simple structure which was reasonably
+# dynamically representative of a simple airplane structure [GARTEUR](@ref
+# References). It was composed of several beams simulating a fuselage with wings
+# and a tail. Wing tip drums allowed to adjust bending and torsion frequencies
+# similarly to airplane ones, with some very close modal frequencies. 
 
 # ![](garteur-geom.png)
 
@@ -49,7 +49,7 @@
 include("garteur_geometry_tut.jl")
 
 # The geometry is visualized in the tutorial 
-# [garteur_geometry_vis_tut](garteur_geometry_vis_tut.jl).
+# [`garteur_geometry_vis_tut.md`](garteur_geometry_vis_tut.jl).
 
 ##
 # ## Material
@@ -65,16 +65,8 @@ nu = 0.31;
 rho = 2700 * phun("kg/m^3")
 alu = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
 
-# The material of the viscoelastic layer. The properties are due to the
-# technical specification [3]. Since the properties are frequency dependent, we
-# take as a representative value the numbers obtained for 20 Hz.
-# # Poisson ratio:
-# nu = 0.49;
-# # Storage modulus:
-# Gp = 0.6 * phun("MPa") 
-# E = 2 * (1 + nu) * Gp
-# # The mass density:
-# rho = 900 * phun("kg/m^3")
+# The material of the constraining layer on top of the viscoelastic tape. It was
+# aluminum.
 layer = MatDeforElastIso(DeforModelRed3D, rho, alu.E, alu.nu, 0.0)
 
 # Material for the massless connectors has the mass density set to zero;
@@ -213,7 +205,13 @@ Mt = M + Mp
 
 ##
 # ## Solve the free-vibration problem
+
+# Find this many natural frequencies:
 neigvs = 20
+
+# Since the structure is free-floating, mass shifting must be employed to obtain
+# the solution with the singular stiffness matrix. We are simply guessing a
+# frequency between zero and the first fundamental frequency.
 oshift = (2*pi*0.5)^2;
 
 # The Arnoldi algorithm implemented in the well-known `Arpack` package is used
@@ -238,12 +236,15 @@ fs = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
 # ## Comparison of computed and analytical results
 
 # Set of modes measured by participant C.
-# 1.-6. "Rigid body" modes
-# 7. Two node bending, 6.37 Hz
-# 8. Global fuselage rotation, 16.10 Hz
-# 9. First antisymmetric wing torsion, 33.13 Hz
-# 10. First symmetric wing torsion, 33.53 Hz
-# 11. Three node bending, 35.65 Hz
+
+# | Mode | Description | Frequency |
+# | ----- | ----- | ----- |
+# | 1.-6. |  "Rigid body" modes | 0 |
+# | 7. Two node bending | 6.37 Hz |
+# | 8. |  Global fuselage rotation | 16.10 Hz |
+# | 9. |  First antisymmetric wing torsion | 33.13 Hz |
+# | 10. |  First symmetric wing torsion | 33.53 Hz |
+# | 11. |  Three node bending | 35.65 Hz |
 
 # The approximate and analytical frequencies are now reported.
 sigdig(n) = round(n * 1000) / 1000
