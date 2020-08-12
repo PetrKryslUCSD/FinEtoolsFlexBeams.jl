@@ -17,12 +17,12 @@ The test-bed was designed and manufactured by ONERA, France.
 
 ### References
 
-[1] Ground Vibration Test Techniques, compiled by A Gravelle, GARTEUR
-Structures & Materials Action Group 19 Technical report TP-115, 1999.
-[2] Etienne Balmes, Jan R. Wright, GARTEUR GROUP ON GROUND VIBRATION TESTING |
-RESULTS FROM THE TEST OF A SINGLE STRUCTURE BY 12 LABORATORIES IN EUROPE,
-Proceedings of DETC'97, 1997 ASME Design Engineering Technical Conferences,
-September 14-17, 1997, Sacramento, California.
+- <a name="GARTEUR">[GARTEUR]</a> Ground Vibration Test Techniques, compiled by A Gravelle, GARTEUR
+  Structures & Materials Action Group 19 Technical report TP-115, 1999.
+- <a name="BW">[BW]</a> Etienne Balmes, Jan R. Wright, GARTEUR GROUP ON GROUND VIBRATION
+  TESTING | RESULTS FROM THE TEST OF A SINGLE STRUCTURE BY 12 LABORATORIES IN
+  EUROPE, Proceedings of DETC'97, 1997 ASME Design Engineering Technical
+  Conferences, September 14-17, 1997, Sacramento, California.
 
 ## Goals
 
@@ -36,8 +36,8 @@ September 14-17, 1997, Sacramento, California.
 
 ## Geometry of the testbed airplane.
 
-It was a rather simple structure which was reasonably dynamically
-representative of a simple airplane structure. It was composed of several beams
+The aluminum testbed was a rather simple structure which was reasonably dynamically
+representative of a simple airplane structure [[GARTEUR]](#GARTEUR). It was composed of several beams
 simulating a fuselage with wings and a tail. Wing tip drums allowed to adjust
 bending and torsion frequencies similarly to airplane ones, with some very
 close modal frequencies.
@@ -137,6 +137,8 @@ Massless connector between the structure and the sensors and point masses.
 
 ```julia
 cs_connta2p = CrossSectionRectangle(s -> L/5, s -> L/5, s -> [1.0, 0.0, 1.0]; label = 11)
+
+#
 ```
 
 ## Mesh
@@ -276,7 +278,11 @@ Wingdrum complementary masses
 ```julia
 push!(meshes, frame_member([2*L 9.5*L .91*L ; 1.8*L 9.2*L .96*L], 1, cs_connta2p; label = cs_connta2p.label))# added mass
 push!(meshes, frame_member([2*L -9.5*L .91*L ; 1.8*L -9.2*L .96*L], 1, cs_connta2p; label = cs_connta2p.label))# added mass
+
+#
 ```
+
+## Merge all the individual members into one coherent structure
 
 Merge all the meshes of individual parts. This will glue together nodes which
 are in the "same" location. The parts of the mesh can be distinguished based
