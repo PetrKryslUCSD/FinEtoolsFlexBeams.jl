@@ -14,7 +14,7 @@
 # - Calculate the discrete model quantities and solve the free vibration problem.
 # - Demonstrate visualization of the free vibrations.
 
-##
+#%%
 # ## Definition of the basic inputs
 
 # The finite element code realize on the basic functionality implemented in this
@@ -31,7 +31,7 @@ rho = 0.28 * phun("lbm/in^3")
 # Here are the cross-sectional dimensions and the length of the beam between supports.
 b = 1.8 * phun("in"); h = 1.8 * phun("in"); L = 100 * phun("in");
 
-##
+#%%
 # ## Analytical frequencies 
 
 # The analytical frequencies were taken from table 8-1 of Formulas for natural
