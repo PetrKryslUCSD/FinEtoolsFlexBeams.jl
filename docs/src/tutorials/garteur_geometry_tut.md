@@ -41,7 +41,7 @@ The test-bed was designed and manufactured by ONERA, France.
 ## Geometry of the testbed airplane.
 
 The aluminum testbed was a rather simple structure which was reasonably
-dynamically representative of a simple airplane structure [[GARTEUR]](@ref
+dynamically representative of a simple airplane structure [GARTEUR](@ref
 GARTEUR). It was composed of several beams simulating a fuselage with wings
 and a tail. Wing tip drums allowed to adjust bending and torsion frequencies
 similarly to airplane ones, with some very close modal frequencies.
