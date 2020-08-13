@@ -349,6 +349,7 @@ fs = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
 ## Comparison of computed and analytical results
 
 Set of modes measured by participant C.
+
 | Mode | Description | Frequency |
 | ----- | ----- | ----- |
 | 1.-6. |  "Rigid body" modes | 0 |
