@@ -24,13 +24,14 @@ The reference values were analytically determined (Blevins, FORMULAS FOR
 DYNAMICS, ACOUSTICS AND VIBRATION, Table 4.16). Note that shear flexibility
 was neglected when computing the reference values.
 
-Mode                Reference Value (Hz)  NAFEMS Target Value (Hz)
-7, 8 (out of plane)         51.85                 52.29
-9, 10 (in plane)            53.38                 53.97
-11, 12 (out of plane)      148.8                 149.7
-13, 14 (in plane)          151.0                 152.4
-15, 16 (out of plane)      287.0                 288.3
-17, 18 (in plane)          289.5                 288.3
+ | Mode       |         Reference Value (Hz)  |  NAFEMS Target Value (Hz) |
+ | -------   |     -------  |  ------- |
+ | 7, 8 | (out of plane)   |        51.85          |         52.29  |
+ | 9, 10 |  (in plane)       |       53.38         |          53.97  |
+ | 11, 12 |  (out of plane)   |     148.8          |         149.7  |
+ | 13, 14 |  (in plane)       |     151.0          |         152.4  |
+ | 15, 16 |  (out of plane)   |     287.0          |         288.3  |
+ |  17, 18 |  (in plane)      |      289.5         |          288.3  |
 
 ## Goals
 
