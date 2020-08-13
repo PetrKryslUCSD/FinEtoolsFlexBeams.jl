@@ -1,7 +1,3 @@
-```@meta
-EditURL = "<unknown>/argyris_frame_modal_tut.jl"
-```
-
 # Modal analysis of Argyris frame: effect of prestress
 
 ## Description
@@ -18,19 +14,19 @@ The fundamental vibration frequency depends on the prestress force.
 The finite element code relies on the basic functionality implemented in this
 package.
 
-```@example argyris_frame_modal_tut
+```julia
 using FinEtools
 ```
 
 The linear deformation code will be needed to evaluate the loading.
 
-```@example argyris_frame_modal_tut
+```julia
 using FinEtoolsDeforLinear
 ```
 
 The functionality concerning beam models comes from these modules.
 
-```@example argyris_frame_modal_tut
+```julia
 using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionRectangle
 using FinEtoolsFlexBeams.RotUtilModule:  update_rotation_field!
 using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member, merge_members
@@ -42,30 +38,27 @@ CB = FEMMCorotBeamModule
 
 Parameters:
 
-```@example argyris_frame_modal_tut
+```julia
 E = 71240.0 * phun("MPa")
 nu = 0.31; # Poisson ratio
 rho = 5000 * phun("kg/m^3");
-nothing #hide
 ```
 
 cross-sectional dimensions and length of each leg in millimeters
 
-```@example argyris_frame_modal_tut
+```julia
 b = 0.6 * phun("mm"); h = 30.0 * phun("mm"); L = 240.0 * phun("mm");
-nothing #hide
 ```
 
 Magnitude of the total applied force, Newton
 
-```@example argyris_frame_modal_tut
+```julia
 magn = 1e-5 * phun("N");
-nothing #hide
 ```
 
 Cross-sectional properties
 
-```@example argyris_frame_modal_tut
+```julia
 cs = CrossSectionRectangle(s -> b, s -> h, s -> [0.0, 1.0, 0.0])
 
 #
@@ -75,7 +68,7 @@ cs = CrossSectionRectangle(s -> b, s -> h, s -> [0.0, 1.0, 0.0])
 
 Select the number of elements per leg.
 
-```@example argyris_frame_modal_tut
+```julia
 n = 8;
 members = Tuple{FENodeSet, AbstractFESet}[]
 push!(members, frame_member([0 0 L; L 0 L], n, cs))
@@ -86,7 +79,7 @@ fens, fes = merge_members(members; tolerance = L / 10000)
 Construct the requisite fields, geometry and displacement
 Initialize configuration variables
 
-```@example argyris_frame_modal_tut
+```julia
 geom0 = NodalField(fens.xyz)
 u0 = NodalField(zeros(size(fens.xyz,1), 3))
 Rfield0 = initial_Rfield(fens)
@@ -95,58 +88,54 @@ dchi = NodalField(zeros(size(fens.xyz,1), 6))
 
 Apply EBC's
 
-```@example argyris_frame_modal_tut
+```julia
 l1 = selectnode(fens; box = [0 0 0 0 L L], tolerance = L / 10000)
 for i in [1, 2, 3, 4, 5, 6]
     setebc!(dchi, l1, true, i)
 end
 applyebc!(dchi)
 numberdofs!(dchi);
-nothing #hide
 ```
 
 Assemble the global discrete system
 
 Material properties
 
-```@example argyris_frame_modal_tut
+```julia
 material = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
 
 femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material)
 K = CB.stiffness(femm, geom0, u0, Rfield0, dchi);
 M = CB.mass(femm, geom0, u0, Rfield0, dchi);
-nothing #hide
 ```
 
 Construct force intensity,  loaded boundary, and assemble the load.
 
-```@example argyris_frame_modal_tut
+```julia
 tipn = selectnode(fens; box=[L L 0 0  0 0], tolerance=L/n/1000)[1]
 loadbdry = FESetP1(reshape([tipn], 1, 1))
 lfemm = FEMMBase(IntegDomain(loadbdry, PointRule()))
 fi = ForceIntensity(FFlt[-magn, 0, 0, 0, 0, 0]);
 F = CB.distribloads(lfemm, geom0, dchi, fi, 3);
-nothing #hide
 ```
 
 Solve for the displacement under the static load.
 
-```@example argyris_frame_modal_tut
+```julia
 scattersysvec!(dchi, K\F);
-nothing #hide
 ```
 
 Update deflections and rotations so that the initial stress can be computed.
 First the displacements:
 
-```@example argyris_frame_modal_tut
+```julia
 u1 = deepcopy(u0)
 u1.values .= dchi.values[:, 1:3]
 ```
 
 Then the rotations:
 
-```@example argyris_frame_modal_tut
+```julia
 Rfield1 = deepcopy(Rfield0)
 update_rotation_field!(Rfield1, dchi)
 ```
@@ -154,7 +143,7 @@ update_rotation_field!(Rfield1, dchi)
 The static deflection is now used to compute the internal forces
 which in turn lead to the geometric stiffness.
 
-```@example argyris_frame_modal_tut
+```julia
 Kg = CB.geostiffness(femm, geom0, u1, Rfield1, dchi);
 
 #
@@ -162,7 +151,7 @@ Kg = CB.geostiffness(femm, geom0, u1, Rfield1, dchi);
 
 ## Solution of the eigenvalue free-vibration problem
 
-```@example argyris_frame_modal_tut
+```julia
 using Arpack
 ```
 
@@ -170,7 +159,7 @@ We will solve for this many natural frequencies. Then, since they are ordered
 by magnitude, we will pick the fundamental by taking the first from the
 list.
 
-```@example argyris_frame_modal_tut
+```julia
 neigvs = 4
 ```
 
@@ -178,7 +167,7 @@ First we will  sweep through the loading factors that are positive, meaning
 the force points in the direction in which it was defined (towards the
 clamped end of the frame).
 
-```@example argyris_frame_modal_tut
+```julia
 lfp = linearspace(0.0, 68000.0, 400)
 fsp = let
     fsp = []
@@ -195,7 +184,7 @@ Next, we will sweep through arrange of negative load factors: this simply
 turns the force around so that it points away from the clamped end. This can
 also buckle the frame, but the magnitude is higher.
 
-```@example argyris_frame_modal_tut
+```julia
 lfm = linearspace(-109000.0, 0.0, 400)
 fsm = let
     fsm = []
@@ -212,14 +201,14 @@ end
 
 ## Plot of the fundamental frequency is it depends on the loading factor
 
-```@example argyris_frame_modal_tut
+```julia
 using PlotlyJS
 ```
 
 We concatenate the ranges for the load factors and the calculated fundamental
 frequencies and present them in a single plot.
 
-```@example argyris_frame_modal_tut
+```julia
 tcp = scatter(;x=cat(lfp, lfm; dims=1), y=cat(fsp, fsm; dims=1), mode="markers", name = "Fundamental frequency", line_color = "rgb(15, 15, 15)")
 plots = cat(tcp; dims = 1)
 layout = Layout(;width=500, height=500, xaxis=attr(title="Loading factor P", zeroline=true), yaxis=attr(title="Frequency(P) [Hz]", zeroline=true))
@@ -232,7 +221,7 @@ loading factor consists of two branches. These two branches correspond to two
 different buckling modes: one for the positive orientation of the force and
 one for the negative orientation.
 
-```@example argyris_frame_modal_tut
+```julia
 #
 ```
 
@@ -241,7 +230,7 @@ one for the negative orientation.
 Here we visualize the fundamental vibration modes for different values of the
 loading factor.
 
-```@example argyris_frame_modal_tut
+```julia
 using FinEtoolsFlexBeams.VisUtilModule: plot_space_box, plot_solid, render, react!, default_layout_3d, save_to_json
 scale = 0.005
 
@@ -269,7 +258,7 @@ end
 This is the vibration mode in the lead up to the buckling mode for the
 positive orientation of the force.
 
-```@example argyris_frame_modal_tut
+```julia
 loading_factor = 60000
 evals, evecs, nconv = eigs(K + loading_factor .* Kg, M; nev=neigvs, which=:SM);
 vis(loading_factor, evecs[:, 1])
@@ -280,7 +269,7 @@ note that the associated fundamental frequency increased due to the effect of
 the force upon the stiffening of the clamped leg of the frame that is now in
 tension, and therefore stiffer.
 
-```@example argyris_frame_modal_tut
+```julia
 loading_factor = -50000
 evals, evecs, nconv = eigs(K + loading_factor .* Kg, M; nev=neigvs, which=:SM);
 vis(loading_factor, evecs[:, 1])
@@ -290,7 +279,7 @@ Increasing the load factor in the negative orientation further, the
 fundamental frequency will switch: it will be a different mode shape, the one
 that is close to the buckling mode shape for this orientation of the force.
 
-```@example argyris_frame_modal_tut
+```julia
 loading_factor = -100000
 evals, evecs, nconv = eigs(K + loading_factor .* Kg, M; nev=neigvs, which=:SM);
 vis(loading_factor, evecs[:, 1])

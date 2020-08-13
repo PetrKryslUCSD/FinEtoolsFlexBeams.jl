@@ -1,7 +1,3 @@
-```@meta
-EditURL = "<unknown>/beam_modal_tut.jl"
-```
-
 # Modal analysis of simply supported/clamped beam
 
 ## Description
@@ -18,7 +14,7 @@ in another. The results are compared with analytical expressions.
 - Calculate the discrete model quantities and solve the free vibration problem.
 - Demonstrate visualization of the free vibrations.
 
-```@example beam_modal_tut
+```julia
 #%%
 ```
 
@@ -27,28 +23,27 @@ in another. The results are compared with analytical expressions.
 The finite element code realize on the basic functionality implemented in this
 package.
 
-```@example beam_modal_tut
+```julia
 using FinEtools
 ```
 
 The material parameters may be defined with the specification of the units.
 The elastic properties are:
 
-```@example beam_modal_tut
+```julia
 E = 30002.0 * phun("ksi")
 nu = 0.0;
-nothing #hide
 ```
 
 The mass density is expressed in customary units as
 
-```@example beam_modal_tut
+```julia
 rho = 0.28 * phun("lbm/in^3")
 ```
 
 Here are the cross-sectional dimensions and the length of the beam between supports.
 
-```@example beam_modal_tut
+```julia
 b = 1.8 * phun("in"); h = 1.8 * phun("in"); L = 100 * phun("in");
 
 #%%
@@ -68,24 +63,22 @@ as a clamped beam.
 
 The cross-sectional properties are:
 
-```@example beam_modal_tut
+```julia
 A = b * h;
 I2 = b * h^3 / 12;
 I3 = b^3 * h / 12;
-nothing #hide
 ```
 
 Then the analytical vibration frequencies for the first two modes are:
 
-```@example beam_modal_tut
+```julia
 @show analyt_freq = [(1 * pi)^2, (4.73004074)^2] .* (sqrt(E * I2 / rho / A) / (2 * pi * L^2));
-nothing #hide
 ```
 
 The purpose of the numerical model is to calculate approximation to these two
 analytical natural frequencies.
 
-```@example beam_modal_tut
+```julia
 neigvs = length(analyt_freq);
 
 #
@@ -102,7 +95,7 @@ Cartesian coordinates. `[1.0, 0.0, 0.0]` is the vector that together with the
 tangent to the midline curve of the beam spans the $x_1x_2$ plane of the
 local coordinates for the beam.
 
-```@example beam_modal_tut
+```julia
 using FinEtoolsFlexBeams.CrossSectionModule: CrossSectionRectangle
 cs = CrossSectionRectangle(s -> b, s -> h, s -> [1.0, 0.0, 0.0])
 ```
@@ -110,46 +103,45 @@ cs = CrossSectionRectangle(s -> b, s -> h, s -> [1.0, 0.0, 0.0])
 We can compare the analytical values of the cross-section properties with
 those stored in the `cs` structure:
 
-```@example beam_modal_tut
+```julia
 @show A, I2, I3
 @show cs.parameters(0.0)
 ```
 
 Now we generate the mesh of the beam. The locations of its two endpoints are:
 
-```@example beam_modal_tut
+```julia
 xyz = [[0 -L / 2 0]; [0 L / 2 0]]
 ```
 
 We will generate
 
-```@example beam_modal_tut
+```julia
 n = 4
 ```
 
 beam elements along the member.
 
-```@example beam_modal_tut
+```julia
 using FinEtoolsFlexBeams.MeshFrameMemberModule: frame_member
 fens, fes = frame_member(xyz, n, cs);
-nothing #hide
 ```
 
 The mesh definition consists of the nodes
 
-```@example beam_modal_tut
+```julia
 @show fens
 ```
 
 and the finite elements
 
-```@example beam_modal_tut
+```julia
 @show fes
 ```
 
 Note  that the cross-sectional properties are incorporated through `cs`.
 
-```@example beam_modal_tut
+```julia
 #
 ```
 
@@ -158,7 +150,7 @@ Note  that the cross-sectional properties are incorporated through `cs`.
 Material properties can be now used to create a material: isotropic elasticity
 model of the `FinEtoolsDeforLinear` package is instantiated.
 
-```@example beam_modal_tut
+```julia
 using FinEtoolsDeforLinear
 material = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
 
@@ -172,13 +164,13 @@ We begin by constructing the requisite fields, geometry and displacement.
 These are the so-called "configuration variables", all initialized to 0.
 This is that geometry field.
 
-```@example beam_modal_tut
+```julia
 geom0 = NodalField(fens.xyz)
 ```
 
 This is the displacement field, three unknown displacements per node.
 
-```@example beam_modal_tut
+```julia
 u0 = NodalField(zeros(size(fens.xyz, 1), 3))
 ```
 
@@ -186,7 +178,7 @@ This is the rotation field, three unknown rotations per node are represented
 with a rotation matrix, in total nine numbers. The utility function
 `initial_Rfield`
 
-```@example beam_modal_tut
+```julia
 using FinEtoolsFlexBeams.RotUtilModule: initial_Rfield
 Rfield0 = initial_Rfield(fens)
 ```
@@ -194,7 +186,7 @@ Rfield0 = initial_Rfield(fens)
 Here we verify the number of nodes and the number of degrees of freedom in the
 rotation field per node.
 
-```@example beam_modal_tut
+```julia
 @show nents(Rfield0)
 @show ndofs(Rfield0)
 ```
@@ -203,7 +195,7 @@ Finally, this is the displacement and rotation field for incremental changes,
 incremental displacements and incremental rotations. In total, 6 unknowns per
 node.
 
-```@example beam_modal_tut
+```julia
 dchi = NodalField(zeros(size(fens.xyz, 1), 6))
 
 #
@@ -220,7 +212,7 @@ location. The tolerance of a fraction of the length of an element (i. e. the
 distance between the nodes) is used to take the location and blow it up into
 a nonzero-volume box.
 
-```@example beam_modal_tut
+```julia
 l1 = selectnode(fens; box=[0 0 -L / 2 -L / 2 0 0], tolerance=L / n / 1000)
 ```
 
@@ -228,7 +220,7 @@ The nodes in this list should consist of a single node (which is why the
 tolerance is so small, in order to limit the selection to a single node near
 the location given).
 
-```@example beam_modal_tut
+```julia
 @show length(l1)
 ```
 
@@ -236,7 +228,7 @@ The boundary condition at this point dictates zero displacements (degrees of
 freedom 1, 2, and 3) and zero rotations about $Y$ (5) and $Z$ (6). This
 leaves rotation about the $X$ free.
 
-```@example beam_modal_tut
+```julia
 for i in [1,2,3,5,6]
     setebc!(dchi, l1, true, i)
 end
@@ -244,13 +236,13 @@ end
 
 Similarly, the node next to the other end of the beam is selected.
 
-```@example beam_modal_tut
+```julia
 l1 = selectnode(fens; box=[0 0 L / 2  L / 2 0 0], tolerance=L / n / 1000)
 ```
 
 And an identical boundary condition combination is enforced.
 
-```@example beam_modal_tut
+```julia
 for i in [1,2,3,5,6]
     setebc!(dchi, l1, true, i)
 end
@@ -260,22 +252,21 @@ These boundary conditions now need to be "applied". This simply means that the
 prescribed values of the degrees of freedom are copied into the active
 degrees of freedom.
 
-```@example beam_modal_tut
+```julia
 applyebc!(dchi)
 ```
 
 The essential boundary conditions will also reduce the number of free
 (unknown) degrees of freedom.
 
-```@example beam_modal_tut
+```julia
 numberdofs!(dchi);
-nothing #hide
 ```
 
 Here we inspect the degrees of freedom in the incremental
 displacement/rotation field:
 
-```@example beam_modal_tut
+```julia
 @show dchi.dofnums
 ```
 
@@ -283,22 +274,21 @@ Note that the degrees of freedom are actually carried by the incremental
 field, not by the displacement or the rotation fields. There are therefore 6
 degrees of freedom per node in the incremental displacement field.
 
-```@example beam_modal_tut
+```julia
 #
 ```
 
 ## Assemble the global discrete system
 
-```@example beam_modal_tut
+```julia
 using FinEtoolsFlexBeams.FEMMCorotBeamModule: FEMMCorotBeam
 femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material);
-nothing #hide
 ```
 
 For disambiguation we will refer to the stiffness and mass functions by
 qualifying them with the corotational-beam module, `FEMMCorotBeamModule`.
 
-```@example beam_modal_tut
+```julia
 using FinEtoolsFlexBeams.FEMMCorotBeamModule
 CB = FEMMCorotBeamModule
 ```
@@ -309,16 +299,15 @@ access to the integration domain. The next argument is the geometry field,
 followed by the displacement, rotations, and incremental
 displacement/rotation fields.
 
-```@example beam_modal_tut
+```julia
 K = CB.stiffness(femm, geom0, u0, Rfield0, dchi);
 M = CB.mass(femm, geom0, u0, Rfield0, dchi);
-nothing #hide
 ```
 
 We can compare the size of the stiffness matrix with the number of degrees of
 freedom that are unknown (20).
 
-```@example beam_modal_tut
+```julia
 @show size(K)
 
 #
@@ -331,15 +320,14 @@ to solve the generalized eigenvalue problem with the sparse matrices. As is
 common in structural dynamics, we request the smallest eigenvalues in
 absolute value (`:SM`).
 
-```@example beam_modal_tut
+```julia
 using Arpack
 evals, evecs, nconv = eigs(K, M; nev=neigvs, which=:SM);
-nothing #hide
 ```
 
 First  we should check that the requested eigenvalues actually converged:
 
-```@example beam_modal_tut
+```julia
 @show nconv == neigvs
 ```
 
@@ -347,7 +335,7 @@ The eigenvalues (i. e. the squares of the angular frequencies) are returned in
 the vector `evals`. The mode shapes constitute the columns of the matrix
 `evecs`.
 
-```@example beam_modal_tut
+```julia
 @show size(evecs)
 ```
 
@@ -355,7 +343,7 @@ The natural frequencies are obtained from the squares of the angular
 frequencies. We note the use of `sqrt.` which broadcast the square root over
 the array `evals`.
 
-```@example beam_modal_tut
+```julia
 fs = sqrt.(evals) / (2 * pi);
 
 #
@@ -365,7 +353,7 @@ fs = sqrt.(evals) / (2 * pi);
 
 The approximate and analytical frequencies are now reported.
 
-```@example beam_modal_tut
+```julia
 println("Approximate frequencies: $fs [Hz]")
 println("Analytical frequencies: $analyt_freq [Hz]")
 ```
@@ -373,7 +361,7 @@ println("Analytical frequencies: $analyt_freq [Hz]")
 Close agreement between the approximate and analytical frequencies can be
 observed: The error of the numerical solution is a fraction of a percent.
 
-```@example beam_modal_tut
+```julia
 errs = abs.(analyt_freq .- fs) ./ analyt_freq
 println("Relative errors of frequencies: $errs [ND]")
 
@@ -387,13 +375,13 @@ geometry. The configuration during the animation needs to reflect rotations.
 The function `update_rotation_field!` will update the rotation field given a
 vibration mode.
 
-```@example beam_modal_tut
+```julia
 using FinEtoolsFlexBeams.RotUtilModule: update_rotation_field!
 ```
 
 The visualization utilities take advantage of the PlotlyJS library.
 
-```@example beam_modal_tut
+```julia
 using PlotlyJS
 using FinEtoolsFlexBeams.VisUtilModule: plot_space_box, plot_solid, render, react!, default_layout_3d, save_to_json
 ```
@@ -401,59 +389,58 @@ using FinEtoolsFlexBeams.VisUtilModule: plot_space_box, plot_solid, render, reac
 The magnitude of the vibration modes (displacements  and rotations) will be
 amplified with this scale factor:
 
-```@example beam_modal_tut
+```julia
 scale = 1.5
 ```
 
 This is the mode that will be animated:
 
-```@example beam_modal_tut
+```julia
 mode = 1
 ```
 
 In order to handle variables inside loops correctly, we create a local scope
 with the `let end` block.
 
-```@example beam_modal_tut
+```julia
 let
 ```
 
 The extents of the box will be preserved during animation in order to
 eliminate changes in the viewing parameters.
 
-```@example beam_modal_tut
+```julia
     tbox = plot_space_box([[-0.2 * L -L / 2 -0.2 * L]; [+0.2 * L L / 2 +0.2 * L]])
 ```
 
 This is the geometry of the structure without deformation (undeformed). It
 is displayed as gray, partially transparent.
 
-```@example beam_modal_tut
+```julia
     tenv0 = plot_solid(fens, fes; x=geom0.values, u=0.0 .* dchi.values[:, 1:3], R=Rfield0.values, facecolor="rgb(125, 155, 125)", opacity=0.3);
-nothing #hide
 ```
 
 Initially the plot consists of the box and the undeformed geometry.
 
-```@example beam_modal_tut
+```julia
     plots = cat(tbox, tenv0; dims=1)
 ```
 
 Create the layout for the plot. Set the size of the window.
 
-```@example beam_modal_tut
+```julia
     layout = default_layout_3d(;width=600, height=600, options = Dict(:responsive=>true))
 ```
 
 Set the aspect mode to get the correct proportions.
 
-```@example beam_modal_tut
+```julia
     layout[:scene][:aspectmode] = "data"
 ```
 
 Render the undeformed structure
 
-```@example beam_modal_tut
+```julia
     pl = render(plots; layout=layout, title="Mode $(mode)")
     sleep(2.115)
 ```
@@ -468,7 +455,7 @@ of plots.
 4. Call the `react!` function to update the display. Sleep for a brief
 period of time to give the display a chance to become current.
 
-```@example beam_modal_tut
+```julia
     for xscale in scale .* sin.(collect(0:1:89) .* (2 * pi / 21))
         scattersysvec!(dchi, xscale .* evecs[:, mode])
         u1 = deepcopy(u0)
@@ -484,14 +471,14 @@ period of time to give the display a chance to become current.
 
 Save the plot to a Json file. It can be then re-displayed later.
 
-```@example beam_modal_tut
+```julia
     save_to_json(pl, "deformed_plot.json")
 end
 ```
 
 Load the plot from a file.
 
-```@example beam_modal_tut
+```julia
 using FinEtoolsFlexBeams.VisUtilModule: plot_from_json
 plot_from_json("deformed_plot.json")
 ```

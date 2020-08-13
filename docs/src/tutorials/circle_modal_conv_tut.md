@@ -1,7 +1,3 @@
-```@meta
-EditURL = "<unknown>/circle_modal_conv_tut.jl"
-```
-
 # Modal analysis of a free-floating steel circle
 
 ## Description
@@ -42,7 +38,7 @@ Mode                Reference Value (Hz)  NAFEMS Target Value (Hz)
 - Compute data for extrapolation to the limit to predict the true natural
   frequencies.
 
-```@example circle_modal_conv_tut
+```julia
 #
 ```
 
@@ -50,7 +46,7 @@ Mode                Reference Value (Hz)  NAFEMS Target Value (Hz)
 
 Include the needed packages and modules.
 
-```@example circle_modal_conv_tut
+```julia
 using Arpack
 using FinEtools
 using FinEtoolsDeforLinear
@@ -68,55 +64,52 @@ using FinEtoolsFlexBeams.FESetCorotBeamModule: MASS_TYPE_CONSISTENT_NO_ROTATION_
 The material parameters may be defined with the specification of the units.
 The elastic properties are:
 
-```@example circle_modal_conv_tut
+```julia
 E = 200.0 * phun("GPa")
 nu = 0.3;
-nothing #hide
 ```
 
 The mass density is
 
-```@example circle_modal_conv_tut
+```julia
 rho = 8000 * phun("kg/m^3")
 ```
 
 Here are the cross-sectional dimensions and the length of the beam between supports.
 
-```@example circle_modal_conv_tut
+```julia
 radius = 1.0 * phun("m"); diameter = 0.1 * phun("m");
-nothing #hide
 ```
 
 We shall calculate these eigenvalues, but we are mostly interested in the
 first three  natural frequencies.
 
-```@example circle_modal_conv_tut
+```julia
 neigvs = 18;
-nothing #hide
 ```
 
 The mass shift needs to be applied since the structure is free-floating.
 
-```@example circle_modal_conv_tut
+```julia
 oshift = (2*pi*15)^2
 ```
 
 Here we get to choose the model: Bernoulli or Timoshenko
 
-```@example circle_modal_conv_tut
+```julia
 shear_correction_factor = 6/7 # Timoshenko
 ```
 
 shear_correction_factor = Inf # Bernoulli
 
-```@example circle_modal_conv_tut
+```julia
 cs = CrossSectionCircle(s -> diameter/2, s -> [1.0, 0.0, 0.0], shear_correction_factor)
 @show cs.parameters(0.0)
 ```
 
 Here we can choose the mass- matrix type:
 
-```@example circle_modal_conv_tut
+```julia
 mtype = MASS_TYPE_CONSISTENT_NO_ROTATION_INERTIA
 mtype = MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA
 mtype = MASS_TYPE_LUMPED_DIAGONAL_NO_ROTATION_INERTIA
@@ -127,7 +120,7 @@ Here are the formulas for the first two natural frequencies, obtained
 analytically with the shear flexibility  neglected. The parameters of the
 structure:
 
-```@example circle_modal_conv_tut
+```julia
 R = radius
 I = cs.parameters(0.0)[4]
 m = rho * cs.parameters(0.0)[1]
@@ -135,7 +128,7 @@ m = rho * cs.parameters(0.0)[1]
 
 For instance the the first out of plane mode is listed in this table as
 
-```@example circle_modal_conv_tut
+```julia
 J = cs.parameters(0.0)[2]
 G = E/2/(1+nu)
 i = 2 # the first non-rigid body mode
@@ -144,7 +137,7 @@ i = 2 # the first non-rigid body mode
 
 The first "ovaling" (in-plane) mode is:
 
-```@example circle_modal_conv_tut
+```julia
 i=2 # the first ovaling mode
 @show i*(i^2-1)/(2*pi*R^2*(i^2+1)^(1/2))*sqrt(E*I/m)
 
@@ -153,7 +146,7 @@ material = MatDeforElastIso(DeforModelRed3D, rho, E, nu, 0.0)
 
 We will generate this many elements  along the length of the circular ring.
 
-```@example circle_modal_conv_tut
+```julia
 results = let
     results = []
     for i in 1:3
@@ -162,20 +155,19 @@ results = let
 
 beam elements along the member.
 
-```@example circle_modal_conv_tut
+```julia
         tolerance = radius/n/1000;
-nothing #hide
 ```
 
 Generate the mesh of a straight member.
 
-```@example circle_modal_conv_tut
+```julia
         fens, fes = frame_member([0 0 0; 2*pi 0 0], n, cs)
 ```
 
 Twist the straight member into a ring.
 
-```@example circle_modal_conv_tut
+```julia
         for i in 1:count(fens)
             a = fens.xyz[i, 1]
             fens.xyz[i, :] .= (radius+radius*cos(a), radius*sin(a), 0)
@@ -184,13 +176,13 @@ Twist the straight member into a ring.
 
 Merge the nodes of the bases, which involves renumbering the connectivity.
 
-```@example circle_modal_conv_tut
+```julia
         fens, fes = mergenodes(fens, fes, tolerance, [1, n+1])
 ```
 
 Generate the discrete model.
 
-```@example circle_modal_conv_tut
+```julia
         geom0 = NodalField(fens.xyz)
         u0 = NodalField(zeros(size(fens.xyz, 1), 3))
         using FinEtoolsFlexBeams.RotUtilModule: initial_Rfield
@@ -201,19 +193,17 @@ Generate the discrete model.
         femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material);
         K = CB.stiffness(femm, geom0, u0, Rfield0, dchi);
         M = CB.mass(femm, geom0, u0, Rfield0, dchi; mass_type = mtype);
-nothing #hide
 ```
 
 Solve the free vibration problem.
 
-```@example circle_modal_conv_tut
+```julia
         evals, evecs, nconv = eigs(K + oshift * M, M; nev=neigvs, which=:SM, ncv = 3*neigvs, maxiter = 2000);
-nothing #hide
 ```
 
 Correct for the mass shift.
 
-```@example circle_modal_conv_tut
+```julia
         evals = evals .- oshift;
         sigdig(n) = round(n * 10000) / 10000
         fs = real(sqrt.(complex(evals)))/(2*pi)
@@ -242,14 +232,14 @@ refinement factor as a convenience: we will calculate the element size by
 dividing the circumference of the ring with a number of elements generated
 circumferentially.
 
-```@example circle_modal_conv_tut
+```julia
 using PlotlyJS
 using FinEtools.AlgoBaseModule: richextrapol
 ```
 
 Modes 7 and 8
 
-```@example circle_modal_conv_tut
+```julia
 sols = [r[1] for r in results]
 resextrap = richextrapol(sols, [4.0, 2.0, 1.0])
 print("Predicted frequency 7 and 8: $(resextrap[1])\n")
@@ -259,7 +249,7 @@ t78 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", name
 
 Modes 9 and 10
 
-```@example circle_modal_conv_tut
+```julia
 sols = [r[2] for r in results]
 resextrap = richextrapol(sols, [4.0, 2.0, 1.0])
 print("Predicted frequency 9 and 10: $(resextrap[1])\n")
@@ -269,7 +259,7 @@ t910 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", nam
 
 Modes 11 and 12
 
-```@example circle_modal_conv_tut
+```julia
 sols = [r[3] for r in results]
 resextrap = richextrapol(sols, [4.0, 2.0, 1.0])
 print("Predicted frequency 11 and 12: $(resextrap[1])\n")
@@ -280,7 +270,7 @@ t1112 = scatter(;x=2*pi*radius./[80, 160, 320], y=errs, mode="markers+lines", na
 Presents the convergence graph on a log-log scale.  The slope of the error
 curves are the convergence rate.
 
-```@example circle_modal_conv_tut
+```julia
 layout = Layout(;width=400, height=300, xaxis=attr(title="Element size", type = "log"), yaxis=attr(title="Normalized error [ND]", type = "log"), title = "3D: Convergence of modes 7, ..., 12", xaxis_range=[-2, -1], yaxis_range=[-4, -1])
 pl = plot([t78, t910, t1112], layout; options = Dict(
         :showSendToCloud=>true,
