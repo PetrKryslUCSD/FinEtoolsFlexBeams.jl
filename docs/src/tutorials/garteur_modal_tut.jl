@@ -240,7 +240,7 @@ fs = sqrt.([max(0, e - oshift) for e in evals]) / (2 * pi);
 # | Mode | Description | Frequency |
 # | ----- | ----- | ----- |
 # | 1.-6. |  "Rigid body" modes | 0 |
-# | 7. Two node bending | 6.37 Hz |
+# | 7. |  Two node bending | 6.37 Hz |
 # | 8. |  Global fuselage rotation | 16.10 Hz |
 # | 9. |  First antisymmetric wing torsion | 33.13 Hz |
 # | 10. |  First symmetric wing torsion | 33.53 Hz |
