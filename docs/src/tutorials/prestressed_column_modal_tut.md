@@ -9,6 +9,9 @@ The fundamental vibration frequency depends on the prestress force.
 
 - Demonstrate the change in the fundamental vibration frequency due to the
   prestress through an axial force.
+- Show how to evaluate the geometric stiffness from a static solution.
+- Solve the eigenvalue free vibration problem with the inclusion of the
+  geometric stiffness matrix.
 
 ```julia
 #

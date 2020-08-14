@@ -25,6 +25,7 @@ git clone https://github.com/PetrKryslUCSD/FinEtoolsFlexBeams.jl.git
 
 Change your working directory to `FinEtoolsFlexBeams`. Start Julia and run
 the following:
+
 ```
 using Pkg; Pkg.activate("."); Pkg.instantiate()
 Pkg.build()
