@@ -7,7 +7,8 @@ The fundamental vibration frequency depends on the prestress force.
 
 ## Goals
 
--
+- Demonstrate the change in the fundamental vibration frequency due to the
+  prestress through an axial force.
 
 ```julia
 #
@@ -80,7 +81,7 @@ The beam has cylindrical supports at either end.
 Simply supported column without a pre-stressing force has a fundamental frequency of
 
 ```julia
-analyt_freq = (1*pi)^2/(2*pi*L^2)*sqrt(E*I2/rho/A);
+@show analyt_freq = (1*pi)^2/(2*pi*L^2)*sqrt(E*I2/rho/A);
 ```
 
 The critical Euler buckling load (simple-support): (pi^2*E*I2/L^2).
@@ -187,7 +188,8 @@ for i in [1,2,3,5]
 end
 ```
 
-Similarly, the node next to the other end of the beam is selected. This note is axially movable, but all other degrees of freedom
+Similarly, the node next to the other end of the beam is selected. This node
+is to be exposed to the external loading through the axial force.
 
 ```julia
 movable = selectnode(fens; box=[0 0 L/2  L/2 0 0], tolerance=L/n/1000)[1]
@@ -201,7 +203,9 @@ for i in [1,3,5]
 end
 ```
 
-These boundary conditions now need to be "applied". This simply means that the prescribed values of the degrees of freedom are copied into the active degrees of freedom.
+These boundary conditions now need to be "applied". This simply means that the
+prescribed values of the degrees of freedom are copied into the active degrees
+of freedom.
 
 ```julia
 applyebc!(dchi)
@@ -235,7 +239,8 @@ using FinEtoolsFlexBeams.FEMMCorotBeamModule: FEMMCorotBeam
 femm = FEMMCorotBeam(IntegDomain(fes, GaussRule(1, 2)), material);
 ```
 
-For disambiguation we will refer to the stiffness and mass functions by qualifying them with the corotational-beam module, `FEMMCorotBeamModule`.
+For disambiguation we will refer to the stiffness and mass functions by
+qualifying them with the corotational-beam module, `FEMMCorotBeamModule`.
 
 ```julia
 using FinEtoolsFlexBeams.FEMMCorotBeamModule
@@ -252,28 +257,33 @@ displacement/rotation fields.
 K = CB.stiffness(femm, geom0, u0, Rfield0, dchi);
 ```
 
-Now we construct the means of applying the concentrated force of prestress at the movable node.
-The node is the "boundary" of the domain of the column.
+Now we construct the means of applying the concentrated force of prestress at
+the movable node. The node is the "boundary" of the domain of the column.
 
 ```julia
 loadbdry = FESetP1(reshape([movable], 1, 1))
 ```
 
-The concentrated force can be considered a distributed loading at a single point.
-This distributed loading can be integrated with a quadrature rule suitable for
-a single point domains.
+The concentrated force can be considered a distributed loading at a single
+point. This distributed loading can be integrated with a quadrature rule
+suitable for a single point domains.
 
 ```julia
 lfemm = FEMMBase(IntegDomain(loadbdry, PointRule()))
 ```
 
-We assume that the magnitude of the force is unity. The buckling factor corresponding to failure is then the value of the Euler force.
+We assume that the magnitude of the force is unity. Note that the force is
+applied in the positive direction along the beam, meaning as tensile.
+Therefore, buckling will be caused by applying  a negative buckling factor.
+Numerically, the buckling factor corresponding to failure is then of the
+magnitude of the Euler force.
 
 ```julia
 fi = ForceIntensity(FFlt[0, 1.0, 0, 0, 0, 0]);
 ```
 
-The distributed loading is now integrated over the "volume" of the integration domain.
+The distributed loading is now integrated over the "volume" of the integration
+domain.
 
 ```julia
 F = CB.distribloads(lfemm, geom0, dchi, fi, 3);
@@ -285,7 +295,8 @@ Solve for the displacement under @show the static load
 scattersysvec!(dchi, K\F);
 ```
 
-Update deflections so that the initial stress can be computed. First the displacements:
+Update deflections so that the initial stress can be computed. First the
+displacements:
 
 ```julia
 u1 = deepcopy(u0)
@@ -301,7 +312,7 @@ update_rotation_field!(Rfield1, dchi)
 ```
 
 The static deflection is now used to compute the internal forces
-which in turn lead to the geometric stiffness.
+which in turn lead to the geometric stiffness matrix.
 
 ```julia
 Kg = CB.geostiffness(femm, geom0, u1, Rfield1, dchi);
@@ -353,9 +364,19 @@ The fundamental frequency:
     end
     freqs
 end
+```
 
+Show the normalized force and the fundamental frequencies.
+
+```julia
 @show Ps./PEul, freqs
 
+#
+```
+
+## Present a plot
+
+```julia
 using PlotlyJS
 
 tc = scatter(;x=Ps./PEul, y=freqs./analyt_freq, mode="markers", name = "Fundamental frequency", line_color = "rgb(15, 15, 15)")
