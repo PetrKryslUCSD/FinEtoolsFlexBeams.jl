@@ -10,13 +10,13 @@ FinEtools used for the simulation of large-displacement response of three-dimens
 
 ## News
 
+- 08/16/2020: Described tutorials.
 - 07/27/2020: Added documentation.
 - 02/25/2020: Nonlinear static analysis implemented.
 - 02/20/2020: Nonlinear transient dynamic analysis implemented.
 - 02/16/2020: Buckling analysis implemented.
 
 ## Tutorials
-
 
 Clone the package to your working directory:
 ```
@@ -28,15 +28,13 @@ the following:
 
 ```
 using Pkg; Pkg.activate("."); Pkg.instantiate()
-Pkg.build()
 ```
 
-In general the tutorials require the folder `FinEtoolsFlexBeams.jl/notebooks` to be the working directory since the scripts assume that the input files will be found in the current directory. So to run a tutorial, do
-```
-using IJulia    
-IJulia.notebook(dir = pwd(), detached = true)
-```
-head over to the `notebooks` folder, open the tutorial notebook, and evaluate in Jupyter.
+The tutorials are in the form of Julia scripts in the folder `FinEtoolsFlexBeams.jl/docs/src/tutorials`. The markdown generated from these files is also in the same folder.
+
+To view the markdown, follow the link to the documentation.
+
+To run a tutorial, head over to the `tutorials` folder, open the tutorial script, and evaluate in Julia.
 
 ## Examples
 
