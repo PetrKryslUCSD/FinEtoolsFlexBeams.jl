@@ -5,8 +5,6 @@ using FinEtools
 using FinEtools.IntegDomainModule: IntegDomain
 import FinEtoolsDeforLinear.MatDeforElastIsoModule: MatDeforElastIso
 using ..FESetCorotBeamModule: FESetL2CorotBeam, local_frame_and_def!, local_mass!, local_stiffness!, natural_forces!, local_geometric_stiffness!, local_forces!, MASS_TYPE_CONSISTENT_WITH_ROTATION_INERTIA
-using InteractiveUtils
-using Traceur
 
 """
     FEMMPointGroundedSpring{S<:AbstractFESet}
