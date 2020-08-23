@@ -10,6 +10,7 @@ FinEtools used for the simulation of large-displacement response of three-dimens
 
 ## News
 
+- 08/23/2020: Added a separate tutorial package, [FinEtoolsFlexBeamsTutorials.jl](https://petrkryslucsd.github.io/FinEtoolsFlexBeamsTutorials.jl)).
 - 08/16/2020: Described tutorials.
 - 07/27/2020: Added documentation.
 - 02/25/2020: Nonlinear static analysis implemented.
