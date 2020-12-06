@@ -1,7 +1,7 @@
 name = "FinEtoolsFlexBeams"
 uuid = "1d6e2fc3-29aa-4bd6-bf55-212bcb8e2840"
 authors = ["Petr Krysl <pkrysl@ucsd.edu>"]
-version = "0.3.0"
+version = "0.3.1"
 
 [deps]
 Arpack = "7d9fca2a-8960-54d3-9f78-7d1dccf2cb97"
